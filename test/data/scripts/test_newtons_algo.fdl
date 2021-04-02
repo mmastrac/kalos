@@ -1,0 +1,22 @@
+handle init {
+    var number = 31000;
+    var guess = abs(number);
+    var new_guess;
+    var count = 0;
+    print("Square root of {number}:\n");
+
+    loop {
+        new_guess = (guess + number / guess) / 2;
+        print("Guess: {new_guess}\n");
+        if (abs(guess - new_guess) <= 1) {
+            break;
+        }
+        guess = new_guess;
+        if (count > 100) {
+            print("Failed to converge!\n");
+            break;
+        }
+    }
+
+    print("Square root of {number} is {guess} (check = {guess*guess})\n");
+}

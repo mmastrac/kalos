@@ -1,0 +1,15 @@
+handle init {
+    print(str(1));
+    print(str("a"));
+    print(int("1"));
+    print(ord("a"));
+    print(chr(ord("a")));
+    print(hex(123));
+    print(bool("yes"));
+    print(bool(""));
+    print(bool(123));
+    print(bool(0));
+    print(min(123, 456));
+    print(max(123, 456));
+    print(len("abcdef"));
+}

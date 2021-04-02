@@ -1,0 +1,13 @@
+handle init {
+    if ("aa" == "a" "a") {
+        print("correct 1!\n");
+    }
+    if ("aaa" == ("a" "a" "a")) {
+        print("correct 2!\n");
+    }
+    if ("""
+a
+""" == "\na\n") {
+        print("correct 3!\n");
+    }
+}

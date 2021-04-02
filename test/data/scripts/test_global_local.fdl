@@ -1,0 +1,9 @@
+var foo = 1 + 2;
+
+handle init {
+    var baz = 30;
+    var bar;
+
+    bar = foo + 1;
+    print(bar + baz);
+}

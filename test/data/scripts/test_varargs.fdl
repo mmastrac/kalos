@@ -1,0 +1,7 @@
+import test;
+
+handle init {
+    print(test.sum_numbers());
+    print(test.sum_numbers(1,2,3,4,5,6));
+    print(test.sum_numbers_2(1,2,3,4,5,6));
+}

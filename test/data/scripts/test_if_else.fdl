@@ -1,0 +1,7 @@
+handle init {
+    if (1 == 1) {
+        print("correct!\n");
+    } else {
+        print("incorrect!\n");
+    }
+}

@@ -1,0 +1,16 @@
+handle init {
+    var foo;
+    loop {
+        print("start loop!\n");
+        foo = foo + 1;
+        print(foo);
+        print("\n");
+        if (foo == 3) {
+            break;
+        } else if (foo == 2) {
+            continue;
+        }
+        print("end loop!\n");
+    }
+    print("done!\n");
+}
