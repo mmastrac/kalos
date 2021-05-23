@@ -61,8 +61,10 @@ typedef struct kalos_module {
 #define KALOS_MODULE(name, ...) KALOS_MODULE__(name, #name, __VA_ARGS__)
 #define KALOS_MODULE__(name_, name_str_, ...) \
     void kalos_module_dispatch_##name_(kalos_state state, int function, kalos_stack* stack) {\
+        LOG("Dispatch %s:%d", #name_, function);\
         switch (function) {\
             KALOS_FOREACH__(KALOS_SHIM__, __VA_ARGS__) \
+            default: LOG("Invalid dispatch index!"); \
         }\
     } \
     kalos_module kalos_module_##name_ = { .name=name_str_, .dispatch=kalos_module_dispatch_##name_, .exports={ \
@@ -94,7 +96,7 @@ typedef struct kalos_module {
 #define KALOS_DEF__0(x) KALOS_DEF__##x
 #define KALOS_DEF__1(...)
 #define KALOS_SHIM__(a,b) KALOS_CONCAT__(KALOS_SHIM__, KM__PRIMITIVE_COMPARE(b,))(a, b)
-#define KALOS_SHIM__0(index, x) case index: KALOS_SHIM__##x break;
+#define KALOS_SHIM__0(index, x) case index: LOG("Index %d", index); { KALOS_SHIM__##x } break;
 #define KALOS_SHIM__1(...)
 
 // Definition phase
@@ -108,9 +110,9 @@ typedef struct kalos_module {
 #define KALOS_DEF__DOC(...)
 
 // Shim phase
-#define KALOS_SHIM__CONST(x, typ, y) 
-#define KALOS_SHIM__FUNCTION(realname_,...) KALOS_FUNCTION_SHIM__(0,,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
-#define KALOS_SHIM__FUNCTION_VARARGS(typ_, realname_,...) KALOS_FUNCTION_SHIM__(1,typ_,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
+#define KALOS_SHIM__CONST(x, typ, y) LOG("Invoking const %s", #x);
+#define KALOS_SHIM__FUNCTION(realname_,...) LOG("func %s", #realname_); KALOS_FUNCTION_SHIM__(0,,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
+#define KALOS_SHIM__FUNCTION_VARARGS(typ_, realname_,...) LOG("func va %s", #realname_); KALOS_FUNCTION_SHIM__(1,typ_,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
 #define KALOS_SHIM__DOC(...)
 
 #define KALOS_CONST_FIELD__NUMBER const_number
@@ -148,7 +150,7 @@ typedef struct kalos_module {
 #define KALOS_VARARG_SETUP_1(arg_count) int ofs = kalos_stack_fixup_varargs(arg_count, stack);
 
 #define KALOS_FUNCTION_SHIM__(varargs_, vararg_type_, arg_count_, realname_, ret_, name_, p1, p1t, p2, p2t, p3, p3t, p4, p4t, p5, p5t, p6, p6t, p7, p7t, p8, p8t, ...) \
-    { KALOS_VARARG_SETUP_##varargs_(arg_count_) KALOS_PUSH_##ret_(realname_( state\
+    { LOG("Invoke %s", #name_); KALOS_VARARG_SETUP_##varargs_(arg_count_) KALOS_PUSH_##ret_(realname_( state\
         KALOS_ARG_S__(0, arg_count_, p1t) KALOS_ARG_S__(1, arg_count_, p2t) KALOS_ARG_S__(2, arg_count_, p3t) KALOS_ARG_S__(3, arg_count_, p4t)\
         KALOS_ARG_S__(4, arg_count_, p5t) KALOS_ARG_S__(5, arg_count_, p6t) KALOS_ARG_S__(6, arg_count_, p7t) KALOS_ARG_S__(7, arg_count_, p8t)\
         KALOS_VARARG_ARGS_##varargs_(arg_count_))); }

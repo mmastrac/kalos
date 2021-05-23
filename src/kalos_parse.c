@@ -28,8 +28,8 @@ kalos_builtin kalos_builtins[] = {
     { NULL },
 };
 
-#define THROW(msg) { LOG("Throw %s (last token was %s)", msg, kalos_token_strings[parse_state->last_token]); parse_state->failure_message = msg; goto fail; } 
-#define TRY(x) {x; if (parse_state->failure_message) { LOG("Caught %s", parse_state->failure_message); goto fail; } }
+#define THROW(msg) { LOG("%d: Throw %s (last token was %s)", __LINE__, msg, kalos_token_strings[parse_state->last_token]); parse_state->failure_message = msg; goto fail; } 
+#define TRY(x) {x; if (parse_state->failure_message) { LOG("%d: Caught %s", __LINE__, parse_state->failure_message); goto fail; } }
 #define TRY_EXIT fail: {}
 #define NO_OPERATOR_PRECEDENCE -1
 
@@ -135,6 +135,7 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
 static int lex(struct parse_state* parse_state) {
     parse_state->last_token = kalos_lex(&parse_state->lex_state, &parse_state->token[0]);
     if (parse_state->last_token == KALOS_TOKEN_ERROR) {
+        LOG("c=%02x c-1=%02x %02x", *parse_state->lex_state.s, *(parse_state->lex_state.s - 1), *(parse_state->lex_state.s - 2));
         THROW(ERROR_INVALID_TOKEN);
     }
     TRY_EXIT;
@@ -248,6 +249,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
                 break;
             }
             if (strcmp(context->exports[i].name, token) == 0) {
+                LOG("%d: Resolved %s as module export", parse_state->lex_state.line, token);
                 struct name_resolution_result res;
                 res.type = context->exports[i].type == KALOS_EXPORT_TYPE_FUNCTION ? NAME_RESOLUTION_MODULE_EXPORT_FUNCTION : NAME_RESOLUTION_MODULE_EXPORT_CONST;
                 res.export = &context->exports[i];
@@ -262,6 +264,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
                 break;
             }
             if (strcmp(kalos_builtins[i].name, token) == 0) {
+                LOG("%d: Resolved %s as builtin", parse_state->lex_state.line, token);
                 struct name_resolution_result res = { .type=NAME_RESOLUTION_BUILTIN };
                 res.builtin = &kalos_builtins[i];
                 return res;
@@ -269,6 +272,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         }
         for (int i = 0; i < parse_state->locals.var_index; i++) {
             if (strcmp(parse_state->locals.vars[i].name, token) == 0) {
+                LOG("%d: Resolved %s as local var", parse_state->lex_state.line, token);
                 struct name_resolution_result res = { .type=NAME_RESOLUTION_LOCAL_VAR };
                 res.var = &parse_state->locals.vars[i];
                 res.var_slot = i;
@@ -277,6 +281,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         }
         for (int i = 0; i < parse_state->globals.var_index; i++) {
             if (strcmp(parse_state->globals.vars[i].name, token) == 0) {
+                LOG("%d: Resolved %s as global var", parse_state->lex_state.line, token);
                 struct name_resolution_result res = { .type=NAME_RESOLUTION_GLOBAL_VAR };
                 res.var=&parse_state->globals.vars[i];
                 res.var_slot=i;
@@ -286,6 +291,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         for (int i = 0; i < parse_state->module_index; i++) {
             kalos_module* module = parse_state->all_modules[parse_state->imported_modules[i]];
             if (strcmp(module->name, token) == 0) {
+                LOG("%d: Resolved %s as module", parse_state->lex_state.line, token);
                 struct name_resolution_result res = { .type=NAME_RESOLUTION_MODULE };
                 res.module = module;
                 res.module_index = parse_state->imported_modules[i];
@@ -294,6 +300,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         }
         // Fall back to extra builtins
         if (parse_state->extra_builtins) {
+            LOG("%d: Resolved %s as extra builtin", parse_state->lex_state.line, token);
             struct name_resolution_result res = resolve_word(parse_state, parse_state->extra_builtins, parse_state->extra_builtins_module_index);
             if (res.type != NAME_RESOLUTION_NOT_FOUND) {
                 return res;
@@ -304,6 +311,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
                 break;
             }
             if (parse_state->all_modules[i]->name && strcmp(parse_state->all_modules[i]->name, token) == 0) {
+                LOG("%d: Resolved %s as unimported module", parse_state->lex_state.line, token);
                 struct name_resolution_result res = { .type=NAME_RESOLUTION_UNIMPORTED_MODULE };
                 res.module = parse_state->all_modules[i];
                 res.module_index = i;
@@ -471,6 +479,7 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 } else {
                     TRY(parse_push_string(parse_state, res.export->entry.const_string));
                 }
+                goto not_a_var;
             } else {
                 THROW(ERROR_UNKNOWN_VARIABLE);
             }
@@ -478,6 +487,7 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
             if (parse_state->const_mode && !res.var->is_const) {
                 THROW(ERROR_INVALID_CONST_EXPRESSION);
             }
+            not_a_var:
             return;
         }
     }
