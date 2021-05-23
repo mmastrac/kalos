@@ -55,7 +55,7 @@ typedef struct kalos_module {
 } kalos_module;
 
 // Entry macros
-#define KALOS_MODULE_FORWARD_DEF(x) kalos_module kalos_module_##x
+#define KALOS_MODULE_FORWARD_DEF(x) extern kalos_module kalos_module_##x
 #define KALOS_MODULE_REF(x) (&kalos_module_##x)
 #define KALOS_MODULE_BUILTIN(...) KALOS_MODULE__(builtin, NULL, __VA_ARGS__)
 #define KALOS_MODULE(name, ...) KALOS_MODULE__(name, #name, __VA_ARGS__)
