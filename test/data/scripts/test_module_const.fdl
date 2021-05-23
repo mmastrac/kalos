@@ -1,6 +1,9 @@
 import test;
 
+const X = test.ONE * 2;
+
 handle init {
     print(test.PI_ISH);
     print(test.HELLO_WORLD);
+    print(X);
 }
