@@ -20,6 +20,8 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_CONST_NUMBER,
     KALOS_EXPORT_TYPE_CONST_STRING,
     KALOS_EXPORT_TYPE_FUNCTION,
+    KALOS_EXPORT_TYPE_PROP_READ,
+    KALOS_EXPORT_TYPE_PROP_WRITE,
 } kalos_export_type;
 
 typedef struct kalos_arg {
@@ -100,6 +102,10 @@ typedef struct kalos_module {
 #define KALOS_SHIM__1(...)
 
 // Definition phase
+#define KALOS_DEF__PROP_READ(fn, name_, typ) \
+    { .name=#name_, .type= KALOS_EXPORT_TYPE_PROP_READ, .entry={ .function={ .return_type=FUNCTION_TYPE_##typ } } },
+#define KALOS_DEF__PROP_WRITE(fn, name_, typ) \
+    { .name=#name_, .type= KALOS_EXPORT_TYPE_PROP_WRITE, .entry={ .function={ .return_type=FUNCTION_TYPE_##typ } } },
 #define KALOS_DEF__CONST(x, typ, y) \
     { .name=#x, .type= KALOS_EXPORT_TYPE_CONST_##typ, .entry={ . KALOS_CONST_FIELD__##typ =y } },
 #define KALOS_ARG_COUNT__(a, b, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, ...) \
@@ -110,7 +116,9 @@ typedef struct kalos_module {
 #define KALOS_DEF__DOC(...)
 
 // Shim phase
-#define KALOS_SHIM__CONST(x, typ, y) LOG("Invoking const %s", #x);
+#define KALOS_SHIM__PROP_READ(fn, name_, typ) LOG("propread %s", #name_); KALOS_PUSH_##typ(fn( state ) )
+#define KALOS_SHIM__PROP_WRITE(fn, name_, typ) LOG("propwrite %s", #name_); fn( state KALOS_ARG_S__(0, 1, typ) );
+#define KALOS_SHIM__CONST(x, typ, y) 
 #define KALOS_SHIM__FUNCTION(realname_,...) LOG("func %s", #realname_); KALOS_FUNCTION_SHIM__(0,,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
 #define KALOS_SHIM__FUNCTION_VARARGS(typ_, realname_,...) LOG("func va %s", #realname_); KALOS_FUNCTION_SHIM__(1,typ_,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
 #define KALOS_SHIM__DOC(...)
