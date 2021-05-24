@@ -70,6 +70,7 @@ struct name_resolution_result {
         NAME_RESOLUTION_MODULE,
         NAME_RESOLUTION_MODULE_EXPORT_CONST,
         NAME_RESOLUTION_MODULE_EXPORT_FUNCTION,
+        NAME_RESOLUTION_MODULE_EXPORT_PROP,
         NAME_RESOLUTION_UNIMPORTED_MODULE,
     } type;
     union {
@@ -82,9 +83,19 @@ struct name_resolution_result {
             uint8_t module_index;
         };
         struct {
-            kalos_export* export;
             uint8_t export_module_index;
-            uint8_t export_index;
+            union {
+                struct {
+                    kalos_export* export;
+                    uint8_t export_index;
+                };
+                struct {
+                    kalos_export* export_read;
+                    kalos_export* export_write;
+                    uint8_t export_index_read;
+                    uint8_t export_index_write;
+                };
+            };
         };
         kalos_builtin* builtin;
     };
@@ -242,6 +253,7 @@ static void write_next_handler_section(struct parse_state* parse_state, char* na
 
 // Resolution order: builtins, locals, globals, modules
 static struct name_resolution_result resolve_word(struct parse_state* parse_state, kalos_module* context, uint8_t module_index) {
+    struct name_resolution_result res = { .type = NAME_RESOLUTION_NOT_FOUND };
     const char* token = parse_state->token;
     if (context) {
         for (int i = 0; ; i++) {
@@ -250,13 +262,34 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
             }
             if (strcmp(context->exports[i].name, token) == 0) {
                 LOG("%d: Resolved %s as module export", parse_state->lex_state.line, token);
-                struct name_resolution_result res;
-                res.type = context->exports[i].type == KALOS_EXPORT_TYPE_FUNCTION ? NAME_RESOLUTION_MODULE_EXPORT_FUNCTION : NAME_RESOLUTION_MODULE_EXPORT_CONST;
-                res.export = &context->exports[i];
-                res.export_index = i;
-                res.export_module_index = module_index;
-                return res;
+                        res.export_module_index = module_index;
+                switch (context->exports[i].type) {
+                    case KALOS_EXPORT_TYPE_FUNCTION:
+                    case KALOS_EXPORT_TYPE_CONST_NUMBER:
+                    case KALOS_EXPORT_TYPE_CONST_STRING:
+                        res.type = context->exports[i].type == KALOS_EXPORT_TYPE_FUNCTION ? NAME_RESOLUTION_MODULE_EXPORT_FUNCTION : NAME_RESOLUTION_MODULE_EXPORT_CONST;
+                        res.export = &context->exports[i];
+                        res.export_index = i;
+                        return res;
+                        break;
+                    case KALOS_EXPORT_TYPE_PROP_READ:
+                        res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
+                        res.export_read = &context->exports[i];
+                        res.export_index_read = i;
+                        break;
+                    case KALOS_EXPORT_TYPE_PROP_WRITE:
+                        res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
+                        res.export_write = &context->exports[i];
+                        res.export_index_write = i;
+                        break;
+                }
             }
+            if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP && res.export_read && res.export_write) {
+                break;
+            }
+        }
+        if (res.type != NAME_RESOLUTION_NOT_FOUND) {
+            return res;
         }
     } else {
         for (int i = 0; ; i++) {
@@ -265,7 +298,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
             }
             if (strcmp(kalos_builtins[i].name, token) == 0) {
                 LOG("%d: Resolved %s as builtin", parse_state->lex_state.line, token);
-                struct name_resolution_result res = { .type=NAME_RESOLUTION_BUILTIN };
+                res.type = NAME_RESOLUTION_BUILTIN;
                 res.builtin = &kalos_builtins[i];
                 return res;
             }
@@ -273,7 +306,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         for (int i = 0; i < parse_state->locals.var_index; i++) {
             if (strcmp(parse_state->locals.vars[i].name, token) == 0) {
                 LOG("%d: Resolved %s as local var", parse_state->lex_state.line, token);
-                struct name_resolution_result res = { .type=NAME_RESOLUTION_LOCAL_VAR };
+                res.type = NAME_RESOLUTION_LOCAL_VAR;
                 res.var = &parse_state->locals.vars[i];
                 res.var_slot = i;
                 return res;
@@ -282,7 +315,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         for (int i = 0; i < parse_state->globals.var_index; i++) {
             if (strcmp(parse_state->globals.vars[i].name, token) == 0) {
                 LOG("%d: Resolved %s as global var", parse_state->lex_state.line, token);
-                struct name_resolution_result res = { .type=NAME_RESOLUTION_GLOBAL_VAR };
+                res.type = NAME_RESOLUTION_GLOBAL_VAR;
                 res.var=&parse_state->globals.vars[i];
                 res.var_slot=i;
                 return res;
@@ -292,7 +325,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
             kalos_module* module = parse_state->all_modules[parse_state->imported_modules[i]];
             if (strcmp(module->name, token) == 0) {
                 LOG("%d: Resolved %s as module", parse_state->lex_state.line, token);
-                struct name_resolution_result res = { .type=NAME_RESOLUTION_MODULE };
+                res.type = NAME_RESOLUTION_MODULE;
                 res.module = module;
                 res.module_index = parse_state->imported_modules[i];
                 return res;
@@ -301,7 +334,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         // Fall back to extra builtins
         if (parse_state->extra_builtins) {
             LOG("%d: Resolved %s as extra builtin", parse_state->lex_state.line, token);
-            struct name_resolution_result res = resolve_word(parse_state, parse_state->extra_builtins, parse_state->extra_builtins_module_index);
+            res = resolve_word(parse_state, parse_state->extra_builtins, parse_state->extra_builtins_module_index);
             if (res.type != NAME_RESOLUTION_NOT_FOUND) {
                 return res;
             }
@@ -312,14 +345,14 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
             }
             if (parse_state->all_modules[i]->name && strcmp(parse_state->all_modules[i]->name, token) == 0) {
                 LOG("%d: Resolved %s as unimported module", parse_state->lex_state.line, token);
-                struct name_resolution_result res = { .type=NAME_RESOLUTION_UNIMPORTED_MODULE };
+                res.type = NAME_RESOLUTION_UNIMPORTED_MODULE;
                 res.module = parse_state->all_modules[i];
                 res.module_index = i;
                 return res;
             }
         }
     }
-    struct name_resolution_result res = { .type=NAME_RESOLUTION_NOT_FOUND };
+
     return res;
 }
 
