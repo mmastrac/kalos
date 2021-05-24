@@ -143,7 +143,7 @@
             <key>1</key>
             <dict>
               <key>name</key>
-              <string>punctuation.kalos</string>
+              <string>string.kalos</string>
             </dict>
           </dict>
           <key>patterns</key>
@@ -160,7 +160,7 @@
             <key>1</key>
             <dict>
               <key>name</key>
-              <string>punctuation.kalos</string>
+              <string>string.kalos</string>
             </dict>
           </dict>
         </dict>
@@ -208,6 +208,18 @@
               <string>punctuation.kalos</string>
             </dict>
           </dict>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>(\\(?:[\x{005c}\x{0022}nr]))</string>
+          <key>name</key>
+          <string>string.kalos</string>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>([^\x{0022}\x{005c}])</string>
+          <key>name</key>
+          <string>string.kalos</string>
         </dict>
        </array>
     </dict>

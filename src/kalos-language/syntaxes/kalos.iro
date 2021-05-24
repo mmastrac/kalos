@@ -73,8 +73,8 @@ styles [] {
 
 .text : style {
    color                 = brown
-   ace_scope             = text
-   textmate_scope        = text
+   ace_scope             = string
+   textmate_scope        = string
    pygments_scope        = String
 }
 
@@ -175,10 +175,10 @@ expression : context {
    
    : inline_push {
       regex          \= (\")
-      styles []       = .punctuation;
+      styles []       = .text;
       : pop {
          regex       \= (\")
-         styles []    = .punctuation;
+         styles []    = .text;
       }
       : inline_push {
          regex       \= ({)
@@ -188,6 +188,14 @@ expression : context {
             styles []       = .punctuation;
          }
          : include "expression" ;
+      }
+      : pattern {
+         regex      \= (\\(?:[\\"nr]))
+         styles [] = .text;
+      }
+      : pattern {
+         regex      \= ([^"\\])
+         styles [] = .text;
       }
    }
 }
