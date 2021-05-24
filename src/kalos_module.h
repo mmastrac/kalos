@@ -117,7 +117,7 @@ typedef struct kalos_module {
 
 // Shim phase
 #define KALOS_SHIM__PROP_READ(fn, name_, typ) LOG("propread %s", #name_); KALOS_PUSH_##typ(fn( state ) )
-#define KALOS_SHIM__PROP_WRITE(fn, name_, typ) LOG("propwrite %s", #name_); fn( state KALOS_ARG_S__(0, 1, typ) );
+#define KALOS_SHIM__PROP_WRITE(fn, name_, typ) LOG("propwrite %s", #name_); kalos_stack_fixup_no_varargs(1, stack), fn( state KALOS_ARG_S__(0, 1, typ) );
 #define KALOS_SHIM__CONST(x, typ, y) 
 #define KALOS_SHIM__FUNCTION(realname_,...) LOG("func %s", #realname_); KALOS_FUNCTION_SHIM__(0,,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
 #define KALOS_SHIM__FUNCTION_VARARGS(typ_, realname_,...) LOG("func va %s", #realname_); KALOS_FUNCTION_SHIM__(1,typ_,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_,__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
@@ -154,7 +154,7 @@ typedef struct kalos_module {
 #define KALOS_VARARG_ARGS_0(arg_count) 
 #define KALOS_VARARG_ARGS_1(arg_count)   , peek(stack, -arg_count-ofs-1)->value.number, peek(stack, -arg_count-1)
 
-#define KALOS_VARARG_SETUP_0(arg_count) int ofs = kalos_stack_fixup_no_varargs(arg_count, stack);
+#define KALOS_VARARG_SETUP_0(arg_count) kalos_stack_fixup_no_varargs(arg_count, stack);
 #define KALOS_VARARG_SETUP_1(arg_count) int ofs = kalos_stack_fixup_varargs(arg_count, stack);
 
 #define KALOS_FUNCTION_SHIM__(varargs_, vararg_type_, arg_count_, realname_, ret_, name_, p1, p1t, p2, p2t, p3, p3t, p4, p4t, p5, p5t, p6, p6t, p7, p7t, p8, p8t, ...) \

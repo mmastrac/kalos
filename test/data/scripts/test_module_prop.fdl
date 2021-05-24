@@ -1,0 +1,8 @@
+import test;
+
+handle init {
+    print(test.read_only);
+    test.write_only = 999;
+    test.read_write = 111;
+    print(test.read_write);
+}
