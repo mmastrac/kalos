@@ -1,0 +1,25 @@
+{
+    "name": "kalos-language",
+    "displayName": "Kalos Language",
+    "description": "Syntax highlighting for Kalos",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.56.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "kalos",
+            "aliases": ["Kalos", "kalos"],
+            "extensions": [".kalos",".fdl"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "kalos",
+            "scopeName": "source.kalos",
+            "path": "./syntaxes/kalos.tmLanguage"
+        }]
+    }
+}
