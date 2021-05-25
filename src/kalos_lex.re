@@ -165,6 +165,8 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "break" { return KALOS_TOKEN_BREAK; }
         <init> "continue" { return KALOS_TOKEN_CONTINUE; }
         <init> "debugger" { return KALOS_TOKEN_DEBUGGER; }
+        <init> "for" { return KALOS_TOKEN_FOR; }
+        <init> "in" { return KALOS_TOKEN_IN; }
 
         <init> @word_start word @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_WORD; }
         <init> @word_start int @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }

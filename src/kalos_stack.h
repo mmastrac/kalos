@@ -1,10 +1,14 @@
 #pragma once
 
+#include <stdbool.h>
 #include "kalos.h"
 
 typedef struct kalos_object kalos_object;
 typedef struct kalos_value kalos_value;
-typedef kalos_value (*kalos_propget)(kalos_object* object, char* property);
+typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object* object, char* property);
+typedef kalos_object* (*kalos_iterstart)(kalos_state state, kalos_object* object);
+typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object* object, bool* done);
+typedef int (*kalos_addref_release)(kalos_state state, kalos_object* object, bool addref);
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -16,7 +20,10 @@ typedef enum kalos_value_type {
 
 struct kalos_object {
     void* context;
+    kalos_addref_release addref_release;
     kalos_propget propget;
+    kalos_iterstart iterstart;
+    kalos_iternext iternext;
 };
 
 typedef union kalos_value_union {
@@ -66,6 +73,12 @@ static inline void push_string(kalos_stack* stack, kalos_string value) {
 static inline void push_bool(kalos_stack* stack, kalos_int value) {
     stack->stack[stack->stack_index].type = KALOS_VALUE_BOOL;
     stack->stack[stack->stack_index].value.number = value;
+    stack->stack_index++;
+}
+
+static inline void push_object(kalos_stack* stack, kalos_object* object) {
+    stack->stack[stack->stack_index].type = KALOS_VALUE_OBJECT;
+    stack->stack[stack->stack_index].value.object = object;
     stack->stack_index++;
 }
 

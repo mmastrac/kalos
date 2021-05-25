@@ -22,3 +22,5 @@ void kalos_run_free(kalos_state state);
 
 kalos_string kalos_allocate_string(kalos_state state, char* string);
 kalos_string kalos_allocate_string_size(kalos_state state, int size);
+
+kalos_object* kalos_allocate_object(kalos_state state, size_t context_size);

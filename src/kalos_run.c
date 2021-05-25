@@ -12,6 +12,7 @@
 #define KALOS_FIELD_NUMBER number
 #define KALOS_FIELD_BOOL number
 #define KALOS_FIELD_STRING string
+#define KALOS_FIELD_OBJECT object
 
 #define KALOS_VAR_SLOT_SIZE 16
 
@@ -25,6 +26,7 @@ typedef struct kalos_state_internal {
     uint16_t pc;
 } kalos_state_internal;
 
+#define push_OBJECT push_object
 #define push_BOOL push_bool
 #define push_STRING push_string
 #define push_NUMBER push_number
@@ -217,6 +219,53 @@ kalos_int op_unary_number(kalos_state_internal* state, kalos_op op, kalos_int v)
     }
 }
 
+struct kalos_range {
+    kalos_int current;
+    kalos_int start;
+    kalos_int end;
+    kalos_int step;
+} kalos_range;
+
+kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
+    struct kalos_range* range_context = (struct kalos_range*)iter->context;
+    kalos_value value = {0};
+    if (range_context->current >= range_context->end) {
+        *done = true;
+        return value;
+    }
+    value.type = KALOS_VALUE_NUMBER;
+    value.value.number = range_context->current;
+    range_context->current += range_context->step;
+    LOG("range %d %d (curr %d)", range_context->start, range_context->end, range_context->current);
+    return value;
+}
+
+kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
+    struct kalos_range* range_context = (struct kalos_range*)range->context;
+    kalos_object* iter = kalos_allocate_object(state, sizeof(kalos_range));
+    *(struct kalos_range*)iter->context = *range_context;
+    iter->iternext = range_iternext;
+    return iter;
+}
+
+kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start, kalos_int end) {
+    kalos_object* range = kalos_allocate_object(state, sizeof(kalos_range));
+    struct kalos_range* range_context = (struct kalos_range*)range->context;
+    range_context->start = start;
+    range_context->end = end;
+    range_context->step = 1;
+    range->iterstart = range_iterstart;
+    return range;
+}
+
+kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string splitee, kalos_string splitter) {
+    return NULL;
+}
+
+kalos_object* op_iterator(kalos_state_internal* state, kalos_op op, kalos_object* iterable) {
+    return iterable->iterstart(state, iterable);
+}
+
 kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* fns) {
     kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
     if (!state) {
@@ -252,6 +301,10 @@ void kalos_trigger(kalos_state state_, char* handler) {
         switch (op) {
             case KALOS_OP_END:
                 return;
+            case KALOS_OP_DROP:
+                ENSURE_STACK(1);
+                pop(&state->stack);
+                break;
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
@@ -299,6 +352,17 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_GOTO_IF:
                 POP2(op_goto_if, BOOL, NUMBER);
                 break;
+            case KALOS_OP_ITERATOR:
+                PUSH(OBJECT, POP1(op_iterator, OBJECT));
+                break;
+            case KALOS_OP_ITERATOR_NEXT: {
+                kalos_value* iterator = peek(&state->stack, 0);
+                bool done;
+                kalos_value next = iterator->value.object->iternext(state_, iterator->value.object, &done);
+                push_bool(&state->stack, done);
+                *push_raw(&state->stack) = next;
+                break;
+            }
             case KALOS_OP_NEGATE:
             case KALOS_OP_POSIVATE:
             case KALOS_OP_BITWISE_NOT:
@@ -395,6 +459,12 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_MODULUS:
                 PUSH(NUMBER, POP2(op_number_op, NUMBER, NUMBER));
                 break;
+            case KALOS_OP_SPLIT:
+                PUSH(OBJECT, POP2(op_split, STRING, STRING));
+                break;
+            case KALOS_OP_RANGE:
+                PUSH(OBJECT, POP2(op_range, NUMBER, NUMBER));
+                break;
             case KALOS_OP_MAX:
                 internal_error(state); // impossible
                 break;
@@ -405,4 +475,13 @@ void kalos_trigger(kalos_state state_, char* handler) {
 void kalos_run_free(kalos_state state_) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->fns->free(state);
+}
+
+kalos_object* kalos_allocate_object(kalos_state state, size_t context_size) {
+    kalos_object* object = (kalos_object*)malloc(sizeof(kalos_object) + context_size);
+    memset(object, 0, sizeof(*object));
+    if (context_size) {
+        object->context = (uint8_t*)object + context_size;
+    }
+    return object;
 }

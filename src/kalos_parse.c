@@ -141,7 +141,8 @@ static void parse_function_call_builtin(struct parse_state* parse_state, kalos_b
 static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index, uint8_t export_index);
 static void parse_handler_statement(struct parse_state* parse_state);
 static void parse_if_statement(struct parse_state* parse_state);
-static void parse_loop_statement(struct parse_state* parse_state);
+static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot);
+static void parse_statement_block(struct parse_state* parse_state);
 static bool parse_statement(struct parse_state* parse_state);
 static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state);
 
@@ -551,11 +552,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
     int fixup_offset = parse_state->output_script_index;
     TRY(parse_push_number(parse_state, 0));
     TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
-    
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
-    for (;;) {
-        TRY(if (!parse_statement(parse_state)) { break; });
-    }
+    TRY(parse_statement_block(parse_state));
 
     int peek;
     TRY(peek = lex_peek(parse_state));
@@ -577,10 +574,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_IF));
         parse_if_statement(parse_state);
     } else {
-        TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
-        for (;;) {
-            TRY(if (!parse_statement(parse_state)) { break; });
-        }
+        TRY(parse_statement_block(parse_state));
     }
 
     fixup_goto_op(parse_state, fixup_offset_else, parse_state->output_script_index);
@@ -588,7 +582,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-static void parse_loop_statement(struct parse_state* parse_state) {
+static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot) {
     int saved_break = parse_state->loop_break;
     int saved_continue = parse_state->loop_continue;
 
@@ -604,12 +598,14 @@ static void parse_loop_statement(struct parse_state* parse_state) {
 
     fixup_goto_op(parse_state, initial_fixup, parse_state->output_script_index);
     parse_state->loop_continue = parse_state->output_script_index;
-
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
-    for (;;) {
-        TRY(if (!parse_statement(parse_state)) { break; });
+    if (iterator) {
+        TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR_NEXT));
+        TRY(parse_push_number(parse_state, iterator_slot));
+        TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
+        TRY(parse_push_number(parse_state, parse_state->loop_break));
+        TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
     }
-
+    TRY(parse_statement_block(parse_state));
     TRY(parse_push_number(parse_state, parse_state->loop_continue));
     TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
 
@@ -618,6 +614,22 @@ static void parse_loop_statement(struct parse_state* parse_state) {
     parse_state->loop_break = saved_break;
     parse_state->loop_continue = saved_break;
 
+    TRY_EXIT;
+}
+
+static void parse_for_statement(struct parse_state* parse_state) {
+    // Convert:
+    //   for i in it { ... }
+    // into
+    //   temp = iter(it); loop { i = next(it); if (done) break; ... } drop_iterator();
+    TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+    struct name_resolution_result res;
+    TRY(res = resolve_word(parse_state, NULL, 0));
+    TRY(parse_assert_token(parse_state, KALOS_TOKEN_IN));
+    TRY(parse_expression(parse_state));
+    TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR));
+    TRY(parse_loop_statement(parse_state, true, res.var_slot));
+    TRY(parse_push_op(parse_state, KALOS_OP_DROP));
     TRY_EXIT;
 }
 
@@ -727,6 +739,14 @@ static void parse_expression_paren(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
+static void parse_statement_block(struct parse_state* parse_state) {
+    TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
+    for (;;) {
+        TRY(if (!parse_statement(parse_state)) { break; });
+    }
+    TRY_EXIT;
+}
+
 static bool parse_statement(struct parse_state* parse_state) {
     int peek, token;
     TRY(token = lex(parse_state));
@@ -737,7 +757,9 @@ static bool parse_statement(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_IF) {
         TRY(parse_if_statement(parse_state));
     } else if (token == KALOS_TOKEN_LOOP) {
-        TRY(parse_loop_statement(parse_state));
+        TRY(parse_loop_statement(parse_state, false, 0));
+    } else if (token == KALOS_TOKEN_FOR) {
+        TRY(parse_for_statement(parse_state));
     } else if (token == KALOS_TOKEN_BREAK) {
         if (parse_state->loop_break == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
@@ -772,13 +794,7 @@ static bool parse_statement(struct parse_state* parse_state) {
 static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     TRY(write_next_handler_section(parse_state, parse_state->token));
-
-    // TRY(lookup_handler(parse_state));
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
-    for (;;) {
-        TRY(if (!parse_statement(parse_state)) { break; });
-    }
-
+    TRY(parse_statement_block(parse_state));
     TRY_EXIT;
 }
 

@@ -29,7 +29,7 @@
       <array> 
         <dict>
           <key>match</key>
-          <string>(if|else|loop|var|const|import|handle|break|continue|debugger)</string>
+          <string>(\b(?:if|else|for|in|loop|var|const|import|handle|break|continue|debugger)(?![a-z0-9_]))</string>
           <key>name</key>
           <string>keyword.kalos</string>
         </dict>

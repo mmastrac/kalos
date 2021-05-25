@@ -101,7 +101,7 @@ contexts [] {
 main : context {
 
    : pattern {
-      regex          \= (if|else|loop|var|const|import|handle|break|continue|debugger)
+      regex          \= (\b(?:if|else|for|in|loop|var|const|import|handle|break|continue|debugger)(?![a-z0-9_]))
       styles []       = .keyword;
    }
    
