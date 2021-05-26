@@ -10,12 +10,19 @@
 #endif
 
 typedef int16_t kalos_int;
-typedef struct { 
+
+typedef struct {
     uint16_t count;
-    uint16_t length;
     const char* s;
+} kalos_string_allocated;
+typedef struct { 
+    kalos_int length__;
+    union {
+        kalos_string_allocated* sa;
+        const char* sc;
+    };
 } kalos_string;
-typedef struct { char* s; } kalos_writable_string;
+typedef struct { kalos_string_allocated* s; } kalos_writable_string;
 
 typedef void* (*kalos_mem_alloc_fn)(size_t);
 typedef void (*kalos_mem_free_fn)(void*);

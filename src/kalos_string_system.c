@@ -31,7 +31,7 @@ static inline char get_sign(kalos_string_format* format, kalos_int value) {
 }
 
 kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* format) {
-    kalos_string str = { .count = 0 };
+    kalos_string str;
     if (format->align == KALOS_STRING_FORMAT_ALIGN_PADDING_AFTER_SIGN) {
         // TODO
         return kalos_string_allocate(state, "");
@@ -67,23 +67,21 @@ kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_s
         } else if (format->align == KALOS_STRING_FORMAT_ALIGN_RIGHT) {
             offset = format->min_width - size;
         }
-        char* s = kalos_mem_alloc(state, format->min_width + 1);
+        str = __kalos_string_alloc(state, format->min_width);
+        char* s = __kalos_string_data(str);
         memset(s, format->fill ? format->fill : ' ', format->min_width);
         sprintf(s + offset, string_format, value);
         if (format->align != KALOS_STRING_FORMAT_ALIGN_RIGHT) {
             s[offset + size] = format->fill ? format->fill : ' ';
             s[format->min_width] = 0;
         }
-        str.length = format->min_width;
-        str.s = s;
         VALIDATE_STRING(str);
         return str;
     } else {
         return kalos_string_allocate_fmt(state, string_format, value);
-        char* s = kalos_mem_alloc(state, size + 1);
+        str = __kalos_string_alloc(state, size);
+        char* s = __kalos_string_data(str);
         sprintf(s, string_format, value);
-        str.length = size;
-        str.s = s;
         VALIDATE_STRING(str);
         return str;
     }
