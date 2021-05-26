@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include "kalos.h"
 
-typedef void* (*kalos_mem_alloc)(size_t);
-
 typedef enum kalos_string_format_align {
     KALOS_STRING_FORMAT_ALIGN_LEFT = '<',
     KALOS_STRING_FORMAT_ALIGN_RIGHT = '>',
@@ -31,4 +29,3 @@ typedef struct kalos_string_format {
 } kalos_string_format;
 
 bool kalos_parse_string_format(const char* s, kalos_string_format* string_format);
-char* kalos_string_format_int(kalos_int value, kalos_string_format* string_format, kalos_mem_alloc alloc);

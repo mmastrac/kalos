@@ -38,7 +38,7 @@ typedef struct kalos_function {
 
 typedef union kalos_export_entry {
     kalos_int const_number;
-    kalos_string const_string;
+    const char* const_string;
     kalos_function function;
 } kalos_export_entry;
 

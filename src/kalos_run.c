@@ -8,6 +8,7 @@
 #include "kalos_parse.h"
 #include "kalos_run.h"
 #include "kalos_string_format.h"
+#include "kalos_string_system.h"
 
 #define KALOS_FIELD_NUMBER number
 #define KALOS_FIELD_BOOL number
@@ -17,6 +18,7 @@
 #define KALOS_VAR_SLOT_SIZE 16
 
 typedef struct kalos_state_internal {
+    kalos_mem_alloc_fn alloc; // part of public interface
     kalos_script* script;
     kalos_fn* fns;
     kalos_module** modules;
@@ -49,22 +51,22 @@ COERCE(BOOL,
     v->value.number = 0,
     v->value.number = (v->value.number != 0),
     v->value.number = 1,
-    v->value.number = v->value.string[0] != 0,
+    v->value.number = !kalos_string_isempty(state, v->value.string),
     return true)
 
 COERCE(NUMBER, 
     v->value.number = 0,
     return true,
     return false,
-    v->value.number = v->value.string[0] != 0,
+    v->value.number = atoi(kalos_string_c(state, v->value.string)),
     return true)
 
 COERCE(STRING, 
-    v->value.string = "",
-    int n = v->value.number; sprintf((char*)(v->value.string = state->fns->alloc(6)), "%d", n),
+    v->value.string = kalos_string_allocate(state, ""),
+    v->value.string = kalos_string_allocate_fmt(state, "%d", v->value.number),
     return false,
     return true,
-    v->value.string = v->value.number ? "true" : "false")
+    v->value.string = kalos_string_allocate(state, v->value.number ? "true" : "false"))
 
 void internal_error(kalos_state_internal* state) {
 }
@@ -138,14 +140,11 @@ kalos_int op_string_compare_op(kalos_state_internal* state, kalos_op op, kalos_s
         internal_error(state); // impossible
         return 0;
     }
-    return op_number_op(state, op, strcmp(a, b), 0);
+    return op_number_op(state, op, kalos_string_compare(state, a, b), 0);
 }
 
 kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_string b) {
-    char* buf = state->fns->alloc(strlen(a) + strlen(b) + 1);
-    strcpy(buf, a);
-    strcat(buf, b);
-    return buf;
+    return kalos_string_take_append(state, a, b);
 }
 
 kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_int b) {
@@ -154,14 +153,15 @@ kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_
 
 kalos_string op_string_format(kalos_state_internal* state, kalos_op op, kalos_value* v, kalos_string_format* format) {
     if (v->type == KALOS_VALUE_NUMBER) {
-        return kalos_string_format_int(v->value.number, format, state->fns->alloc);
+        return kalos_string_format_int(state, v->value.number, format);
     } else if (v->type == KALOS_VALUE_STRING) {
-        int size = snprintf(NULL, 0, "%*.*s", format->min_width, format->precision ? format->precision : 0xffff, v->value.string);
-        char* s = state->fns->alloc(size + 1);
-        sprintf(s,"%*s", format->min_width, v->value.string);
-        return s;
+        int size = snprintf(NULL, 0, "%*.*s", format->min_width, format->precision ? format->precision : 0xffff, kalos_string_c(state, v->value.string));
+        kalos_writable_string str = kalos_string_allocate_writable_size(state, size);
+        char* s = kalos_string_writable_c(state, str);
+        sprintf(s, "%*s", format->min_width, kalos_string_c(state, v->value.string));
+        return kalos_string_commit(state, str);
     }
-    return "";
+    return kalos_string_allocate(state, "");
 }
 
 bool op_bool(kalos_state_internal* state, kalos_op op, bool v) {
@@ -174,24 +174,23 @@ kalos_string op_strings(kalos_state_internal* state, kalos_op op, kalos_string v
 
 kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string v) {
     switch (op) {
-        case KALOS_OP_ORD: return v[0];
-        case KALOS_OP_LENGTH: return strlen(v);
+        case KALOS_OP_ORD: return kalos_string_char_at(state, v, 0);
+        case KALOS_OP_LENGTH: return kalos_string_length(state, v);
         default: return 0;
     }
 }
 
 kalos_string op_to_hex_or_char(kalos_state_internal* state, kalos_op op, kalos_int v) {
     if (op == KALOS_OP_TO_HEX) {
-        char* s = state->fns->alloc(10);
-        sprintf(s, "0x%x", v);
-        return s;
+        return kalos_string_allocate_fmt(state, "0x%x", v);
     } else if (op == KALOS_OP_TO_CHAR) {
-        char* s = state->fns->alloc(2);
+        kalos_writable_string str = kalos_string_allocate_writable_size(state, 1);
+        char* s = kalos_string_writable_c(state, str);
         s[0] = v;
-        s[1] = 0;
-        return s;
+        return kalos_string_commit(state, str);
     }
-    return NULL;
+    internal_error(state);
+    return kalos_string_allocate(state, "");
 }
 
 kalos_int op_to_number(kalos_state_internal* state, kalos_op op, kalos_int v) {
@@ -275,17 +274,14 @@ kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
     }
     *done = false;
 
-    char* found = strstr(split_context->splitee + split_context->offset, split_context->splitter);
+    int found_offset = kalos_string_find_from(state, split_context->splitee, split_context->splitter, split_context->offset);
     value.type = KALOS_VALUE_STRING;
-    if (!found) {
+    if (found_offset == -1) {
         // Copy the remainder of the string, or an empty string if nothing is left
-        value.value.string = kalos_allocate_string_size(state, split_context->length - split_context->offset);
-        strcpy((char*)value.value.string, split_context->splitee + split_context->offset);
+        value.value.string = kalos_string_take_substring_start(state, split_context->splitee, split_context->offset);
         split_context->offset = split_context->length + 1;
     } else {
-        int found_offset = found - split_context->splitee;
-        value.value.string = kalos_allocate_string_size(state, found_offset - split_context->offset);
-        strncpy((char*)value.value.string, split_context->splitee + split_context->offset, found_offset - split_context->offset);
+        value.value.string = kalos_string_take_substring(state, split_context->splitee, split_context->offset, found_offset - split_context->offset);
         split_context->offset += (found_offset - split_context->offset) + split_context->splitter_length;
     }
 
@@ -305,9 +301,9 @@ kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string sp
     kalos_object* split = kalos_allocate_object(state, sizeof(struct kalos_split));
     struct kalos_split* split_context = (struct kalos_split*)split->context;
     split_context->splitee = splitee;
-    split_context->length = strlen(splitee);
+    split_context->length = kalos_string_length(state, splitee);
     split_context->splitter = splitter;
-    split_context->splitter_length = strlen(splitter);
+    split_context->splitter_length = kalos_string_length(state, splitter);
     split->iterstart = split_iterstart;
     return split;
 }
@@ -322,11 +318,23 @@ kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* f
         fns->error("malloc");
     }
     memset(state, 0, sizeof(kalos_state_internal));
+    state->alloc = fns->alloc;
     state->modules = modules;
     state->script = script;
     state->fns = fns;
     LOG("%s", "Triggering global");
     kalos_trigger((kalos_state)state, "");
+    return (kalos_state)state;
+}
+
+kalos_state kalos_init_for_test(kalos_fn* fns) {
+    kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
+    if (!state) {
+        fns->error("malloc");
+    }
+    memset(state, 0, sizeof(kalos_state_internal));
+    state->alloc = fns->alloc;
+    state->fns = fns;
     return (kalos_state)state;
 }
 
@@ -347,7 +355,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
             state->fns->error("Internal error");
             return;
         }
-        LOG("exec %s", kalos_op_strings[op]);
+        LOG("exec %s (stack = %d)", kalos_op_strings[op], state->stack.stack_index);
         switch (op) {
             case KALOS_OP_END:
                 return;
@@ -360,9 +368,9 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 break;
             case KALOS_OP_PUSH_STRING: {
                 ENSURE_STACK_SPACE(1);
-                kalos_string string = (kalos_string)&state->script->script_ops[state->pc];
+                kalos_string string = kalos_string_allocate(state, (const char*)&state->script->script_ops[state->pc]);
                 push_string(&state->stack, string);
-                state->pc += strlen(string) + 1;
+                state->pc += kalos_string_length(state, string) + 1;
                 break;
             }
             case KALOS_OP_PUSH_INTEGER: {
@@ -537,16 +545,7 @@ kalos_object* kalos_allocate_object(kalos_state state_, size_t context_size) {
     return object;
 }
 
-kalos_string kalos_allocate_string(kalos_state state_, char* string) {
+void* kaloc_mem_alloc(kalos_state state_, size_t size) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    kalos_string s = state->fns->alloc(strlen(string) + 1);
-    strcpy((char*)s, string);
-    return s;
-}
-
-kalos_string kalos_allocate_string_size(kalos_state state_, int size) {
-    kalos_state_internal* state = (kalos_state_internal*)state_;
-    kalos_string s = state->fns->alloc(size + 1);
-    ((char*)s)[size] = 0;
-    return s;
+    return state->fns->alloc(size);
 }
