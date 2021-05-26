@@ -1,9 +1,13 @@
 #pragma once
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include "../defines.h"
 #include "kalos.h"
 #include "kalos_string_format.h"
+
+#pragma warning 303 9
 
 #define KALOS_STRING_POISONED 0x7fff
 
@@ -35,7 +39,7 @@ static inline kalos_writable_string kalos_string_allocate_writable_size(kalos_st
 static inline kalos_string kalos_string_duplicate(kalos_state state, kalos_string s);
 kalos_writable_string kalos_string_duplicate_writable(kalos_state state);
 static inline kalos_string kalos_string_commit(kalos_state state, kalos_writable_string string);
-static inline void kalos_string_release(kalos_state state, kalos_string string);
+void kalos_string_release(kalos_state state, kalos_string string);
 
 static inline char* kalos_string_writable_c(kalos_state state, kalos_writable_string s) { return (char*)s.s + sizeof(kalos_string_allocated); }
 static inline const char* kalos_string_c(kalos_state state, kalos_string s);
@@ -112,17 +116,6 @@ static inline kalos_string kalos_string_commit(kalos_state state, kalos_writable
     s.sa->count = 0;
     VALIDATE_STRING(s);
     return s;
-}
-
-static inline void kalos_string_release(kalos_state state, kalos_string s) {
-    if (s.length__ > 0) {
-        if (s.sa->count == 0) {
-            s.sa->count = KALOS_STRING_POISONED;
-            kalos_mem_free(state, (void*)s.sa);
-        } else {
-            s.sa->count--;
-        }
-    }
 }
 
 static inline const char* kalos_string_c(kalos_state state, kalos_string s) {

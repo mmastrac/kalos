@@ -136,7 +136,6 @@ kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, ka
 }
 
 kalos_int op_string_compare_op(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_string b) {
-    // Hopefully the compiler is now smart enough to remove most of the switch cases below
     if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
         internal_error(state); // impossible
         return 0;
@@ -454,9 +453,18 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 kalos_value* storage = (op == KALOS_OP_STORE_GLOBAL || op == KALOS_OP_LOAD_GLOBAL) ? state->locals : state->globals;
                 if (op == KALOS_OP_STORE_GLOBAL || op == KALOS_OP_STORE_LOCAL) {
                     ENSURE_STACK(1);
+                    if (storage[slot].type == KALOS_VALUE_STRING) {
+                        kalos_string_release(state, storage[slot].value.string);
+                    }
                     storage[slot] = *pop(&state->stack);
                 } else {
-                    *push_raw(&state->stack) = storage[slot];
+                    kalos_value* stack = push_raw(&state->stack);
+                    if (storage[slot].type == KALOS_VALUE_STRING) {
+                        stack->type = KALOS_VALUE_STRING;
+                        stack->value.string = kalos_string_duplicate(state, storage[slot].value.string);
+                    } else {
+                        *stack = storage[slot];
+                    }
                 }
                 break;
             }
