@@ -19,6 +19,7 @@
 
 typedef struct kalos_state_internal {
     kalos_mem_alloc_fn alloc; // part of public interface
+    kalos_mem_free_fn free; // part of public interface
     kalos_script* script;
     kalos_fn* fns;
     kalos_module** modules;
@@ -148,7 +149,10 @@ kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_strin
 }
 
 kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_int b) {
-    return a;
+    if (b <= 0) {
+        return kalos_string_allocate(state, "");
+    }
+    return kalos_string_take_repeat(state, a, b);
 }
 
 kalos_string op_string_format(kalos_state_internal* state, kalos_op op, kalos_value* v, kalos_string_format* format) {
@@ -319,6 +323,7 @@ kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* f
     }
     memset(state, 0, sizeof(kalos_state_internal));
     state->alloc = fns->alloc;
+    state->free = fns->free;
     state->modules = modules;
     state->script = script;
     state->fns = fns;
@@ -334,6 +339,7 @@ kalos_state kalos_init_for_test(kalos_fn* fns) {
     }
     memset(state, 0, sizeof(kalos_state_internal));
     state->alloc = fns->alloc;
+    state->free = fns->free;
     state->fns = fns;
     return (kalos_state)state;
 }

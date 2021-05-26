@@ -5,7 +5,11 @@
 #include "kalos.h"
 #include "kalos_string_format.h"
 
+#ifdef IS_TEST
 #define VALIDATE_STRING(str_) { ASSERT(strlen(str_.s) == str_.length); ASSERT(str_.s[str_.length] == 0); }
+#else
+#define VALIDATE_STRING(str_)
+#endif
 
 /*
     All functions that end in take_ assume that the string is now owned by the function. Callers must
@@ -36,6 +40,7 @@ static inline kalos_int kalos_string_find_from(kalos_state state, kalos_string a
 static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string string, int start, int length);
 static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string string, int start);
 static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string a, kalos_string b);
+static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string a, kalos_int b);
 
 kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* string_format);
 
@@ -121,6 +126,21 @@ static inline kalos_string kalos_string_take_append(kalos_state state, kalos_str
     str.s = s;
     memcpy(s, a.s, a.length);
     memcpy(s + a.length, b.s, b.length);
+    s[str.length] = 0;
+    VALIDATE_STRING(str);
+    return str;
+}
+
+static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string a, kalos_int b) {
+    kalos_string str;
+    str.count = 0;
+    str.length = a.length * b;
+    char* s = kalos_mem_alloc(state, a.length * b + 1);
+    str.s = s;
+    for (int i = 0; i < b; i++) {
+        memcpy(s, a.s, a.length);
+        s += a.length;
+    }
     s[str.length] = 0;
     VALIDATE_STRING(str);
     return str;
