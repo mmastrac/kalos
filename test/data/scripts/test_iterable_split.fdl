@@ -1,0 +1,14 @@
+handle init {
+    var i;
+    for i in split("1,2,3,4", ",") {
+        print(">{i}<");
+    }
+    print("\n");
+    for i in split("1,2,3,", ",") {
+        print(">{i}<");
+    }
+    print("\n");
+    for i in split("", ",") {
+        print(">{i}<");
+    }
+}

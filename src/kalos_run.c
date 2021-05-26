@@ -224,7 +224,7 @@ struct kalos_range {
     kalos_int start;
     kalos_int end;
     kalos_int step;
-} kalos_range;
+};
 
 kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
     struct kalos_range* range_context = (struct kalos_range*)iter->context;
@@ -242,14 +242,14 @@ kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
 
 kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
     struct kalos_range* range_context = (struct kalos_range*)range->context;
-    kalos_object* iter = kalos_allocate_object(state, sizeof(kalos_range));
+    kalos_object* iter = kalos_allocate_object(state, sizeof(struct kalos_range));
     *(struct kalos_range*)iter->context = *range_context;
     iter->iternext = range_iternext;
     return iter;
 }
 
 kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start, kalos_int end) {
-    kalos_object* range = kalos_allocate_object(state, sizeof(kalos_range));
+    kalos_object* range = kalos_allocate_object(state, sizeof(struct kalos_range));
     struct kalos_range* range_context = (struct kalos_range*)range->context;
     range_context->start = start;
     range_context->end = end;
@@ -258,8 +258,58 @@ kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start
     return range;
 }
 
+struct kalos_split {
+    kalos_string splitee;
+    kalos_string splitter;
+    int offset;
+    int length;
+    int splitter_length;
+};
+
+kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
+    struct kalos_split* split_context = (struct kalos_split*)iter->context;
+    kalos_value value = {0};
+    if (split_context->offset > split_context->length) {
+        *done = true;
+        return value;
+    }
+    *done = false;
+
+    char* found = strstr(split_context->splitee + split_context->offset, split_context->splitter);
+    value.type = KALOS_VALUE_STRING;
+    if (!found) {
+        // Copy the remainder of the string, or an empty string if nothing is left
+        value.value.string = kalos_allocate_string_size(state, split_context->length - split_context->offset);
+        strcpy((char*)value.value.string, split_context->splitee + split_context->offset);
+        split_context->offset = split_context->length + 1;
+    } else {
+        int found_offset = found - split_context->splitee;
+        value.value.string = kalos_allocate_string_size(state, found_offset - split_context->offset);
+        strncpy((char*)value.value.string, split_context->splitee + split_context->offset, found_offset - split_context->offset);
+        split_context->offset += (found_offset - split_context->offset) + split_context->splitter_length;
+    }
+
+    return value;
+}
+
+kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
+    struct kalos_split* split_context = (struct kalos_split*)split->context;
+    kalos_object* iter = kalos_allocate_object(state, sizeof(struct kalos_split));
+    struct kalos_split* iter_context = (struct kalos_split*)iter->context;
+    *iter_context = *split_context;
+    iter->iternext = split_iternext;
+    return iter;
+}
+
 kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string splitee, kalos_string splitter) {
-    return NULL;
+    kalos_object* split = kalos_allocate_object(state, sizeof(struct kalos_split));
+    struct kalos_split* split_context = (struct kalos_split*)split->context;
+    split_context->splitee = splitee;
+    split_context->length = strlen(splitee);
+    split_context->splitter = splitter;
+    split_context->splitter_length = strlen(splitter);
+    split->iterstart = split_iterstart;
+    return split;
 }
 
 kalos_object* op_iterator(kalos_state_internal* state, kalos_op op, kalos_object* iterable) {
@@ -477,11 +527,26 @@ void kalos_run_free(kalos_state state_) {
     state->fns->free(state);
 }
 
-kalos_object* kalos_allocate_object(kalos_state state, size_t context_size) {
-    kalos_object* object = (kalos_object*)malloc(sizeof(kalos_object) + context_size);
-    memset(object, 0, sizeof(*object));
+kalos_object* kalos_allocate_object(kalos_state state_, size_t context_size) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_object* object = (kalos_object*)state->fns->alloc(sizeof(kalos_object) + context_size);
+    memset(object, 0, sizeof(*object) + context_size);
     if (context_size) {
-        object->context = (uint8_t*)object + context_size;
+        object->context = (uint8_t*)object + sizeof(kalos_object);
     }
     return object;
+}
+
+kalos_string kalos_allocate_string(kalos_state state_, char* string) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_string s = state->fns->alloc(strlen(string) + 1);
+    strcpy((char*)s, string);
+    return s;
+}
+
+kalos_string kalos_allocate_string_size(kalos_state state_, int size) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_string s = state->fns->alloc(size + 1);
+    ((char*)s)[size] = 0;
+    return s;
 }
