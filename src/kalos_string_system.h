@@ -5,8 +5,14 @@
 #include "kalos.h"
 #include "kalos_string_format.h"
 
+#define KALOS_STRING_POISONED 0x7fff
+
 #ifdef IS_TEST
-#define VALIDATE_STRING(str_) { ASSERT(strlen(__kalos_string_data(str_)) == abs(str_.length__)); ASSERT(__kalos_string_data(str_)[abs(str_.length__)] == 0); }
+#define VALIDATE_STRING(str_) { \
+    ASSERT(strlen(__kalos_string_data(str_)) == abs(str_.length__)); \
+    ASSERT(__kalos_string_data(str_)[abs(str_.length__)] == 0); \
+    ASSERT(str_.length__ <= 0 || str_.sa->count != KALOS_STRING_POISONED); \
+}
 #else
 #define VALIDATE_STRING(str_)
 #endif
@@ -90,6 +96,7 @@ static inline kalos_writable_string kalos_string_allocate_writable_size(kalos_st
 }
 
 static inline kalos_string kalos_string_duplicate(kalos_state state, kalos_string s) {
+    VALIDATE_STRING(s);
     if (s.length__ <= 0) {
         return s;
     } else {
@@ -102,24 +109,25 @@ static inline kalos_string kalos_string_commit(kalos_state state, kalos_writable
     kalos_string s;
     s.length__ = strlen(kalos_string_writable_c(state, string));
     s.sa = string.s;
+    s.sa->count = 0;
     VALIDATE_STRING(s);
     return s;
 }
 
 static inline void kalos_string_release(kalos_state state, kalos_string s) {
-    // if (s.count == 0) {
-    //     kalos_mem_free(state, (void*)s.s);
-    // } else {
-    //     s.count--;
-    // }
+    if (s.length__ > 0) {
+        if (s.sa->count == 0) {
+            s.sa->count = KALOS_STRING_POISONED;
+            kalos_mem_free(state, (void*)s.sa);
+        } else {
+            s.sa->count--;
+        }
+    }
 }
 
 static inline const char* kalos_string_c(kalos_state state, kalos_string s) {
-    if (s.length__ == 0) {
-        return "";
-    } else {
-        return __kalos_string_data(s);
-    }
+    VALIDATE_STRING(s);
+    return __kalos_string_data(s);
 }
 
 static inline kalos_int kalos_string_compare(kalos_state state, kalos_string a, kalos_string b) {
