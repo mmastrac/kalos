@@ -72,7 +72,7 @@ static inline kalos_string __kalos_string_alloc(kalos_state state, kalos_int siz
 static inline kalos_string kalos_string_allocate(kalos_state state, const char* string) {
     kalos_string s;
     s.sc = string;
-    s.length__ = -strlen(string);
+    s.length__ = -(int)strlen(string);
     VALIDATE_STRING(s);
     return s;
 }

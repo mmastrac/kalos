@@ -394,8 +394,9 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 break;
             }
             case KALOS_OP_PUSH_INTEGER: {
-                kalos_int* int_value = (kalos_int*)&state->script->script_ops[state->pc];
-                push_number(&state->stack, *int_value);
+                kalos_int int_value;
+                memcpy(&int_value, &state->script->script_ops[state->pc], sizeof(kalos_int));
+                push_number(&state->stack, int_value);
                 state->pc += sizeof(kalos_int);
                 break;
             }
