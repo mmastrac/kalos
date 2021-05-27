@@ -78,7 +78,6 @@ kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_s
         VALIDATE_STRING(str);
         return str;
     } else {
-        return kalos_string_allocate_fmt(state, string_format, value);
         str = __kalos_string_alloc(state, size);
         char* s = __kalos_string_data(str);
         sprintf(s, string_format, value);
