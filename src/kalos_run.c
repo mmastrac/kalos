@@ -10,10 +10,10 @@
 #include "kalos_string_format.h"
 #include "kalos_string_system.h"
 
-#define KALOS_FIELD_NUMBER number
-#define KALOS_FIELD_BOOL number
-#define KALOS_FIELD_STRING string
-#define KALOS_FIELD_OBJECT object
+#define KALOS_FIELD_NUMBER(v) v->value.number
+#define KALOS_FIELD_BOOL(v) v->value.number
+#define KALOS_FIELD_STRING(v) &v->value.string
+#define KALOS_FIELD_OBJECT(v) v->value.object
 
 #define KALOS_VAR_SLOT_SIZE 16
 
@@ -106,14 +106,14 @@ kalos_value_type get_major_type(kalos_value* v) {
 #define POP1(method, typ) \
     (v1 = pop(&state->stack), \
     coerce(state, v1, KALOS_VALUE_##typ), \
-    method(state, op, v1->value. KALOS_FIELD_##typ))
+    method(state, op, KALOS_FIELD_##typ(v1)))
 
 #define POP2(method, type1, type2) \
     (v2 = pop(&state->stack), \
     v1 = pop(&state->stack), \
     coerce(state, v1, KALOS_VALUE_##type1), \
     coerce(state, v2, KALOS_VALUE_##type2), \
-    method(state, op, v1->value. KALOS_FIELD_##type1, v2->value. KALOS_FIELD_##type2))
+    method(state, op, KALOS_FIELD_##type1(v1), KALOS_FIELD_##type2(v2)))
 
 #define ENSURE_STACK(size) { if (state->stack.stack_index < KALOS_STACK_SIZE) { internal_error(state); } }
 #define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack.stack_index - 1 < size) { internal_error(state); } }
@@ -135,19 +135,19 @@ kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, ka
     }
 }
 
-kalos_int op_string_compare_op(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_string b) {
+kalos_int op_string_compare_op(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_string* b) {
     if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
         internal_error(state); // impossible
         return 0;
     }
-    return op_number_op(state, op, kalos_string_compare(state, a, b), 0);
+    return op_number_op(state, op, kalos_string_compare(state, *a, *b), 0);
 }
 
-kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_string b) {
+kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_string* b) {
     return kalos_string_take_append(state, a, b);
 }
 
-kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string a, kalos_int b) {
+kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_int b) {
     if (b <= 0) {
         return kalos_string_allocate(state, "");
     }
@@ -171,14 +171,14 @@ bool op_bool(kalos_state_internal* state, kalos_op op, bool v) {
     return v;
 }
 
-kalos_string op_strings(kalos_state_internal* state, kalos_op op, kalos_string v) {
-    return v;
+kalos_string op_strings(kalos_state_internal* state, kalos_op op, kalos_string* v) {
+    return *v;
 }
 
-kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string v) {
+kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string* v) {
     switch (op) {
-        case KALOS_OP_ORD: return kalos_string_char_at(state, v, 0);
-        case KALOS_OP_LENGTH: return kalos_string_length(state, v);
+        case KALOS_OP_ORD: return kalos_string_char_at(state, *v, 0);
+        case KALOS_OP_LENGTH: return kalos_string_length(state, *v);
         default: return 0;
     }
 }
@@ -281,10 +281,10 @@ kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
     value.type = KALOS_VALUE_STRING;
     if (found_offset == -1) {
         // Copy the remainder of the string, or an empty string if nothing is left
-        value.value.string = kalos_string_take_substring_start(state, split_context->splitee, split_context->offset);
+        value.value.string = kalos_string_take_substring_start(state, &split_context->splitee, split_context->offset);
         split_context->offset = split_context->length + 1;
     } else {
-        value.value.string = kalos_string_take_substring(state, split_context->splitee, split_context->offset, found_offset - split_context->offset);
+        value.value.string = kalos_string_take_substring(state, &split_context->splitee, split_context->offset, found_offset - split_context->offset);
         split_context->offset += (found_offset - split_context->offset) + split_context->splitter_length;
     }
 
@@ -300,13 +300,13 @@ kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
     return iter;
 }
 
-kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string splitee, kalos_string splitter) {
+kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string* splitee, kalos_string* splitter) {
     kalos_object* split = kalos_allocate_object(state, sizeof(struct kalos_split));
     struct kalos_split* split_context = (struct kalos_split*)split->context;
-    split_context->splitee = splitee;
-    split_context->length = kalos_string_length(state, splitee);
-    split_context->splitter = splitter;
-    split_context->splitter_length = kalos_string_length(state, splitter);
+    split_context->splitee = *splitee;
+    split_context->length = kalos_string_length(state, *splitee);
+    split_context->splitter = *splitter;
+    split_context->splitter_length = kalos_string_length(state, *splitter);
     split->iterstart = split_iterstart;
     return split;
 }
@@ -489,7 +489,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 if (major_type == KALOS_VALUE_NUMBER) {
                     PUSH(NUMBER, op_number_op(state, op, v2->value.number, v1->value.number));
                 } else if (major_type == KALOS_VALUE_STRING) {
-                    PUSH(NUMBER, op_string_compare_op(state, op, v2->value.string, v1->value.string));
+                    PUSH(NUMBER, op_string_compare_op(state, op, &v2->value.string, &v1->value.string));
                 }
                 break;
             }

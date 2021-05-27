@@ -51,10 +51,10 @@ static inline kalos_int kalos_string_compare(kalos_state state, kalos_string a, 
 static inline kalos_int kalos_string_find(kalos_state state, kalos_string a, kalos_string b);
 static inline kalos_int kalos_string_find_from(kalos_state state, kalos_string a, kalos_string b, int start);
 
-static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string string, int start, int length);
-static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string string, int start);
-static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string a, kalos_string b);
-static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string a, kalos_int b);
+static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string, int start, int length);
+static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string* string, int start);
+static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string* a, kalos_string* b);
+static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a, kalos_int b);
 
 kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* string_format);
 
@@ -143,38 +143,38 @@ static inline kalos_int kalos_string_find_from(kalos_state state, kalos_string a
     return found - __kalos_string_data(a);
 }
 
-static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string string, int start, int length) {
+static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string, int start, int length) {
     kalos_string str = __kalos_string_alloc(state, length);
     char* s = __kalos_string_data(str);
     if (length) {
-        memcpy(s, __kalos_string_data(string) + start, length);
+        memcpy(s, __kalos_string_data(*string) + start, length);
         s[length] = 0;
     }
     VALIDATE_STRING(str);
     return str;
 }
 
-static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string string, int start) {
-    return kalos_string_take_substring(state, string, start, kalos_string_length(state, string) - start);
+static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string* string, int start) {
+    return kalos_string_take_substring(state, string, start, kalos_string_length(state, *string) - start);
 }
 
-static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string a, kalos_string b) {
-    kalos_int al = kalos_string_length(state, a);
-    kalos_int bl = kalos_string_length(state, b);
+static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string* a, kalos_string* b) {
+    kalos_int al = kalos_string_length(state, *a);
+    kalos_int bl = kalos_string_length(state, *b);
     kalos_string str = __kalos_string_alloc(state, al + bl);
     char* s = __kalos_string_data(str);
-    memcpy(s, __kalos_string_data(a), al);
-    memcpy(s + al, __kalos_string_data(b), bl);
+    memcpy(s, __kalos_string_data(*a), al);
+    memcpy(s + al, __kalos_string_data(*b), bl);
     s[al + bl] = 0;
     VALIDATE_STRING(str);
     return str;
 }
 
-static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string a, kalos_int b) {
-    kalos_int al = kalos_string_length(state, a);
+static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a, kalos_int b) {
+    kalos_int al = kalos_string_length(state, *a);
     kalos_string str = __kalos_string_alloc(state, al * b);
     char* s = __kalos_string_data(str);
-    char* as = __kalos_string_data(a);
+    char* as = __kalos_string_data(*a);
     for (int i = 0; i < b; i++) {
         memcpy(s, as, al);
         s += al;
