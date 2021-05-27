@@ -17,6 +17,15 @@
 
 #define KALOS_VAR_SLOT_SIZE 16
 
+static const int8_t kalos_op_input_size[] = {
+#define KALOS_OP(x, in, out) in, 
+#include "kalos_constants.inc"
+};
+static const int8_t kalos_op_output_size[] = {
+#define KALOS_OP(x, in, out) out, 
+#include "kalos_constants.inc"
+};
+
 typedef struct kalos_state_internal {
     kalos_mem_alloc_fn alloc; // part of public interface
     kalos_mem_free_fn free; // part of public interface
@@ -235,6 +244,7 @@ kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
         *done = true;
         return value;
     }
+    *done = false;
     value.type = KALOS_VALUE_NUMBER;
     value.value.number = range_context->current;
     range_context->current += range_context->step;
@@ -361,37 +371,41 @@ void kalos_trigger(kalos_state state_, char* handler) {
             return;
         }
         LOG("exec %s (stack = %d)", kalos_op_strings[op], state->stack.stack_index);
+        int stack_index = state->stack.stack_index;
+        if (kalos_op_input_size[op] != -1) {
+            ENSURE_STACK(kalos_op_input_size[op]);
+            if (kalos_op_output_size[op] != -1 && kalos_op_output_size[op] > kalos_op_input_size[op]) {
+                ENSURE_STACK_SPACE(kalos_op_output_size[op] - kalos_op_input_size[op]);
+            }
+        }
         switch (op) {
             case KALOS_OP_END:
                 return;
             case KALOS_OP_DROP:
-                ENSURE_STACK(1);
                 pop(&state->stack);
                 break;
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
             case KALOS_OP_PUSH_STRING: {
-                ENSURE_STACK_SPACE(1);
                 kalos_string string = kalos_string_allocate(state, (const char*)&state->script->script_ops[state->pc]);
                 push_string(&state->stack, string);
                 state->pc += kalos_string_length(state, string) + 1;
                 break;
             }
             case KALOS_OP_PUSH_INTEGER: {
-                ENSURE_STACK_SPACE(1);
                 kalos_int* int_value = (kalos_int*)&state->script->script_ops[state->pc];
                 push_number(&state->stack, *int_value);
                 state->pc += sizeof(kalos_int);
                 break;
             }
-            case KALOS_OP_FORMAT:
-                ENSURE_STACK(1);
+            case KALOS_OP_FORMAT: {
                 kalos_string_format* string_format = (kalos_string_format*)&state->script->script_ops[state->pc];
                 state->pc += sizeof(kalos_string_format);
                 v1 = pop(&state->stack);
                 PUSH(STRING, op_string_format(state, op, v1, string_format));
                 break;
+            }
             case KALOS_OP_LENGTH:
             case KALOS_OP_ORD:
                 PUSH(NUMBER, POP1(op_string_number, STRING));
@@ -436,7 +450,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 PUSH(BOOL, POP1(op_unary_number, BOOL));
                 break;
             case KALOS_OP_CALL: {
-                ENSURE_STACK(2);
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
                 state->modules[module]->dispatch(state_, export, &state->stack);
@@ -448,7 +461,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_STORE_GLOBAL:
             case KALOS_OP_LOAD_LOCAL:
             case KALOS_OP_STORE_LOCAL: {
-                ENSURE_STACK(1);
                 int slot = pop(&state->stack)->value.number;
                 kalos_value* storage = (op == KALOS_OP_STORE_GLOBAL || op == KALOS_OP_LOAD_GLOBAL) ? state->locals : state->globals;
                 if (op == KALOS_OP_STORE_GLOBAL || op == KALOS_OP_STORE_LOCAL) {
@@ -474,7 +486,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_LT:
             case KALOS_OP_GTE:
             case KALOS_OP_LTE: {
-                ENSURE_STACK(2);
                 v1 = pop(&state->stack);
                 v2 = pop(&state->stack);
                 int major_type = max(get_major_type(v1), get_major_type(v2));
@@ -494,7 +505,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 break;
             }
             case KALOS_OP_ADD:
-                ENSURE_STACK(2);
                 v1 = peek(&state->stack, 0);
                 v2 = peek(&state->stack, 1);
                 int major_type = max(get_major_type(v1), get_major_type(v2));
@@ -505,7 +515,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 }
                 break;
             case KALOS_OP_MULTIPLY:
-                ENSURE_STACK(2);
                 if (peek(&state->stack, 0)->type == KALOS_VALUE_STRING) {
                     // ...
                     PUSH(STRING, POP2(op_string_multiply, STRING, NUMBER));
@@ -540,6 +549,12 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_MAX:
                 internal_error(state); // impossible
                 break;
+        }
+
+        // Confirm stack is correct
+        if (kalos_op_input_size[op] != -1 && kalos_op_output_size[op] != -1) {
+            int diff = state->stack.stack_index - stack_index;
+            ASSERT(diff == kalos_op_output_size[op] - kalos_op_input_size[op]);
         }
     }
 }

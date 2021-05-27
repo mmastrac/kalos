@@ -9,7 +9,7 @@
 
 #define KALOS_MAX_IMPORTS 16
 
-#define KALOS_OP(x) #x ,
+#define KALOS_OP(x, in, out) #x ,
 const char* kalos_op_strings[] = {
     #include "kalos_constants.inc"
     "<invalid>",
