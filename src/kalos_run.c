@@ -501,8 +501,12 @@ void kalos_trigger(kalos_state state_, char* handler) {
 #define cleanup_VOID(x)
 
 #define OP(op, ...) \
-    case KALOS_OP_##op: \
+    OPS op \
         if (0) { /* ignored */ } OP_CASES(__VA_ARGS__) else { value_error(state); } break;
+#define OPS(...) KALOS_FOREACH__(OP_OP_CASE, __VA_ARGS__)
+#define OP_OP_CASE(index_, op) KALOS_CONCAT__(OP_OP_CASE, KM__PRIMITIVE_COMPARE(op,))(op)
+#define OP_OP_CASE0(op) case KALOS_OP_##op:
+#define OP_OP_CASE1(op) 
 #define OP_CASES(...) KALOS_FOREACH__(OP_CASE, __VA_ARGS__)
 #define OP_CASE(index_, tuple_) OP_CASE_ tuple_ (,)
 #define OP_CASE_(a, ...) KALOS_CONCAT__(OP_CASE, KM__PRIMITIVE_COMPARE(a,))(a,__VA_ARGS__)
@@ -521,58 +525,45 @@ void kalos_trigger(kalos_state state_, char* handler) {
 #define OP_CLEANUP_1(...)
 #define OP_EAT_PARENS(...)
 
-            OP(DROP,        (op_drop, VOID, ANY));
-            OP(PUSH_STRING, (op_push_string, STRING, VOID));
-            OP(PUSH_INTEGER,(op_push_integer, NUMBER, VOID));
-            OP(PUSH_TRUE,   (op_push_bool, BOOL, VOID));
-            OP(PUSH_FALSE,  (op_push_bool, BOOL, VOID));
-            OP(GOTO,        (op_goto, VOID, NUMBER));
-            OP(GOTO_IF,     (op_goto_if, VOID, BOOL, NUMBER));
-            OP(LOAD_LOCAL,  (op_load, ANY, NUMBER));
-            OP(LOAD_GLOBAL, (op_load, ANY, NUMBER));
-            OP(STORE_LOCAL, (op_store, VOID, ANY, NUMBER));
-            OP(STORE_GLOBAL,(op_store, VOID, ANY, NUMBER));
-            OP(FORMAT,      (op_format, STRING, ANY));
-            OP(LENGTH,      (op_string_number, NUMBER, STRING));
-            OP(ORD,         (op_string_number, NUMBER, STRING));
-            OP(TO_STRING,   (op_to_string, STRING, ANY));
-            OP(TO_BOOL,     (op_to_bool, BOOL, ANY));
-            OP(LOGICAL_NOT, (op_unary_number, BOOL, NUMBER), (op_to_bool, BOOL, ANY));
-            OP(TO_INT,      (op_to_int, NUMBER, ANY));
-            OP(TO_CHAR,     (op_to_hex_or_char, STRING, NUMBER));
-            OP(TO_HEX,      (op_to_hex_or_char, STRING, NUMBER));
-            OP(ITERATOR,    (op_iterator, OBJECT, OBJECT));
-            OP(SPLIT,       (op_split, OBJECT, STRING, STRING));
-            OP(RANGE,       (op_range, OBJECT, NUMBER, NUMBER));
+            OP((DROP),        (op_drop, VOID, ANY));
+            OP((PUSH_STRING), (op_push_string, STRING, VOID));
+            OP((PUSH_INTEGER),(op_push_integer, NUMBER, VOID));
+            OP((PUSH_TRUE, PUSH_FALSE),
+                              (op_push_bool, BOOL, VOID));
+            OP((GOTO),        (op_goto, VOID, NUMBER));
+            OP((GOTO_IF),     (op_goto_if, VOID, BOOL, NUMBER));
+            OP((LOAD_LOCAL, LOAD_GLOBAL),
+                              (op_load, ANY, NUMBER));
+            OP((STORE_LOCAL, STORE_GLOBAL),
+                              (op_store, VOID, ANY, NUMBER));
+            OP((FORMAT),      (op_format, STRING, ANY));
+            OP((LENGTH, ORD), (op_string_number, NUMBER, STRING));
+            OP((TO_STRING),   (op_to_string, STRING, ANY));
+            OP((TO_BOOL),     (op_to_bool, BOOL, ANY));
+            OP((LOGICAL_NOT), (op_unary_number, BOOL, NUMBER), (op_to_bool, BOOL, ANY));
+            OP((TO_INT),      (op_to_int, NUMBER, ANY));
+            OP((TO_CHAR),     (op_to_hex_or_char, STRING, NUMBER));
+            OP((TO_HEX),      (op_to_hex_or_char, STRING, NUMBER));
+            OP((ITERATOR),    (op_iterator, OBJECT, OBJECT));
+            OP((SPLIT),       (op_split, OBJECT, STRING, STRING));
+            OP((RANGE),       (op_range, OBJECT, NUMBER, NUMBER));
             // Compare ops with numeric and string equivalents
-            OP(EQUAL,       (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
-            OP(NOT_EQUAL,   (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
-            OP(GT,          (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
-            OP(GTE,         (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
-            OP(LT,          (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
-            OP(LTE,         (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
+            OP((EQUAL, NOT_EQUAL),
+                              (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
+            OP((GT, GTE, LT, LTE),
+                              (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING));
             // Add and multiply work with strings/numbers
-            OP(ADD,         (op_number_op, NUMBER, NUMBER, NUMBER), (op_string_add, STRING, STRING, ANY), (op_string_add2, STRING, ANY, STRING));
-            OP(MULTIPLY,    (op_number_op, NUMBER, NUMBER, NUMBER), (op_string_multiply, STRING, STRING, NUMBER), (op_string_multiply2, STRING, NUMBER, STRING));
+            OP((ADD),         (op_number_op, NUMBER, NUMBER, NUMBER), (op_string_add, STRING, STRING, ANY), (op_string_add2, STRING, ANY, STRING));
+            OP((MULTIPLY),    (op_number_op, NUMBER, NUMBER, NUMBER), (op_string_multiply, STRING, STRING, NUMBER), (op_string_multiply2, STRING, NUMBER, STRING));
             // Unary ops
-            OP(NEGATE,      (op_unary_number, NUMBER, NUMBER));
-            OP(POSIVATE,    (op_unary_number, NUMBER, NUMBER));
-            OP(BITWISE_NOT, (op_unary_number, NUMBER, NUMBER));
-            OP(ABS,         (op_unary_number, NUMBER, NUMBER));
+            OP((NEGATE, POSIVATE, BITWISE_NOT, ABS), 
+                              (op_unary_number, NUMBER, NUMBER));
             // Purely boolean binary ops
-            OP(LOGICAL_AND, (op_number_op, NUMBER, BOOL, BOOL), (op_logical_op, ANY, ANY, ANY));
-            OP(LOGICAL_OR,  (op_number_op, NUMBER, BOOL, BOOL), (op_logical_op, ANY, ANY, ANY));
+            OP((LOGICAL_AND, LOGICAL_OR),
+                              (op_number_op, NUMBER, BOOL, BOOL), (op_logical_op, ANY, ANY, ANY));
             // Purely numeric binary ops
-            OP(MINIMUM,     (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(MAXIMUM,     (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(LEFT_SHIFT,  (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(RIGHT_SHIFT, (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(BIT_AND,     (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(BIT_OR,      (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(BIT_XOR,     (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(SUBTRACT,    (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(DIVIDE,      (op_number_op, NUMBER, NUMBER, NUMBER));
-            OP(MODULUS,     (op_number_op, NUMBER, NUMBER, NUMBER));
+            OP((MINIMUM, MAXIMUM, LEFT_SHIFT, RIGHT_SHIFT, BIT_AND, BIT_OR, BIT_XOR, SUBTRACT, DIVIDE, MODULUS),
+                              (op_number_op, NUMBER, NUMBER, NUMBER));
 
             case KALOS_OP_MAX:
                 internal_error(state); // impossible

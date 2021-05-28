@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "../defines.h"
+#define KALOS_STRING_SYSTEM_C
 #include "kalos_string_system.h"
 
 static inline const char* get_alt_format(kalos_string_format* format) {
@@ -83,17 +84,5 @@ kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_s
         sprintf(s, string_format, value);
         VALIDATE_STRING(str);
         return str;
-    }
-}
-
-void kalos_string_release(kalos_state state, kalos_string s) {
-    if (s.length__ > 0) {
-        if (s.sa->count == 0) {
-            s.sa->count = KALOS_STRING_POISONED;
-            kalos_mem_free(state, (void*)s.sa);
-        } else {
-            ASSERT(s.sa->count != KALOS_STRING_POISONED);
-            s.sa->count--;
-        }
     }
 }
