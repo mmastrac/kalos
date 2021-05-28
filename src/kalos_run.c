@@ -311,7 +311,7 @@ kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
         value.value.string = kalos_string_take_substring(state, &splitee, split_context->offset, found_offset - split_context->offset);
         split_context->offset += (found_offset - split_context->offset) + split_context->splitter_length;
     }
-
+    VALIDATE_STRING(value.value.string);
     return value;
 }
 
@@ -330,10 +330,10 @@ kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
 kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string* splitee, kalos_string* splitter) {
     kalos_object* split = kalos_allocate_object(state, sizeof(struct kalos_split));
     struct kalos_split* split_context = (struct kalos_split*)split->context;
-    split_context->splitee = kalos_string_take(state, splitee);
     split_context->length = kalos_string_length(state, *splitee);
-    split_context->splitter = kalos_string_take(state, splitter);
+    split_context->splitee = kalos_string_take(state, splitee);
     split_context->splitter_length = kalos_string_length(state, *splitter);
+    split_context->splitter = kalos_string_take(state, splitter);
     split->iterstart = split_iterstart;
     split->object_free = split_free;
     return split;
@@ -461,6 +461,11 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 kalos_value next = iterator->value.object->iternext(state_, iterator->value.object, &done);
                 push_bool(&state->stack, done);
                 *push_raw(&state->stack) = next;
+                if (next.type == KALOS_VALUE_STRING) {
+                    kalos_string_duplicate(state, next.value.string);
+                } else if (next.type == KALOS_VALUE_OBJECT) {
+                    kalos_object_retain(state, next.value.object);
+                }
                 break;
             }
             case KALOS_OP_CALL: {

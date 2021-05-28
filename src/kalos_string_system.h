@@ -160,8 +160,8 @@ static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_
         memcpy(s, __kalos_string_data(string) + start, length);
         s[length] = 0;
     }
+    kalos_string_release(state, string);
     VALIDATE_STRING(str);
-    kalos_string_release(state, str);
     return str;
 }
 
