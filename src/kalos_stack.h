@@ -49,6 +49,8 @@ typedef struct kalos_stack {
     stack_error stack_error;
 } kalos_stack;
 
+#define KALOS_OBJECT_POISONED 0x7fff
+
 static void kalos_object_retain(kalos_state state, kalos_object* object) {
     object->count++;
 }
@@ -57,10 +59,12 @@ static void kalos_object_release(kalos_state state, kalos_object* object) {
     if (object->count == 0) {
         if (object->object_free) {
             object->object_free(state, object);
+            object->object_free = NULL;
         }
-        object->count = 0x7fff;
+        object->count = KALOS_OBJECT_POISONED;
         kalos_mem_free(state, object);
     } else {
+        ASSERT(object->count != KALOS_OBJECT_POISONED);
         object->count--;
     }
 }
@@ -90,6 +94,58 @@ static inline void kalos_stack_cleanup_varargs(int arg_count, int ofs, kalos_sta
             kalos_string_release(state, stack->stack[stack->stack_index + i].value.string);
         }
     }
+}
+
+// DANGEROUS: Releases a value but doesn't set its type
+static inline void kalos_release__(kalos_state state, kalos_value* value) {
+    if (value->type == KALOS_VALUE_STRING) {
+        kalos_string_release(state, value->value.string);
+    } else if (value->type == KALOS_VALUE_OBJECT) {
+        kalos_object_release(state, value->value.object);
+    }
+}
+
+// DANGEROUS: Retains a value
+static inline void kalos_retain__(kalos_state state, kalos_value* value) {
+    if (value->type == KALOS_VALUE_STRING) {
+        value->value.string = kalos_string_duplicate(state, value->value.string);
+    } if (value->type == KALOS_VALUE_OBJECT) {
+        kalos_object_retain(state, value->value.object);
+    }
+}
+
+// Clears a value and sets its type to NONE
+static inline void kalos_clear(kalos_state state, kalos_value* value) {
+    kalos_release__(state, value);
+    value->type = KALOS_VALUE_NONE;
+}
+
+// Moves a value from one location to another, clearing the old value
+static inline kalos_value kalos_value_move(kalos_state state, kalos_value* value) {
+    kalos_value v = *value;
+    value->type = KALOS_VALUE_NONE;
+    return v;
+}
+
+// Moves a value from one location to another, clearing the old value
+static inline void kalos_value_move_to(kalos_state state, kalos_value* from, kalos_value* to) {
+    kalos_release__(state, to);
+    *to = *from;
+    from->type = KALOS_VALUE_NONE;
+}
+
+// Copies a value from one location to another, retaining if necessary
+static inline kalos_value kalos_value_clone(kalos_state state, kalos_value* value) {
+    kalos_value v = *value;
+    kalos_retain__(state, &v);
+    return v;
+}
+
+// Copies a value from one location to another, retaining if necessary
+static inline void kalos_value_clone_to(kalos_state state, kalos_value* from, kalos_value* to) {
+    kalos_clear(state, to);
+    *to = *from;
+    kalos_retain__(state, to);
 }
 
 static inline void push_number(kalos_stack* stack, kalos_int value) {

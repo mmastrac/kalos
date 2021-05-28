@@ -1,0 +1,9 @@
+handle init {
+    var object = split("1,2,3,4,5", ",");
+    var sum = "";
+    var i;
+    for i in object {
+        sum = sum + i;
+    }
+    print(sum);
+}
