@@ -10,11 +10,6 @@
 #include "kalos_string_format.h"
 #include "kalos_string_system.h"
 
-#define KALOS_FIELD_NUMBER(v) v->value.number
-#define KALOS_FIELD_BOOL(v) v->value.number
-#define KALOS_FIELD_STRING(v) &v->value.string
-#define KALOS_FIELD_OBJECT(v) v->value.object
-
 #define KALOS_VAR_SLOT_SIZE 16
 
 static const int8_t kalos_op_input_size[] = {
@@ -150,11 +145,12 @@ kalos_int op_compare_string(kalos_state_internal* state, kalos_op op, kalos_stri
 }
 
 kalos_int op_compare_type(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
-    if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
-        internal_error(state); // impossible
-        return 0;
+    if (op == KALOS_OP_EQUAL) {
+        return a->type == b->type;
+    } else if (op == KALOS_OP_NOT_EQUAL) {
+        return a->type != b->type;
     }
-    return op_number_op(state, op, a->type, b->type);
+    return 0;
 }
 
 kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_value* b) {
@@ -168,7 +164,7 @@ kalos_string op_string_add2(kalos_state_internal* state, kalos_op op, kalos_valu
 }
 
 kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_int b) {
-    if (b <= 0) {
+    if (b <= 0 || kalos_string_isempty(state, *a)) {
         return kalos_string_allocate(state, "");
     }
     return kalos_string_take_repeat(state, a, b);
@@ -176,10 +172,6 @@ kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_
 
 kalos_string op_string_multiply2(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_string* b) {
     return op_string_multiply(state, op, b, a);
-}
-
-kalos_string op_strings(kalos_state_internal* state, kalos_op op, kalos_string* v) {
-    return *v;
 }
 
 kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string* v) {
@@ -217,10 +209,6 @@ kalos_int op_to_bool(kalos_state_internal* state, kalos_op op, kalos_value* v) {
 kalos_int op_to_int(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     coerce(state, v, KALOS_VALUE_NUMBER);
     return v->value.number;
-}
-
-kalos_int op_to_number(kalos_state_internal* state, kalos_op op, kalos_int v) {
-    return v;
 }
 
 void op_goto(kalos_state_internal* state, kalos_op op, uint16_t pc) {
