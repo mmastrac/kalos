@@ -92,6 +92,7 @@ void kalos_string_release(kalos_state state, kalos_string s) {
             s.sa->count = KALOS_STRING_POISONED;
             kalos_mem_free(state, (void*)s.sa);
         } else {
+            ASSERT(s.sa->count != KALOS_STRING_POISONED);
             s.sa->count--;
         }
     }

@@ -51,6 +51,7 @@ static inline kalos_int kalos_string_compare(kalos_state state, kalos_string a, 
 static inline kalos_int kalos_string_find(kalos_state state, kalos_string a, kalos_string b);
 static inline kalos_int kalos_string_find_from(kalos_state state, kalos_string a, kalos_string b, int start);
 
+static inline kalos_string kalos_string_take(kalos_state state, kalos_string* string);
 static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string, int start, int length);
 static inline kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string* string, int start);
 static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string* a, kalos_string* b);
@@ -63,6 +64,7 @@ static inline kalos_string __kalos_string_alloc(kalos_state state, kalos_int siz
     s.length__ = size;
     if (size) {
         s.sa = kalos_mem_alloc(state, size + sizeof(kalos_string_allocated) + 1);
+        s.sa->count = 0;
     } else {
         s.sc = "";
     }
@@ -143,14 +145,23 @@ static inline kalos_int kalos_string_find_from(kalos_state state, kalos_string a
     return found - __kalos_string_data(a);
 }
 
-static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string, int start, int length) {
+static inline kalos_string kalos_string_take(kalos_state state, kalos_string* string) {
+    kalos_string copy = *string;
+    string->length__ = 0;
+    string->sc = "";
+    return copy;
+}
+
+static inline kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string_, int start, int length) {
+    kalos_string string = kalos_string_take(state, string_);
     kalos_string str = __kalos_string_alloc(state, length);
     char* s = __kalos_string_data(str);
     if (length) {
-        memcpy(s, __kalos_string_data(*string) + start, length);
+        memcpy(s, __kalos_string_data(string) + start, length);
         s[length] = 0;
     }
     VALIDATE_STRING(str);
+    kalos_string_release(state, str);
     return str;
 }
 
@@ -158,28 +169,34 @@ static inline kalos_string kalos_string_take_substring_start(kalos_state state, 
     return kalos_string_take_substring(state, string, start, kalos_string_length(state, *string) - start);
 }
 
-static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string* a, kalos_string* b) {
-    kalos_int al = kalos_string_length(state, *a);
-    kalos_int bl = kalos_string_length(state, *b);
+static inline kalos_string kalos_string_take_append(kalos_state state, kalos_string* a_, kalos_string* b_) {
+    kalos_string a = kalos_string_take(state, a_);
+    kalos_string b = kalos_string_take(state, b_);
+    kalos_int al = kalos_string_length(state, a);
+    kalos_int bl = kalos_string_length(state, b);
     kalos_string str = __kalos_string_alloc(state, al + bl);
     char* s = __kalos_string_data(str);
-    memcpy(s, __kalos_string_data(*a), al);
-    memcpy(s + al, __kalos_string_data(*b), bl);
+    memcpy(s, __kalos_string_data(a), al);
+    memcpy(s + al, __kalos_string_data(b), bl);
     s[al + bl] = 0;
     VALIDATE_STRING(str);
+    kalos_string_release(state, a);
+    kalos_string_release(state, b);
     return str;
 }
 
-static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a, kalos_int b) {
-    kalos_int al = kalos_string_length(state, *a);
+static inline kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a_, kalos_int b) {
+    kalos_string a = kalos_string_take(state, a_);
+    kalos_int al = kalos_string_length(state, a);
     kalos_string str = __kalos_string_alloc(state, al * b);
     char* s = __kalos_string_data(str);
-    char* as = __kalos_string_data(*a);
+    char* as = __kalos_string_data(a);
     for (int i = 0; i < b; i++) {
         memcpy(s, as, al);
         s += al;
     }
     s[al * b] = 0;
     VALIDATE_STRING(str);
+    kalos_string_release(state, a);
     return str;
 }

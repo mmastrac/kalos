@@ -1,5 +1,5 @@
-var foo; 
-var bar;
+var foo;
+var bar = 0;
 handle init {
     foo = 2 + bar + (3 * 6);
     print("xyz" + 1 + "I say \"hi!\"" + bar);

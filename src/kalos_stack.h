@@ -9,7 +9,7 @@ typedef struct kalos_value kalos_value;
 typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object* object, char* property);
 typedef kalos_object* (*kalos_iterstart)(kalos_state state, kalos_object* object);
 typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object* object, bool* done);
-typedef int (*kalos_addref_release)(kalos_state state, kalos_object* object, bool addref);
+typedef void (*kalos_object_free)(kalos_state state, kalos_object* object);
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -21,7 +21,8 @@ typedef enum kalos_value_type {
 
 struct kalos_object {
     void* context;
-    kalos_addref_release addref_release;
+    uint16_t count;
+    kalos_object_free object_free;
     kalos_propget propget;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
@@ -48,6 +49,22 @@ typedef struct kalos_stack {
     stack_error stack_error;
 } kalos_stack;
 
+static void kalos_object_retain(kalos_state state, kalos_object* object) {
+    object->count++;
+}
+
+static void kalos_object_release(kalos_state state, kalos_object* object) {
+    if (object->count == 0) {
+        if (object->object_free) {
+            object->object_free(state, object);
+        }
+        object->count = 0x7fff;
+        kalos_mem_free(state, object);
+    } else {
+        object->count--;
+    }
+}
+
 static inline int kalos_stack_fixup_no_varargs(int arg_count, kalos_stack* stack) {
     stack->stack_index -= arg_count; 
     return 0;
@@ -57,6 +74,22 @@ static inline int kalos_stack_fixup_varargs(int arg_count, kalos_stack* stack) {
     int ofs = stack->stack[stack->stack_index - 1].value.number;
     stack->stack_index -= arg_count + ofs + 1;
     return ofs;
+}
+
+static inline void kalos_stack_cleanup_no_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
+    for (int i = 0; i < arg_count; i++) {
+        if (stack->stack[stack->stack_index + i].type == KALOS_VALUE_STRING) {
+            kalos_string_release(state, stack->stack[stack->stack_index + i].value.string);
+        }
+    }
+}
+
+static inline void kalos_stack_cleanup_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
+    for (int i = 0; i < arg_count + ofs; i++) {
+        if (stack->stack[stack->stack_index + i].type == KALOS_VALUE_STRING) {
+            kalos_string_release(state, stack->stack[stack->stack_index + i].value.string);
+        }
+    }
 }
 
 static inline void push_number(kalos_stack* stack, kalos_int value) {

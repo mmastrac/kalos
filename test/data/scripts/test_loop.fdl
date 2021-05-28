@@ -1,5 +1,5 @@
 handle init {
-    var foo;
+    var foo = 0;
     loop {
         print("start loop!\n");
         foo = foo + 1;
