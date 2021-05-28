@@ -207,6 +207,10 @@ static void parse_push_string(struct parse_state* parse_state, const char* s) {
 static void parse_push_token(struct parse_state* parse_state) {
     if (parse_state->last_token == KALOS_TOKEN_INTEGER) {
         parse_push_number(parse_state, atoi(parse_state->token));
+    } else if (parse_state->last_token == KALOS_TOKEN_TRUE) {
+        parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_TRUE;
+    } else if (parse_state->last_token == KALOS_TOKEN_FALSE) {
+        parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_FALSE;
     } else if (parse_state->last_token == KALOS_TOKEN_STRING 
         || parse_state->last_token == KALOS_TOKEN_STRING_INTERPOLATION
         || parse_state->last_token == KALOS_TOKEN_WORD) {
@@ -649,7 +653,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_TILDE) {
         TRY(parse_expression_part(parse_state));
         TRY(parse_push_op(parse_state, KALOS_OP_BITWISE_NOT));
-    } else if (token == KALOS_TOKEN_INTEGER) {
+    } else if (token == KALOS_TOKEN_INTEGER || token == KALOS_TOKEN_TRUE || token == KALOS_TOKEN_FALSE) {
         TRY(parse_push_token(parse_state));
     } else if (token == KALOS_TOKEN_STRING || token == KALOS_TOKEN_STRING_INTERPOLATION) {
         bool first = true;

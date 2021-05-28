@@ -1,0 +1,10 @@
+handle init {
+    var foo = range(0, 100);
+    foo = range(0, 1);
+    foo = range(0, 2);
+
+    var bar = "";
+    bar = "a";
+    bar = bar + "a";
+    bar = "b" + "c";
+}

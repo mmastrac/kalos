@@ -1,0 +1,12 @@
+handle init {
+    print("{1 + true}\n");
+    print("{1 && 2}\n");
+    print("{"a" && "b"}\n");
+    print("{"" && "b"}\n");
+    print("{"a" || "b"}\n");
+    print("{"" || "b"}\n");
+    print("{"a" + 1}\n");
+    print("{1 + "a"}\n");
+    print("{!""}\n");
+    print("{!"a"}\n");
+}

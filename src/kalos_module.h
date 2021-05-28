@@ -142,7 +142,7 @@ typedef struct kalos_module {
     }, KALOS_VARARG_DEF_##varargs_(vararg_type_) } } },
 
 #define KALOS_STACK__NUMBER(n, arg_count) , peek(stack, -n-1)->value.number
-#define KALOS_STACK__STRING(n, arg_count) , peek(stack, -n-1)->value.string
+#define KALOS_STACK__STRING(n, arg_count) , &peek(stack, -n-1)->value.string
 #define KALOS_STACK__(...)
 
 #define KALOS_ARG_S__(n, arg_count, type_) KALOS_STACK__##type_(n, arg_count)

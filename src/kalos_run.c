@@ -131,6 +131,16 @@ kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, ka
     }
 }
 
+kalos_value op_logical_op(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
+    kalos_value v = kalos_value_clone(state, a);
+    coerce(state, &v, KALOS_VALUE_BOOL);
+    if (v.value.number ^ (op == KALOS_OP_LOGICAL_AND)) {
+        return kalos_value_move(state, a);
+    } else {
+        return kalos_value_move(state, b);
+    }
+}
+
 kalos_int op_compare_string(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_string* b) {
     if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
         internal_error(state); // impossible
@@ -166,10 +176,6 @@ kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_
 
 kalos_string op_string_multiply2(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_string* b) {
     return op_string_multiply(state, op, b, a);
-}
-
-bool op_bool(kalos_state_internal* state, kalos_op op, bool v) {
-    return v;
 }
 
 kalos_string op_strings(kalos_state_internal* state, kalos_op op, kalos_string* v) {
@@ -233,6 +239,7 @@ kalos_int op_unary_number(kalos_state_internal* state, kalos_op op, kalos_int v)
         case KALOS_OP_POSIVATE: return +v;
         case KALOS_OP_BITWISE_NOT: return ~v;
         case KALOS_OP_ABS: return abs(v);
+        case KALOS_OP_LOGICAL_NOT: return !v;
         default: internal_error(state); return v; // impossible
     }
 }
@@ -358,6 +365,10 @@ kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
     return int_value;
 }
 
+kalos_int op_push_bool(kalos_state_internal* state, kalos_op op) {
+    return op == KALOS_OP_PUSH_TRUE;
+}
+
 kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     kalos_string_format* format = (kalos_string_format*)&state->script->script_ops[state->pc];
     state->pc += sizeof(kalos_string_format);
@@ -374,24 +385,13 @@ kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v)
 }
 
 void op_store(kalos_state_internal* state, kalos_op op, kalos_value* v, kalos_int slot) {
-    kalos_value* storage = op == KALOS_OP_STORE_GLOBAL ? state->locals : state->globals;
-    kalos_value old = storage[slot];
-    storage[slot] = *v;
-    if (storage[slot].type == KALOS_VALUE_STRING) {
-        kalos_string_duplicate(state, storage[slot].value.string);
-    } else if (storage[slot].type == KALOS_VALUE_OBJECT) {
-        kalos_object_retain(state, storage[slot].value.object);
-    }
-    if (old.type == KALOS_VALUE_STRING) {
-        kalos_string_release(state, old.value.string);
-    } else if (old.type == KALOS_VALUE_OBJECT) {
-        kalos_object_release(state, old.value.object);
-    }
+    kalos_value* storage = op == KALOS_OP_STORE_LOCAL ? state->locals : state->globals;
+    kalos_value_move_to(state, v, &storage[slot]);
 }
 
 kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int slot) {
-    kalos_value* storage = op == KALOS_OP_LOAD_GLOBAL ? state->locals : state->globals;
-    return storage[slot];
+    kalos_value* storage = op == KALOS_OP_LOAD_LOCAL ? state->locals : state->globals;
+    return kalos_value_clone(state, &storage[slot]);
 }
 
 kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* fns) {
@@ -450,6 +450,9 @@ void kalos_trigger(kalos_state state_, char* handler) {
         }
         switch (op) {
             case KALOS_OP_END:
+                for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
+                    kalos_clear(state, &state->locals[i]);
+                }
                 return;
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
@@ -460,12 +463,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
                 bool done;
                 kalos_value next = iterator->value.object->iternext(state_, iterator->value.object, &done);
                 push_bool(&state->stack, done);
-                *push_raw(&state->stack) = next;
-                if (next.type == KALOS_VALUE_STRING) {
-                    kalos_string_duplicate(state, next.value.string);
-                } else if (next.type == KALOS_VALUE_OBJECT) {
-                    kalos_object_retain(state, next.value.object);
-                }
+                kalos_value_move_to(state, &next, push_raw(&state->stack));
                 break;
             }
             case KALOS_OP_CALL: {
@@ -487,8 +485,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
 #define arg_ANY(x) , &state->stack.stack[state->stack.stack_index+x]
 #define save_ANY kalos_value x = 
 #define push_ANY state->stack.stack[state->stack.stack_index++] = x;
-#define cleanup_ANY(x) if (state->stack.stack[state->stack.stack_index+x].type == KALOS_VALUE_STRING) { cleanup_STRING(x) } \
-    else if (state->stack.stack[state->stack.stack_index+x].type == KALOS_VALUE_OBJECT) { cleanup_OBJECT(x) } \
+#define cleanup_ANY(x) kalos_clear(state, &state->stack.stack[state->stack.stack_index + x]); \
 
 #define arg_NUMBER(x) , state->stack.stack[state->stack.stack_index+x].value.number
 #define save_NUMBER kalos_int x = 
@@ -512,7 +509,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
 
 #define arg_VOID(x)
 #define save_VOID 
-#define push_VOID
+#define push_VOID state->stack.stack[state->stack.stack_index].type = KALOS_VALUE_NONE;
 #define cleanup_VOID(x)
 
 #define OP(op, ...) \
@@ -539,6 +536,8 @@ void kalos_trigger(kalos_state state_, char* handler) {
             OP(DROP,        (op_drop, VOID, ANY));
             OP(PUSH_STRING, (op_push_string, STRING, VOID));
             OP(PUSH_INTEGER,(op_push_integer, NUMBER, VOID));
+            OP(PUSH_TRUE,   (op_push_bool, BOOL, VOID));
+            OP(PUSH_FALSE,  (op_push_bool, BOOL, VOID));
             OP(GOTO,        (op_goto, VOID, NUMBER));
             OP(GOTO_IF,     (op_goto_if, VOID, BOOL, NUMBER));
             OP(LOAD_LOCAL,  (op_load, ANY, NUMBER));
@@ -550,7 +549,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
             OP(ORD,         (op_string_number, NUMBER, STRING));
             OP(TO_STRING,   (op_to_string, STRING, ANY));
             OP(TO_BOOL,     (op_to_bool, BOOL, ANY));
-            OP(LOGICAL_NOT, (op_to_bool, BOOL, ANY));
+            OP(LOGICAL_NOT, (op_unary_number, BOOL, NUMBER), (op_to_bool, BOOL, ANY));
             OP(TO_INT,      (op_to_int, NUMBER, ANY));
             OP(TO_CHAR,     (op_to_hex_or_char, STRING, NUMBER));
             OP(TO_HEX,      (op_to_hex_or_char, STRING, NUMBER));
@@ -573,8 +572,8 @@ void kalos_trigger(kalos_state state_, char* handler) {
             OP(BITWISE_NOT, (op_unary_number, NUMBER, NUMBER));
             OP(ABS,         (op_unary_number, NUMBER, NUMBER));
             // Purely boolean binary ops
-            OP(LOGICAL_AND, (op_number_op, BOOL, NUMBER, NUMBER));
-            OP(LOGICAL_OR,  (op_number_op, BOOL, NUMBER, NUMBER));
+            OP(LOGICAL_AND, (op_number_op, NUMBER, BOOL, BOOL), (op_logical_op, ANY, ANY, ANY));
+            OP(LOGICAL_OR,  (op_number_op, NUMBER, BOOL, BOOL), (op_logical_op, ANY, ANY, ANY));
             // Purely numeric binary ops
             OP(MINIMUM,     (op_number_op, NUMBER, NUMBER, NUMBER));
             OP(MAXIMUM,     (op_number_op, NUMBER, NUMBER, NUMBER));

@@ -51,6 +51,8 @@ typedef struct kalos_stack {
 
 #define KALOS_OBJECT_POISONED 0x7fff
 
+static inline void kalos_clear(kalos_state state, kalos_value* value);
+
 static void kalos_object_retain(kalos_state state, kalos_object* object) {
     object->count++;
 }
@@ -82,17 +84,13 @@ static inline int kalos_stack_fixup_varargs(int arg_count, kalos_stack* stack) {
 
 static inline void kalos_stack_cleanup_no_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
     for (int i = 0; i < arg_count; i++) {
-        if (stack->stack[stack->stack_index + i].type == KALOS_VALUE_STRING) {
-            kalos_string_release(state, stack->stack[stack->stack_index + i].value.string);
-        }
+        kalos_clear(state, &stack->stack[stack->stack_index + i]);
     }
 }
 
 static inline void kalos_stack_cleanup_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
     for (int i = 0; i < arg_count + ofs; i++) {
-        if (stack->stack[stack->stack_index + i].type == KALOS_VALUE_STRING) {
-            kalos_string_release(state, stack->stack[stack->stack_index + i].value.string);
-        }
+        kalos_clear(state, &stack->stack[stack->stack_index + i]);
     }
 }
 
