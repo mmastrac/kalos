@@ -19,4 +19,8 @@ handle init {
     } else {
         print("false!\n");
     }
+    print("{"="*0}\n");
+    print("{"="*1}\n");
+    print("{"="*2}\n");
+    print("{"="*20}\n");
 }

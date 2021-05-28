@@ -582,9 +582,6 @@ void kalos_trigger(kalos_state state_, char* handler) {
         // Confirm stack is correct
         if (kalos_op_input_size[op] != -1 && kalos_op_output_size[op] != -1) {
             int diff = state->stack.stack_index - stack_index;
-            if (diff != kalos_op_output_size[op] - kalos_op_input_size[op]) {
-
-            }
             ASSERT(diff == kalos_op_output_size[op] - kalos_op_input_size[op]);
         }
     }
