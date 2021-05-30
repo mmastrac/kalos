@@ -20,8 +20,6 @@ bool kalos_parse_string_format(const char* s, kalos_string_format* string_format
         re2c:define:YYCTYPE = char;
         re2c:define:YYCURSOR = s;
         re2c:yyfill:enable = 0;
-        re2c:define:YYGETCONDITION = "c";
-        re2c:define:YYSETCONDITION = "c = @@;";
         re2c:tags:expression = "@@{tag}";
 
         int = "0" | [1-9][0-9]*;
