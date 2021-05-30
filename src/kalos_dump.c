@@ -127,7 +127,7 @@ struct kalos_walk_find_section {
 };
 
 #pragma warning 303 9
-bool kalos_find_section_walk(void* context_, kalos_script* script, const char* section, uint16_t pc) {
+static bool kalos_find_section_walk(void* context_, kalos_script* script, const char* section, uint16_t pc) {
     struct kalos_walk_find_section* context = (struct kalos_walk_find_section*)context_;
     if (strcmp(section, context->section) == 0) {
         context->pc = pc;
