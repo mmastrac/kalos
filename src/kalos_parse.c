@@ -23,7 +23,7 @@ typedef struct kalos_builtin {
 
 // Keep sorted for binary search
 #define KALOS_BUILTIN(x, y, z) { .name=#x, .param_count=y, .op=KALOS_OP_##z },
-kalos_builtin kalos_builtins[] = {
+static kalos_builtin kalos_builtins[] = {
     #include "kalos_constants.inc"
     { NULL },
 };

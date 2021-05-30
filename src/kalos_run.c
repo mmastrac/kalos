@@ -46,7 +46,7 @@ void value_error(kalos_state_internal* state) {
 }
 
 #define COERCE(typ, NONE, NUMBER, OBJECT, STRING, BOOL) \
-bool coerce_##typ(kalos_state_internal* state, kalos_value* v) {\
+static bool coerce_##typ(kalos_state_internal* state, kalos_value* v) {\
     switch (v->type) {\
         case KALOS_VALUE_NONE: {NONE;};break;\
         case KALOS_VALUE_BOOL: {BOOL;};break;\
@@ -78,7 +78,7 @@ COERCE(STRING,
     return true,
     v->value.string = kalos_string_allocate(state, v->value.number ? "true" : "false"))
 
-bool coerce(kalos_state_internal* state, kalos_value* v, kalos_value_type type) {
+static bool coerce(kalos_state_internal* state, kalos_value* v, kalos_value_type type) {
     bool success;
     switch (type) {
         case KALOS_VALUE_NONE:
@@ -99,17 +99,10 @@ bool coerce(kalos_state_internal* state, kalos_value* v, kalos_value_type type) 
     return success;
 }
 
-kalos_value_type get_major_type(kalos_value* v) {
-    if (v->type == KALOS_VALUE_STRING || v->type == KALOS_VALUE_OBJECT) {
-        return v->type;
-    }
-    return KALOS_VALUE_NUMBER;
-}
-
 #define ENSURE_STACK(size) { if (state->stack.stack_index < size) { internal_error(state); } }
 #define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack.stack_index - 1 < size) { internal_error(state); } }
 
-kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_int b) {
+static kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_int b) {
     if (op == KALOS_OP_DIVIDE && b == 0) {
         return 0;
     }
@@ -126,7 +119,7 @@ kalos_int op_number_op(kalos_state_internal* state, kalos_op op, kalos_int a, ka
     }
 }
 
-kalos_value op_logical_op(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
+static kalos_value op_logical_op(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
     kalos_value v = kalos_value_clone(state, a);
     coerce(state, &v, KALOS_VALUE_BOOL);
     if (v.value.number ^ (op == KALOS_OP_LOGICAL_AND)) {
@@ -136,7 +129,7 @@ kalos_value op_logical_op(kalos_state_internal* state, kalos_op op, kalos_value*
     }
 }
 
-kalos_int op_compare_string(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_string* b) {
+static kalos_int op_compare_string(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_string* b) {
     if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
         internal_error(state); // impossible
         return 0;
@@ -144,7 +137,7 @@ kalos_int op_compare_string(kalos_state_internal* state, kalos_op op, kalos_stri
     return op_number_op(state, op, kalos_string_compare(state, *a, *b), 0);
 }
 
-kalos_int op_compare_type(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
+static kalos_int op_compare_type(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_value* b) {
     if (op == KALOS_OP_EQUAL) {
         return a->type == b->type;
     } else if (op == KALOS_OP_NOT_EQUAL) {
@@ -153,28 +146,28 @@ kalos_int op_compare_type(kalos_state_internal* state, kalos_op op, kalos_value*
     return 0;
 }
 
-kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_value* b) {
+static kalos_string op_string_add(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_value* b) {
     coerce(state, b, KALOS_VALUE_STRING);
     return kalos_string_take_append(state, a, &b->value.string);
 }
 
-kalos_string op_string_add2(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_string* b) {
+static kalos_string op_string_add2(kalos_state_internal* state, kalos_op op, kalos_value* a, kalos_string* b) {
     coerce(state, a, KALOS_VALUE_STRING);
     return kalos_string_take_append(state, &a->value.string, b);
 }
 
-kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_int b) {
+static kalos_string op_string_multiply(kalos_state_internal* state, kalos_op op, kalos_string* a, kalos_int b) {
     if (b <= 0 || kalos_string_isempty(state, *a)) {
         return kalos_string_allocate(state, "");
     }
     return kalos_string_take_repeat(state, a, b);
 }
 
-kalos_string op_string_multiply2(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_string* b) {
+static kalos_string op_string_multiply2(kalos_state_internal* state, kalos_op op, kalos_int a, kalos_string* b) {
     return op_string_multiply(state, op, b, a);
 }
 
-kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string* v) {
+static kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_string* v) {
     switch (op) {
         case KALOS_OP_ORD: return kalos_string_char_at(state, *v, 0);
         case KALOS_OP_LENGTH: return kalos_string_length(state, *v);
@@ -182,7 +175,7 @@ kalos_int op_string_number(kalos_state_internal* state, kalos_op op, kalos_strin
     }
 }
 
-kalos_string op_to_hex_or_char(kalos_state_internal* state, kalos_op op, kalos_int v) {
+static kalos_string op_to_hex_or_char(kalos_state_internal* state, kalos_op op, kalos_int v) {
     if (op == KALOS_OP_TO_HEX) {
         return kalos_string_allocate_fmt(state, "0x%x", v);
     } else if (op == KALOS_OP_TO_CHAR) {
@@ -195,33 +188,33 @@ kalos_string op_to_hex_or_char(kalos_state_internal* state, kalos_op op, kalos_i
     return kalos_string_allocate(state, "");
 }
 
-kalos_string op_to_string(kalos_state_internal* state, kalos_op op, kalos_value* v) {
+static kalos_string op_to_string(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     coerce(state, v, KALOS_VALUE_STRING);
     kalos_string s = kalos_string_take(state, &v->value.string);
     return s;
 }
 
-kalos_int op_to_bool(kalos_state_internal* state, kalos_op op, kalos_value* v) {
+static kalos_int op_to_bool(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     coerce(state, v, KALOS_VALUE_BOOL);
     return v->value.number ^ (op == KALOS_OP_LOGICAL_NOT);
 }
 
-kalos_int op_to_int(kalos_state_internal* state, kalos_op op, kalos_value* v) {
+static kalos_int op_to_int(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     coerce(state, v, KALOS_VALUE_NUMBER);
     return v->value.number;
 }
 
-void op_goto(kalos_state_internal* state, kalos_op op, uint16_t pc) {
+static void op_goto(kalos_state_internal* state, kalos_op op, uint16_t pc) {
     state->pc = pc;
 }
 
-void op_goto_if(kalos_state_internal* state, kalos_op op, kalos_int flag, kalos_int pc) {
+static void op_goto_if(kalos_state_internal* state, kalos_op op, kalos_int flag, kalos_int pc) {
     if (flag) {
         state->pc = pc;
     }
 }
 
-kalos_int op_unary_number(kalos_state_internal* state, kalos_op op, kalos_int v) {
+static kalos_int op_unary_number(kalos_state_internal* state, kalos_op op, kalos_int v) {
     switch (op) {
         case KALOS_OP_NEGATE: return -v;
         case KALOS_OP_POSIVATE: return +v;
@@ -239,7 +232,7 @@ struct kalos_range {
     kalos_int step;
 };
 
-kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
+static kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
     struct kalos_range* range_context = (struct kalos_range*)iter->context;
     kalos_value value = {0};
     if (range_context->current >= range_context->end) {
@@ -254,7 +247,7 @@ kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
     return value;
 }
 
-kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
+static kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
     struct kalos_range* range_context = (struct kalos_range*)range->context;
     kalos_object* iter = kalos_allocate_object(state, sizeof(struct kalos_range));
     *(struct kalos_range*)iter->context = *range_context;
@@ -262,7 +255,7 @@ kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
     return iter;
 }
 
-kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start, kalos_int end) {
+static kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start, kalos_int end) {
     kalos_object* range = kalos_allocate_object(state, sizeof(struct kalos_range));
     struct kalos_range* range_context = (struct kalos_range*)range->context;
     range_context->start = start;
@@ -280,13 +273,13 @@ struct kalos_split {
     int splitter_length;
 };
 
-void split_free(kalos_state state, kalos_object* object) {
+static void split_free(kalos_state state, kalos_object* object) {
     struct kalos_split* split_context = (struct kalos_split*)object->context;
     kalos_string_release(state, split_context->splitee);
     kalos_string_release(state, split_context->splitter);
 }
 
-kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
+static kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
     struct kalos_split* split_context = (struct kalos_split*)iter->context;
     kalos_value value = {0};
     if (split_context->offset > split_context->length) {
@@ -310,7 +303,7 @@ kalos_value split_iternext(kalos_state state, kalos_object* iter, bool* done) {
     return value;
 }
 
-kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
+static kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
     struct kalos_split* split_context = (struct kalos_split*)split->context;
     kalos_object* iter = kalos_allocate_object(state, sizeof(struct kalos_split));
     struct kalos_split* iter_context = (struct kalos_split*)iter->context;
@@ -322,7 +315,7 @@ kalos_object* split_iterstart(kalos_state state, kalos_object* split) {
     return iter;
 }
 
-kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string* splitee, kalos_string* splitter) {
+static kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string* splitee, kalos_string* splitter) {
     kalos_object* split = kalos_allocate_object(state, sizeof(struct kalos_split));
     struct kalos_split* split_context = (struct kalos_split*)split->context;
     split_context->length = kalos_string_length(state, *splitee);
@@ -334,30 +327,30 @@ kalos_object* op_split(kalos_state_internal* state, kalos_op op, kalos_string* s
     return split;
 }
 
-kalos_object* op_iterator(kalos_state_internal* state, kalos_op op, kalos_object* iterable) {
+static kalos_object* op_iterator(kalos_state_internal* state, kalos_op op, kalos_object* iterable) {
     return iterable->iterstart(state, iterable);
 }
 
-void op_drop(kalos_state_internal* state, kalos_op op, kalos_value* value) {}
+static inline void op_drop(kalos_state_internal* state, kalos_op op, kalos_value* value) {}
 
-kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
+static kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
     kalos_string string = kalos_string_allocate(state, (const char*)&state->script->script_ops[state->pc]);
     state->pc += kalos_string_length(state, string) + 1;
     return string;
 }
 
-kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
+static kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
     kalos_int int_value;
     memcpy(&int_value, &state->script->script_ops[state->pc], sizeof(kalos_int));
     state->pc += sizeof(kalos_int);
     return int_value;
 }
 
-kalos_int op_push_bool(kalos_state_internal* state, kalos_op op) {
+static kalos_int op_push_bool(kalos_state_internal* state, kalos_op op) {
     return op == KALOS_OP_PUSH_TRUE;
 }
 
-kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v) {
+static kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v) {
     kalos_string_format* format = (kalos_string_format*)&state->script->script_ops[state->pc];
     state->pc += sizeof(kalos_string_format);
     if (v->type == KALOS_VALUE_NUMBER) {
@@ -372,12 +365,12 @@ kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v)
     return kalos_string_allocate(state, "");
 }
 
-void op_store(kalos_state_internal* state, kalos_op op, kalos_value* v, kalos_int slot) {
+static void op_store(kalos_state_internal* state, kalos_op op, kalos_value* v, kalos_int slot) {
     kalos_value* storage = op == KALOS_OP_STORE_LOCAL ? state->locals : state->globals;
     kalos_value_move_to(state, v, &storage[slot]);
 }
 
-kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int slot) {
+static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int slot) {
     kalos_value* storage = op == KALOS_OP_LOAD_LOCAL ? state->locals : state->globals;
     return kalos_value_clone(state, &storage[slot]);
 }
