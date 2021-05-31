@@ -1,0 +1,12 @@
+handle init {
+    var x = 10;
+    print(x + "\n");
+    x += 10;
+    print(x + "\n");
+    x -= 5;
+    print(x + "\n");
+    x *= 3;
+    print(x + "\n");
+    x <<= 2;
+    print(x);
+}

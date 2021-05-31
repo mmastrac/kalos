@@ -19,12 +19,12 @@ handle module(module) {
             }
         } else if let entry = export.property {
             if entry.read {
-                
+
             } else {
 
             }
         } else if let entry = export.function {
-
+            
         }
         m += ";\n";
         m += "\t\treturn export;\n";

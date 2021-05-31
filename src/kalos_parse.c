@@ -184,6 +184,16 @@ static kalos_op get_operator_from_token(kalos_token token) {
     }
 }
 
+static bool is_assignment_token(kalos_token token) {
+    #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: return true;
+    switch (token) {
+        #include "kalos_constants.inc"
+        case KALOS_TOKEN_EQ: return true;
+        default:
+            return false;
+    }
+}
+
 static void parse_push_number(struct parse_state* parse_state, int number) {
     parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_INTEGER;
     parse_state->output_script[parse_state->output_script_index++] = number & 0xff;
@@ -475,13 +485,37 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 THROW(ERROR_EXPECTED_FUNCTION);
             }
             return;
-        } else if (peek == KALOS_TOKEN_EQ) {
+        } else if (is_assignment_token(peek)) {
             if (!statement_context) {
                 THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT);
             }
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
+            TRY(parse_assert_token(parse_state, peek));
+            if (peek != KALOS_TOKEN_EQ) {
+                if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
+                    TRY(parse_push_number(parse_state, res.var_slot));
+                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
+                } else if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
+                    TRY(parse_push_number(parse_state, res.var_slot));
+                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
+                } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
+                    if (!res.export_read) {
+                        THROW(ERROR_PROPERTY_NOT_READABLE);
+                    }
+                    TRY(parse_push_number(parse_state, res.export_module_index));
+                    TRY(parse_push_number(parse_state, res.export_index_read));
+                    TRY(parse_push_op(parse_state, KALOS_OP_CALL));
+                }
+            }
             TRY(parse_expression(parse_state));
-
+            kalos_op op = 0;
+            #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: op = KALOS_OP_##y; break;
+            switch (peek) {
+                #include "kalos_constants.inc"
+                default: break;
+            }
+            if (op) {
+                TRY(parse_push_op(parse_state, op));
+            }
             if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
                 TRY(parse_push_number(parse_state, res.var_slot));
                 TRY(parse_push_op(parse_state, KALOS_OP_STORE_GLOBAL));

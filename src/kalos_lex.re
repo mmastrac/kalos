@@ -125,13 +125,28 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "]" { return KALOS_TOKEN_SQBRA_CLOSE; }
         <init> ";" { return KALOS_TOKEN_SEMI; }
         <init> "," { return KALOS_TOKEN_COMMA; }
+
         <init> "=" { return KALOS_TOKEN_EQ; }
+        <init> "+=" { return KALOS_TOKEN_EQ_PLUS; }
+        <init> "-=" { return KALOS_TOKEN_EQ_MINUS; }
+        <init> "*=" { return KALOS_TOKEN_EQ_STAR; }
+        <init> "/=" { return KALOS_TOKEN_EQ_SLASH; }
+        <init> "%=" { return KALOS_TOKEN_EQ_PERCENT; }
+        <init> "||=" { return KALOS_TOKEN_EQ_LOGOR; }
+        <init> "&&=" { return KALOS_TOKEN_EQ_LOGAND; }
+        <init> "|=" { return KALOS_TOKEN_EQ_BITOR; }
+        <init> "&=" { return KALOS_TOKEN_EQ_BITAND; }
+        <init> "^=" { return KALOS_TOKEN_EQ_BITXOR; }
+        <init> "<<=" { return KALOS_TOKEN_EQ_LEFT_SHIFT; }
+        <init> ">>=" { return KALOS_TOKEN_EQ_RIGHT_SHIFT; }
+
         <init> "==" { return KALOS_TOKEN_EQEQ; }
         <init> "<" { return KALOS_TOKEN_LT; }
         <init> ">" { return KALOS_TOKEN_GT; }
         <init> ">=" { return KALOS_TOKEN_GTE; }
         <init> "<=" { return KALOS_TOKEN_LTE; }
         <init> "!=" { return KALOS_TOKEN_NOTEQ; }
+
         <init> "+" { return KALOS_TOKEN_PLUS; }
         <init> "-" { return KALOS_TOKEN_MINUS; }
         <init> "*" { return KALOS_TOKEN_STAR; }
@@ -144,6 +159,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "^" { return KALOS_TOKEN_BITXOR; }
         <init> "<<" { return KALOS_TOKEN_LEFT_SHIFT; }
         <init> ">>" { return KALOS_TOKEN_RIGHT_SHIFT; }
+
         <init> "." { return KALOS_TOKEN_PERIOD; }
         <init> "!" { return KALOS_TOKEN_BANG; }
         <init> "~" { return KALOS_TOKEN_TILDE; }
