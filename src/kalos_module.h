@@ -25,7 +25,7 @@ typedef enum kalos_export_type {
 } kalos_export_type;
 
 typedef struct kalos_arg {
-    char* name;
+    const char* name;
     kalos_function_type type;
 } kalos_arg;
 
@@ -45,7 +45,7 @@ typedef union kalos_export_entry {
 } kalos_export_entry;
 
 typedef struct kalos_export {
-    char* name;
+    const char* name;
     kalos_export_type type;
     kalos_export_entry entry;
 } kalos_export;
