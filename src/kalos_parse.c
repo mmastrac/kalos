@@ -273,7 +273,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
     struct name_resolution_result res = { .type = NAME_RESOLUTION_NOT_FOUND, 0 };
     const char* token = parse_state->token;
     if (context) {
-        for (int i = 0; ; i++) {
+        for (int i = 0; i < context->export_count ; i++) {
             if (!context->exports[i].name) {
                 break;
             }
@@ -841,8 +841,17 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, 
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;
     for (int i = 0;; i++) {
+        if (!modules[i]->exports) {
+            modules[i]->exports = &modules[i]->exports_arr[0];
+            for (int j = 0; ; j++) {
+                if (!modules[i]->exports[j].name) {
+                    modules[i]->export_count = j;
+                    break;
+                }
+            }
+        }
         if (modules[i]) {
-            if (modules[i]->name == NULL) {
+            if (modules[i]->name == NULL || !modules[i]->name[0] || strcmp(modules[i]->name, "builtin") == 0) {
                 parse_state_data.extra_builtins = modules[i];
                 parse_state_data.extra_builtins_module_index = i;
                 break;

@@ -7,6 +7,8 @@
 #include "../scripting/kalos_idl_compiler.h"
 #include "../scripting/kalos_parse.h"
 
+#define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
+
 int verbose = 0;
 
 int help(const char* message, const char* cmd) {
@@ -31,7 +33,7 @@ const char* read_file_string(const char* input, size_t* n) {
     FILE* fd = fopen(input, "rb");
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
-    char* buf = malloc(size + 1);
+    char* buf = malloc(PAGE_ROUND_UP(size + 1, 16));
     fseek(fd, 0, SEEK_SET);
     fread((void*)buf, size, 1, fd);
     if (n) *n = (size_t)size;
@@ -44,7 +46,7 @@ void* read_file(const char* input, size_t* n) {
     FILE* fd = fopen(input, "rb");
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
-    char* buf = malloc(size);
+    char* buf = malloc(PAGE_ROUND_UP(size, 16));
     fseek(fd, 0, SEEK_SET);
     fread((void*)buf, size, 1, fd);
     if (n) *n = (size_t)size;
@@ -81,7 +83,8 @@ int dump_script(int verbose, const char* input) {
 
 int compile_idl(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
-    kalos_idl_parse_module(input_data);
+    kalos_module_parsed modules = kalos_idl_parse_module(input_data);
+    write_file(output, modules.data, modules.size);
     return 0;
 }
 

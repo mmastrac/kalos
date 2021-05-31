@@ -53,9 +53,11 @@ typedef struct kalos_export {
 typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack);
 
 typedef struct kalos_module {
-    char* name;
+    const char* name;
     kalos_dispatch_fn dispatch;
-    kalos_export exports[];
+    kalos_export* exports;
+    kalos_int export_count;
+    kalos_export exports_arr[];
 } kalos_module;
 
 // Entry macros
@@ -71,7 +73,7 @@ typedef struct kalos_module {
             default: LOG("Invalid dispatch index!"); \
         }\
     } \
-    kalos_module kalos_module_##name_ = { .name=name_str_, .dispatch=kalos_module_dispatch_##name_, .exports={ \
+    kalos_module kalos_module_##name_ = { .name=name_str_, .dispatch=kalos_module_dispatch_##name_, .exports_arr={ \
         KALOS_FOREACH__(KALOS_DEF__, __VA_ARGS__) \
     { .name=NULL } } }
 

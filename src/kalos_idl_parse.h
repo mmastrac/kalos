@@ -3,10 +3,10 @@
 
 typedef struct kalos_idl_callbacks {
     void (*begin_module)(void* context, const char* module);
-    void (*end_module)(void* context, const char* module);
+    void (*end_module)(void* context);
 
     void (*begin_function)(void* context, const char* name);
-    void (*function_arg)(void* context, const char* name, const char* type);
+    void (*function_arg)(void* context, const char* name, const char* type, bool is_varargs);
     void (*end_function)(void* context, const char* name, const char* type, const char* symbol);
 
     void (*constant_symbol)(void* context, const char* name, const char* type, const char* symbol);

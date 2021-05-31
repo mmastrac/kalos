@@ -85,14 +85,14 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             callbacks->begin_function(context, buffers[0]);
             continue;
         }
-        <function> @a word @b ws? ":" ws? @c type @d / ws? ","|")" => fcomma {
-            callbacks->function_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d));
+        <function> @a word @b ws? ":" ws? @c type @d ws? (@e "..." @f)? ws? / ","|")" => fcomma {
+            callbacks->function_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), @e != NULL);
             continue;
         }
         <function> ")" :=> fret
         <fcomma> "," :=> function
         <fcomma> ")" :=> fret
-        <fret> ( ":" @a type @b )? ws? "=" ws? @c word @d ws? ";" => module {
+        <fret> ( ":" ws? @a type @b )? ws? "=" ws? @c word @d ws? ";" => module {
             if (a && b) {
                 copy_string(buffers[1], a, b);
             } else {
@@ -101,7 +101,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             callbacks->end_function(context, buffers[0], buffers[1], copy_string(buffers[2], c, d));
             continue;
         }
-        <module> "}" :=> init
+        <module> "}" => init { callbacks->end_module(context); continue; }
     */
     }
 }
