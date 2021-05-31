@@ -41,10 +41,11 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         re2c:tags:expression = "@@{tag}";
 
         end = "\x00";
-        int = "0" | [1-9][0-9]*;
+        int = "-"? ("0" | [1-9][0-9]*);
+        hex = "-"? "0x" [0-9a-fA-F]+;
         word = [a-zA-Z_][a-zA-Z0-9_]*;
         string = '"' [^"\x00]* '"';
-        const = word | int | string;
+        const = int | hex | string;
         ws = (" " | "\t" | "\r" | "\n")+;
         mode = "read" | "write";
         type = "number" | "string" | "void" | "any" | "object";
@@ -64,12 +65,16 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             );
             continue;
         }
-        <module> "const" ws @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e (const|word|string) @f ws? ";" {
+        <module> "const" ws @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e (const|word) @f ws? ";" {
             copy_string(buffers[2], e, f);
             if (buffers[2][0] == '"') {
                 callbacks->constant_string(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2]);
             } else if (isdigit(buffers[2][0])) {
-                callbacks->constant_number(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), strtol(buffers[2], NULL, 10));
+                if (buffers[2][1] == 'x') {
+                    callbacks->constant_number(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), strtol(buffers[2]+2, NULL, 16));
+                } else {
+                    callbacks->constant_number(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), strtol(buffers[2], NULL, 10));
+                }
             } else {
                 callbacks->constant_symbol(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2]);
             }

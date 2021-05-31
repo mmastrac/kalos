@@ -1,0 +1,35 @@
+var m = "";
+
+handle module(module) {
+    var export;
+
+    # Since we know the items we're resolving ahead of time, we could generate something more
+    # optimal like a binary search or a perfect hash, but for now we'll just strcmp.
+    m += "kalos_resolution_result resolve_{m.name}(const char* name) {{";
+
+    for export in module.exports {
+        m += "\tif (strcmp(name, "{export.name}") == 0) {{\n";
+        
+        m += "\t\tkalos_export export = ";
+        if let entry = export.constant {
+            if let value = entry.number {
+                m += "{{ .type=KALOS_EXPORT_TYPE_CONST_NUMBER, .entry={{ .const_number={value} }} }}";
+            } else if let value = entry.string {
+                m += "{{ .type=KALOS_EXPORT_TYPE_CONST_STRING, .entry={{ .const_string={value} }} }}";
+            }
+        } else if let entry = export.property {
+            if entry.read {
+                
+            } else {
+
+            }
+        } else if let entry = export.function {
+
+        }
+        m += ";\n";
+        m += "\t\treturn export;\n";
+        m += "\t}}\n";
+    }
+
+    m += "}}";
+}

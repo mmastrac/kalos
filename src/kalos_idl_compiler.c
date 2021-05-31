@@ -3,6 +3,14 @@
 #include "kalos_module.h"
 #include "kalos_idl_parse.h"
 
+static const char* kalos_idl_script = "\
+var module = "";\
+\
+handle module {\
+    \
+}\
+"; 
+
 struct kalos_module_builder {
     kalos_export* exports;
     int export_count;
@@ -42,11 +50,11 @@ static kalos_function_type strtotype(const char* s) {
 }
 
 static void begin_module(void* context, const char* module) {
-    printf("module %s\n", module);
+    LOG("module %s", module);
 }
 
 static void end_module(void* context, const char* module) {
-    printf("%s\n", module);
+    LOG("%s", module);
 }
 
 static void begin_function(void* context, const char* name) {
@@ -54,7 +62,7 @@ static void begin_function(void* context, const char* name) {
     new_export(builder);
     current_export(builder)->type = KALOS_EXPORT_TYPE_FUNCTION;
     current_export(builder)->name = strdup(name);
-    printf("fn %s\n", name);
+    LOG("fn %s", name);
 }
 
 static void function_arg(void* context, const char* name, const char* type) {
@@ -62,14 +70,14 @@ static void function_arg(void* context, const char* name, const char* type) {
     int arg = current_export(builder)->entry.function.arg_count++;
     current_export(builder)->entry.function.args[arg].name = strdup(name);
     current_export(builder)->entry.function.args[arg].type = strtotype(type);
-    printf("arg %s %s\n", name, type);
+    LOG("arg %s %s", name, type);
 }
 
 static void end_function(void* context, const char* name, const char* type, const char* symbol) {
     struct kalos_module_builder* builder = context;
     current_export(builder)->entry.function.return_type = strtotype(type);
     current_export(builder)->entry.function.symbol = strdup(symbol);
-    printf("fn %s %s %s\n", name, type, symbol);
+    LOG("fn %s %s %s", name, type, symbol);
 }
 
 static void constant_symbol(void* context, const char* name, const char* type, const char* symbol) {
@@ -82,7 +90,7 @@ static void constant_symbol(void* context, const char* name, const char* type, c
     } else if (strcmp(type, "string") == 0) {
         current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_STRING;
     }
-    printf("const %s %s %s\n", name, type, symbol);
+    LOG("const %s %s %s", name, type, symbol);
 }
 
 static void constant_string(void* context, const char* name, const char* type, const char* string) {
@@ -90,7 +98,7 @@ static void constant_string(void* context, const char* name, const char* type, c
     new_export(builder);
     current_export(builder)->name = strdup(name);
     current_export(builder)->entry.const_string = strdup(string);
-    printf("const %s %s %s\n", name, type, string);
+    LOG("const %s %s %s", name, type, string);
 }
 
 static void constant_number(void* context, const char* name, const char* type, kalos_int number) {
@@ -99,6 +107,7 @@ static void constant_number(void* context, const char* name, const char* type, k
     current_export(builder)->name = strdup(name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_NUMBER;
     current_export(builder)->entry.const_number = number;
+    LOG("const %s %s %d", name, type, number);
 }
 
 static void property(void* context, const char* name, const char* type, const char* mode, const char* symbol) {
@@ -112,7 +121,7 @@ static void property(void* context, const char* name, const char* type, const ch
     } else if (strcmp(mode, "write") == 0) {
         current_export(builder)->type = KALOS_EXPORT_TYPE_PROP_WRITE;
     }
-    printf("prop %s %s %s %s\n", name, type, mode, symbol);
+    LOG("prop %s %s %s %s", name, type, mode, symbol);
 }
 
 int export_compare(const void* v1, const void* v2) {
@@ -141,7 +150,7 @@ kalos_module kalos_idl_parse_module(const char* s) {
     struct kalos_module_builder context = {0};
 
     if (!kalos_idl_parse_callback(s, &context, &callbacks)) {
-        printf("fail!\n");
+        printf("fail!");
     }
     qsort(context.exports, context.export_count, sizeof(context.exports[0]), export_compare);
     for (int i = 0; i < context.export_count; i++) {
