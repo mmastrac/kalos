@@ -34,11 +34,13 @@ typedef struct kalos_function {
     uint8_t arg_count;
     kalos_function_type vararg_type;
     kalos_function_type return_type;
+    const char* symbol;
 } kalos_function;
 
 typedef union kalos_export_entry {
     kalos_int const_number;
     const char* const_string;
+    const char* const_symbol;
     kalos_function function;
 } kalos_export_entry;
 
