@@ -274,6 +274,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
     const char* token = parse_state->token;
     if (context) {
         for (int i = 0; i < context->export_count ; i++) {
+            // TODO: Remove this once we migrate 100% to IDL compiler
             if (!context->exports[i].name) {
                 break;
             }
@@ -841,6 +842,15 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, 
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;
     for (int i = 0;; i++) {
+        if (modules[i]) {
+            if (modules[i]->name == NULL || !modules[i]->name[0] || strcmp(modules[i]->name, "builtin") == 0) {
+                parse_state_data.extra_builtins = modules[i];
+                parse_state_data.extra_builtins_module_index = i;
+            }
+        } else {
+            break;
+        }
+        // TODO: Remove this once we migrate 100% to IDL compiler
         if (!modules[i]->exports) {
             modules[i]->exports = &modules[i]->exports_arr[0];
             for (int j = 0; ; j++) {
@@ -849,15 +859,6 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, 
                     break;
                 }
             }
-        }
-        if (modules[i]) {
-            if (modules[i]->name == NULL || !modules[i]->name[0] || strcmp(modules[i]->name, "builtin") == 0) {
-                parse_state_data.extra_builtins = modules[i];
-                parse_state_data.extra_builtins_module_index = i;
-                break;
-            }
-        } else {
-            break;
         }
     }
 
