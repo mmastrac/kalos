@@ -225,6 +225,47 @@ static kalos_int op_unary_number(kalos_state_internal* state, kalos_op op, kalos
     }
 }
 
+struct sized_iterator_context {
+    kalos_iterable_fn fn;
+    size_t context_size;
+    uint16_t index;
+    uint16_t count;
+};
+
+static kalos_value sized_iternext(kalos_state state, kalos_object* iter, bool* done) {
+    struct sized_iterator_context* sized_context = iter->context;
+    kalos_value value = {0};
+    if (sized_context->index >= sized_context->count) {
+        *done = true;
+        return value;
+    }
+    *done = false;
+    sized_context->fn(state, (uint8_t*)iter->context + sizeof(struct sized_iterator_context), sized_context->index++, &value);
+    return value;
+}
+
+static kalos_object* sized_iterstart(kalos_state state, kalos_object* range) {
+    struct sized_iterator_context* sized_context = range->context;
+    kalos_object* iter = kalos_allocate_object(state, sized_context->context_size);
+    memcpy(iter->context, sized_context, sized_context->context_size);
+    iter->iternext = sized_iternext;
+    return iter;
+}
+
+kalos_object* kalos_allocate_sized_iterable(kalos_state state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count) {
+    // This currently copies the entire context to each iterator which is not as efficient as just
+    // retaining the parent, but that requires a bit more complex code and might be slower overall
+    kalos_object* obj = kalos_allocate_object(state, sizeof(struct sized_iterator_context) + context_size);
+    *context = (uint8_t*)obj->context + sizeof(struct sized_iterator_context);
+    struct sized_iterator_context* sized_context = obj->context;
+    sized_context->count = count;
+    sized_context->index = 0;
+    sized_context->context_size = sizeof(struct sized_iterator_context) + context_size;
+    sized_context->fn = fn;
+    obj->iterstart = sized_iterstart;
+    return obj;
+}
+
 struct kalos_range {
     kalos_int current;
     kalos_int start;
@@ -232,36 +273,17 @@ struct kalos_range {
     kalos_int step;
 };
 
-static kalos_value range_iternext(kalos_state state, kalos_object* iter, bool* done) {
-    struct kalos_range* range_context = (struct kalos_range*)iter->context;
-    kalos_value value = {0};
-    if (range_context->current >= range_context->end) {
-        *done = true;
-        return value;
-    }
-    *done = false;
-    value.type = KALOS_VALUE_NUMBER;
-    value.value.number = range_context->current;
-    range_context->current += range_context->step;
-    LOG("range %d %d (curr %d)", range_context->start, range_context->end, range_context->current);
-    return value;
-}
-
-static kalos_object* range_iterstart(kalos_state state, kalos_object* range) {
-    struct kalos_range* range_context = (struct kalos_range*)range->context;
-    kalos_object* iter = kalos_allocate_object(state, sizeof(struct kalos_range));
-    *(struct kalos_range*)iter->context = *range_context;
-    iter->iternext = range_iternext;
-    return iter;
+static void range_iterfunc(kalos_state state, void* context, uint16_t index, kalos_value* value) {
+    kalos_int* range_spec = context;
+    value->type = KALOS_VALUE_NUMBER;
+    value->value.number = range_spec[0] + range_spec[1] * index;
 }
 
 static kalos_object* op_range(kalos_state_internal* state, kalos_op op, kalos_int start, kalos_int end) {
-    kalos_object* range = kalos_allocate_object(state, sizeof(struct kalos_range));
-    struct kalos_range* range_context = (struct kalos_range*)range->context;
-    range_context->start = start;
-    range_context->end = end;
-    range_context->step = 1;
-    range->iterstart = range_iterstart;
+    kalos_int* range_spec;
+    kalos_object* range = kalos_allocate_sized_iterable(state, range_iterfunc, sizeof(kalos_int[2]), (void**)&range_spec, end <= start ? 0 : end - start);
+    range_spec[0] = start;
+    range_spec[1] = 1; // step (TODO)
     return range;
 }
 

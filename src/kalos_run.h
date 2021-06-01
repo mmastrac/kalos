@@ -20,3 +20,6 @@ void kalos_trigger(kalos_state state, char* handler);
 void kalos_run_free(kalos_state state);
 
 kalos_object* kalos_allocate_object(kalos_state state, size_t context_size);
+
+typedef void (*kalos_iterable_fn)(kalos_state state, void* context, uint16_t index, kalos_value* output);
+kalos_object* kalos_allocate_sized_iterable(kalos_state state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
