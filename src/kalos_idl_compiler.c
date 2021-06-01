@@ -270,12 +270,10 @@ kalos_module** kalos_idl_unpack_module(uint8_t* packed_module) {
 
 static const char IDL_COMPILER_SCRIPT[] = {
     #include "kalos_idl_compiler.kalos.inc"
-    , 0
 };
 
 static const char IDL_COMPILER_IDL[] = {
-    #include "kalos_idl_compiler.idl.inc"
-    , 0
+    #include "kalos_idl_compiler.kidl.inc"
 };
 
 static kalos_module* script_current_module;
