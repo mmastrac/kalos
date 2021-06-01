@@ -181,6 +181,18 @@
       <key>patterns</key>
       <array> 
         <dict>
+          <key>match</key>
+          <string>({{)</string>
+          <key>name</key>
+          <string>string.kalos</string>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>(}})</string>
+          <key>name</key>
+          <string>string.kalos</string>
+        </dict>
+        <dict>
           <key>begin</key>
           <string>({)</string>
           <key>beginCaptures</key>
@@ -211,7 +223,7 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>(\\(?:[\x{005c}\x{0022}nr]))</string>
+          <string>(\\(?:[\x{005c}\x{0022}nrt]))</string>
           <key>name</key>
           <string>string.kalos</string>
         </dict>
