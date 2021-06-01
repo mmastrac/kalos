@@ -256,7 +256,9 @@ kalos_object* kalos_allocate_sized_iterable(kalos_state state, kalos_iterable_fn
     // This currently copies the entire context to each iterator which is not as efficient as just
     // retaining the parent, but that requires a bit more complex code and might be slower overall
     kalos_object* obj = kalos_allocate_object(state, sizeof(struct sized_iterator_context) + context_size);
-    *context = (uint8_t*)obj->context + sizeof(struct sized_iterator_context);
+    if (context || context_size) {
+        *context = (uint8_t*)obj->context + sizeof(struct sized_iterator_context);
+    }
     struct sized_iterator_context* sized_context = obj->context;
     sized_context->count = count;
     sized_context->index = 0;

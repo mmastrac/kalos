@@ -256,16 +256,16 @@ static kalos_module* script_current_module;
 static kalos_export* script_current_export;
 static kalos_int script_current_fn_index;
 
-void dispatch_print(kalos_state state, int function, kalos_stack* stack) {
-    printf("%s", kalos_string_c(state, peek(stack, 0)->value.string));
-    if (function == 1) {
-        putchar('\n');
-    }
-    pop(stack);
+void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
+    printf("%s", kalos_string_c(state, *string));
 }
 
-void dispatch_module(kalos_state state, int function, kalos_stack* stack) {
-    push_string(stack, kalos_string_allocate(state, script_current_module->name));
+void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
+    printf("%s\n", kalos_string_c(state, *string));
+}
+
+kalos_string kalos_idl_module_name(kalos_state state) {
+    return kalos_string_allocate(state, script_current_module->name);
 }
 
 char* function_type_to_string(kalos_function_type type) {
@@ -288,33 +288,54 @@ char* function_type_to_string(kalos_function_type type) {
     return "";
 }
 
+static void iter_function_arg(kalos_state state, void* context, uint16_t index, kalos_value* value) {
+    value->type = KALOS_VALUE_STRING;
+    value->value.string = kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[index].type));
+}
+
+kalos_int kalos_idl_function_id(kalos_state state) { return script_current_fn_index; }
+kalos_string kalos_idl_function_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
+kalos_string kalos_idl_function_return_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
+kalos_string kalos_idl_function_name(kalos_state state) { return kalos_string_allocate(state, script_current_export->name); }
+kalos_string kalos_idl_function_realname(kalos_state state) { return kalos_string_allocate(state, script_current_export->entry.function.symbol); }
+kalos_object* kalos_idl_function_args(kalos_state state) { return kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count); }
+kalos_int kalos_idl_function_arg_count(kalos_state state) { return script_current_export->entry.function.arg_count; }
+kalos_string kalos_idl_function_varargs(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
+kalos_string kalos_idl_function_arg_type(kalos_state state, kalos_int arg) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[arg].type)); }
+
 void dispatch_function(kalos_state state, int function, kalos_stack* stack) {
     switch (function) {
         case 0:
             push_number(stack, script_current_export->entry.function.arg_count);
             break;
         case 1:
-            push_number(stack, 1);
+            push_string(stack, kalos_string_allocate(state, "void"));
             break;
         case 2:
-            push_number(stack, script_current_fn_index);
+            // TODO: This should use a context, but we'll assume only one of these are in flight at any time
+            push_object(stack, kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count));
             break;
         case 3:
-            push_string(stack, kalos_string_allocate(state, script_current_export->name));
+            push_number(stack, script_current_fn_index);
             break;
         case 4:
-            push_string(stack, kalos_string_allocate(state, script_current_export->entry.function.symbol));
+            push_string(stack, kalos_string_allocate(state, script_current_export->name));
             break;
         case 5:
-            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)));
+            push_string(stack, kalos_string_allocate(state, script_current_export->entry.function.symbol));
             break;
         case 6:
+            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)));
             break;
         case 7:
+            break;
+        case 8:
             push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)));
             break;
     }
 }
+
+#include "kalos_idl_compiler_dispatch.inc"
 
 void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     kalos_module** modules = kalos_idl_unpack_module(parsed_module.data);
@@ -330,9 +351,9 @@ void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
         NULL,
     };
     kalos_dispatch_fn dispatch[] = {
-        dispatch_print,
-        dispatch_module,
-        dispatch_function,
+        kalos_module_dispatch_builtin,
+        kalos_module_dispatch_module,
+        kalos_module_dispatch_function,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
     for (int i = 0;; i++) {

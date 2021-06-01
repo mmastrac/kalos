@@ -16,4 +16,5 @@ module function {
     prop(read) args: object = kalos_idl_function_args;
     prop(read) arg_count: number = kalos_idl_function_arg_count;
     prop(read) varargs: string = kalos_idl_function_varargs;
+    fn arg_type(index: number): string = kalos_idl_function_arg_type;
 }

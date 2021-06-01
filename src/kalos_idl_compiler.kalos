@@ -13,9 +13,11 @@ handle begin_module {
 
 #handle function(function) {
 handle function {
+    println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
     println("\tcase {function.id}: {{");
     println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
     println("\t\tint arg_count = {function.arg_count};");
+    var arg_offset = 1;
     if (function.varargs == "void") {
         println("\t\tkalos_stack_fixup_no_varargs(arg_count, stack);");
     } else {
@@ -27,20 +29,22 @@ handle function {
     } else if (function.return_type == "number" || function.return_type == "bool") {
         print("kalos_int x = ");
     } else if (function.return_type == "object") {
-        print("kalos_object x = ");
+        print("kalos_object* x = ");
     }
     var arg;
+    var index = 0;
     print("{function.realname}(state");
-    #for arg in function.args {
-    #    print(", ");
-    #    if (arg.type == "string") {
-    #        print("&peek(stack, -n-1)->value.string");
-    #    } else if (arg.type == "number" || arg.type == "bool") {
-    #        print("peek(stack, -n-1)->value.number");
-    #    } else if (arg.type == "object") {
-    #        print("peek(stack, -n-1)->value.object");
-    #    }
-    #}
+    for arg in function.args {
+        print(", ");
+        if (arg == "string") {
+            print("&peek(stack, {-index-arg_offset})->value.string");
+        } else if (arg == "number" || arg == "bool") {
+            print("peek(stack, {-index-arg_offset})->value.number");
+        } else if (arg == "object") {
+            print("peek(stack, {-index-arg_offset})->value.object");
+        }
+        index += 1;
+    }
     if (function.varargs != "void") {
         print(", peek(stack, -arg_count-ofs-1)->value.number, peek(stack, -arg_count-1)");
     }
