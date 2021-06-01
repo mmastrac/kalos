@@ -316,38 +316,6 @@ kalos_int kalos_idl_function_arg_count(kalos_state state) { return script_curren
 kalos_string kalos_idl_function_varargs(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
 kalos_string kalos_idl_function_arg_type(kalos_state state, kalos_int arg) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[arg].type)); }
 
-void dispatch_function(kalos_state state, int function, kalos_stack* stack) {
-    switch (function) {
-        case 0:
-            push_number(stack, script_current_export->entry.function.arg_count);
-            break;
-        case 1:
-            push_string(stack, kalos_string_allocate(state, "void"));
-            break;
-        case 2:
-            // TODO: This should use a context, but we'll assume only one of these are in flight at any time
-            push_object(stack, kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count));
-            break;
-        case 3:
-            push_number(stack, script_current_fn_index);
-            break;
-        case 4:
-            push_string(stack, kalos_string_allocate(state, script_current_export->name));
-            break;
-        case 5:
-            push_string(stack, kalos_string_allocate(state, script_current_export->entry.function.symbol));
-            break;
-        case 6:
-            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)));
-            break;
-        case 7:
-            break;
-        case 8:
-            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)));
-            break;
-    }
-}
-
 #include "kalos_idl_compiler_dispatch.inc"
 
 void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
