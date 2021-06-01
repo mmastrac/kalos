@@ -1,6 +1,8 @@
 #include <stdbool.h>
 
 #include "kalos_module.h"
+#include "kalos_parse.h"
+#include "kalos_run.h"
 #include "kalos_idl_compiler.h"
 #include "kalos_idl_parse.h"
 
@@ -164,7 +166,7 @@ static void property(void* context, const char* name, const char* type, const ch
     new_export(builder);
     current_export(builder)->name = strpack(builder, name);
     current_export(builder)->entry.function.symbol = strpack(builder, symbol);
-        current_export(builder)->entry.function.return_type = strtotype(type);
+    current_export(builder)->entry.function.return_type = strtotype(type);
     if (strcmp(mode, "read") == 0) {
         current_export(builder)->type = KALOS_EXPORT_TYPE_PROP_READ;
     } else if (strcmp(mode, "write") == 0) {
@@ -225,6 +227,11 @@ kalos_module** kalos_idl_unpack_module(uint8_t* packed_module) {
                 case KALOS_EXPORT_TYPE_CONST_STRING:
                     strunpack(strings, &e[j].entry.const_string);
                     break;
+                case KALOS_EXPORT_TYPE_FUNCTION:
+                case KALOS_EXPORT_TYPE_PROP_READ:
+                case KALOS_EXPORT_TYPE_PROP_WRITE:
+                    strunpack(strings, &e[j].entry.function.symbol);
+                    break;
                 default:
                     break;
             }
@@ -233,4 +240,117 @@ kalos_module** kalos_idl_unpack_module(uint8_t* packed_module) {
     }
     output[header->module_count] = NULL;
     return output;
+}
+
+static const char IDL_COMPILER_SCRIPT[] = {
+    #include "kalos_idl_compiler.kalos.inc"
+    , 0
+};
+
+static const char IDL_COMPILER_IDL[] = {
+    #include "kalos_idl_compiler.idl.inc"
+    , 0
+};
+
+static kalos_module* script_current_module;
+static kalos_export* script_current_export;
+static kalos_int script_current_fn_index;
+
+void dispatch_print(kalos_state state, int function, kalos_stack* stack) {
+    printf("%s", kalos_string_c(state, peek(stack, 0)->value.string));
+    if (function == 1) {
+        putchar('\n');
+    }
+    pop(stack);
+}
+
+void dispatch_module(kalos_state state, int function, kalos_stack* stack) {
+    push_string(stack, kalos_string_allocate(state, script_current_module->name));
+}
+
+char* function_type_to_string(kalos_function_type type) {
+    switch (type) {
+        case FUNCTION_TYPE_ANY:
+            return "any";
+        case FUNCTION_TYPE_BOOL:
+            return "bool";
+        case FUNCTION_TYPE_NUMBER:
+            return "number";
+        case FUNCTION_TYPE_OBJECT:
+            return "object";
+        case FUNCTION_TYPE_STRING:
+            return "string";
+        case FUNCTION_TYPE_VARARGS:
+            return "varargs";
+        case FUNCTION_TYPE_VOID:
+            return "void";
+    }
+    return "";
+}
+
+void dispatch_function(kalos_state state, int function, kalos_stack* stack) {
+    switch (function) {
+        case 0:
+            push_number(stack, script_current_export->entry.function.arg_count);
+            break;
+        case 1:
+            push_number(stack, 1);
+            break;
+        case 2:
+            push_number(stack, script_current_fn_index);
+            break;
+        case 3:
+            push_string(stack, kalos_string_allocate(state, script_current_export->name));
+            break;
+        case 4:
+            push_string(stack, kalos_string_allocate(state, script_current_export->entry.function.symbol));
+            break;
+        case 5:
+            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)));
+            break;
+        case 6:
+            break;
+        case 7:
+            push_string(stack, kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)));
+            break;
+    }
+}
+
+void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
+    kalos_module** modules = kalos_idl_unpack_module(parsed_module.data);
+    kalos_script script = {0};
+    script.script_buffer_size = 2048;
+    script.script_ops = malloc(2048);
+    kalos_module_parsed parsed = kalos_idl_parse_module(IDL_COMPILER_IDL);
+    kalos_module** modules_for_script = kalos_idl_unpack_module(parsed.data);
+    kalos_parse(IDL_COMPILER_SCRIPT, modules_for_script, &script);
+    kalos_fn fns = {
+        malloc,
+        free,
+        NULL,
+    };
+    kalos_dispatch_fn dispatch[] = {
+        dispatch_print,
+        dispatch_module,
+        dispatch_function,
+    };
+    kalos_state state = kalos_init(&script, dispatch, &fns);
+    for (int i = 0;; i++) {
+        if (!modules[i]) {
+            break;
+        }
+        script_current_module = modules[i];
+        kalos_trigger(state, "begin_module");
+        for (int j = 0; j < modules[i]->export_count; j++) {
+            if (modules[i]->exports[j].type != KALOS_EXPORT_TYPE_FUNCTION 
+                && modules[i]->exports[j].type != KALOS_EXPORT_TYPE_PROP_READ
+                && modules[i]->exports[j].type != KALOS_EXPORT_TYPE_PROP_WRITE) {
+                continue;
+            }
+            script_current_export = &modules[i]->exports[j];
+            script_current_fn_index = j;
+            kalos_trigger(state, "function");
+        }
+        kalos_trigger(state, "end_module");
+    }
 }

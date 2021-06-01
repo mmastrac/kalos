@@ -1,0 +1,19 @@
+module builtin {
+    fn println(s: string) = kalos_idl_compiler_println;
+    fn print(s: string) = kalos_idl_compiler_print;
+}
+
+module module {
+    prop(read) name: string = kalos_idl_module_name;
+}
+
+module function {
+    prop(read) id: number = kalos_idl_function_id;
+    prop(read) type: string = kalos_idl_function_type;
+    prop(read) return_type: string = kalos_idl_function_return_type;
+    prop(read) name: string = kalos_idl_function_name;
+    prop(read) realname: string = kalos_idl_function_realname;
+    prop(read) args: object = kalos_idl_function_args;
+    prop(read) arg_count: number = kalos_idl_function_arg_count;
+    prop(read) varargs: string = kalos_idl_function_varargs;
+}

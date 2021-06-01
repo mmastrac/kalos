@@ -22,10 +22,11 @@ int help(const char* message, const char* cmd) {
         printf("Error: %s\n\n", message);
     }
     printf("Usage:\n"
-        "  %s [-v] compile idl-file source-file kalosb-file\n"
-        "  %s [-v] dump kalosb-file\n"
-        "  %s [-v] idl source-file idl-file\n",
-        cmd, cmd, cmd);
+        "  %s [-v] compile idl-file source-file compiled-file\n"
+        "  %s [-v] dump compiled-file\n"
+        "  %s [-v] idl idl-source-file idl-file\n"
+        "  %s [-v] dispatch idl-source-file c-file\n",
+        cmd, cmd, cmd, cmd);
     return 1;
 }
 
@@ -88,6 +89,14 @@ int compile_idl(int verbose, const char* input, const char* output) {
     return 0;
 }
 
+int compile_dispatch(int verbose, const char* input, const char* output) {
+    const char* input_data = read_file_string(input, NULL);
+    kalos_module_parsed modules = kalos_idl_parse_module(input_data);
+    kalos_idl_generate_dispatch(modules);
+    // write_file(output, modules.data, modules.size);
+    return 0;
+}
+
 void log_printf(const char* fmt, ...) {
     if (verbose) {
         va_list args;
@@ -122,6 +131,13 @@ int main(int argc, const char** argv) {
         const char* input = argv[idx++];
         const char* output = argv[idx++];
         return compile_idl(verbose, input, output);
+    } else if (strcmp(mode, "dispatch") == 0) {
+        if (argc - idx != 2) {
+            return help("not enough arguments to dispatch", argv[0]);
+        }
+        const char* input = argv[idx++];
+        const char* output = argv[idx++];
+        return compile_dispatch(verbose, input, output);
     } else if (strcmp(mode, "compile") == 0) {
         if (argc - idx != 3) {
             return help("not enough arguments to compile", argv[0]);

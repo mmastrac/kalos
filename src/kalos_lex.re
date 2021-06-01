@@ -76,10 +76,13 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <instring,instringmulti> '\\"' { *output++ = '"'; continue; }
         <instring,instringmulti> "\\n" { *output++ = '\n'; continue; }
         <instring,instringmulti> "\\r" { *output++ = '\r'; continue; }
+        <instring,instringmulti> "\\t" { *output++ = '\t'; continue; }
         <instring> [\n\r] { return KALOS_TOKEN_ERROR; }
         <instringmulti> @ch [\n\r] { *output++ = *ch; continue; }
         <instring,instringmulti> "\\" [a-z] { return KALOS_TOKEN_ERROR; }
-        <instring,instringmulti> "{" {
+        <instring,instringmulti> "{{" { *output++ = '{'; continue; }
+        <instring,instringmulti> "}}" { *output++ = '}'; continue; }
+        <instring,instringmulti> "{" \ [^{] {
             state->string_interp_state = STRING_STATE_EXPR;
             state->string_interp_mode = c;
             *output++ = 0;

@@ -4,5 +4,6 @@ handle init {
     print("|{123:.<10d}|\n");
     print("{1234:x}");
     print("{1234}");
+    print("{{1}}");
     print("\n");
 }

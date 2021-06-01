@@ -8,3 +8,4 @@ typedef struct kalos_module_parsed {
 
 kalos_module_parsed kalos_idl_parse_module(const char* s);
 kalos_module** kalos_idl_unpack_module(uint8_t* data);
+void kalos_idl_generate_dispatch(kalos_module_parsed);
