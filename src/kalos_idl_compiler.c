@@ -70,6 +70,17 @@ static inline void strunpack(const char* strings, const char** s) {
     *s = (strings + (off_t)*s);
 }
 
+static char* unstring(char* s) {
+    int len = strlen(s);
+    int out = 0;
+    for (int i = 1; i < len - 1; i++) {
+        s[out] = s[i];
+        out++;
+    }
+    s[out] = 0;
+    return s;
+}
+
 static kalos_function_type strtotype(const char* s) {
     if (strcmp(s, "number") == 0) {
         return FUNCTION_TYPE_NUMBER;
@@ -95,7 +106,7 @@ static kalos_function_type strtotype(const char* s) {
 
 static void prefix(void* context, const char* prefix) {
     struct kalos_module_builder* builder = context;
-    builder->prefix = strpack(builder, prefix);
+    builder->prefix = strpack(builder, unstring((char*)prefix));
 }
 
 static void begin_module(void* context, const char* module) {
@@ -155,7 +166,8 @@ static void constant_string(void* context, const char* name, const char* type, c
     struct kalos_module_builder* builder = context;
     new_export(builder);
     current_export(builder)->name = strpack(builder, name);
-    current_export(builder)->entry.const_string = strpack(builder, s);
+    current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_STRING;
+    current_export(builder)->entry.const_string = strpack(builder, unstring((char*)s));
     LOG("const %s %s %s", name, type, s);
 }
 
