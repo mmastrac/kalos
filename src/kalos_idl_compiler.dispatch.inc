@@ -1,4 +1,4 @@
-void kalos_module_dispatch_builtin(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=0 name=print arg_count=1 symbol=kalos_idl_compiler_print
 	case 0: {
@@ -21,7 +21,7 @@ void kalos_module_dispatch_builtin(kalos_state state, int function, kalos_stack*
 	}
 }
 
-void kalos_module_dispatch_module(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=0 name=name arg_count=0 symbol=kalos_idl_module_name
 	case 0: {
@@ -46,7 +46,7 @@ void kalos_module_dispatch_module(kalos_state state, int function, kalos_stack* 
 	}
 }
 
-void kalos_module_dispatch_function(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_function(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=0 name=arg_count arg_count=0 symbol=kalos_idl_function_arg_count
 	case 0: {
@@ -118,18 +118,8 @@ void kalos_module_dispatch_function(kalos_state state, int function, kalos_stack
 		push_string(stack, x);
 		break;
 	}
-	// id=7 name=type arg_count=0 symbol=kalos_idl_function_type
+	// id=7 name=varargs arg_count=0 symbol=kalos_idl_function_varargs
 	case 7: {
-		LOG("Invoke %s", "type");
-		int arg_count = 0;
-		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_string x = kalos_idl_function_type(state);
-		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
-		push_string(stack, x);
-		break;
-	}
-	// id=8 name=varargs arg_count=0 symbol=kalos_idl_function_varargs
-	case 8: {
 		LOG("Invoke %s", "varargs");
 		int arg_count = 0;
 		kalos_stack_fixup_no_varargs(arg_count, stack);

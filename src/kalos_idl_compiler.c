@@ -317,7 +317,6 @@ kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allo
 kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix); }
 
 kalos_int kalos_idl_function_id(kalos_state state) { return script_current_fn_index; }
-kalos_string kalos_idl_function_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
 kalos_string kalos_idl_function_return_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
 kalos_string kalos_idl_function_name(kalos_state state) { return kalos_string_allocate(state, script_current_export->name); }
 kalos_string kalos_idl_function_realname(kalos_state state) { return kalos_string_allocate(state, script_current_export->entry.function.symbol); }
@@ -326,7 +325,7 @@ kalos_int kalos_idl_function_arg_count(kalos_state state) { return script_curren
 kalos_string kalos_idl_function_varargs(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
 kalos_string kalos_idl_function_arg_type(kalos_state state, kalos_int arg) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[arg].type)); }
 
-#include "kalos_idl_compiler_dispatch.inc"
+#include "kalos_idl_compiler.dispatch.inc"
 
 void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     kalos_module** modules = kalos_idl_unpack_module(parsed_module.data);
@@ -342,9 +341,9 @@ void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
         NULL,
     };
     kalos_dispatch_fn dispatch[] = {
-        kalos_module_dispatch_builtin,
-        kalos_module_dispatch_module,
-        kalos_module_dispatch_function,
+        kalos_module_idl_builtin,
+        kalos_module_idl_module,
+        kalos_module_idl_function,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
     for (int i = 0;; i++) {

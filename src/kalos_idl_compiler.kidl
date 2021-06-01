@@ -1,3 +1,5 @@
+prefix "kalos_module_idl_";
+
 module builtin {
     fn println(s: string) = kalos_idl_compiler_println;
     fn print(s: string) = kalos_idl_compiler_print;
@@ -10,7 +12,6 @@ module module {
 
 module function {
     prop(read) id: number = kalos_idl_function_id;
-    prop(read) type: string = kalos_idl_function_type;
     prop(read) return_type: string = kalos_idl_function_return_type;
     prop(read) name: string = kalos_idl_function_name;
     prop(read) realname: string = kalos_idl_function_realname;
