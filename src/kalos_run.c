@@ -26,7 +26,7 @@ typedef struct kalos_state_internal {
     kalos_mem_free_fn free; // part of public interface
     kalos_script* script;
     kalos_fn* fns;
-    kalos_module** modules;
+    kalos_dispatch_fn* modules;
     kalos_stack stack;
     kalos_value globals[KALOS_VAR_SLOT_SIZE];
     kalos_value locals[KALOS_VAR_SLOT_SIZE];
@@ -375,7 +375,7 @@ static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int s
     return kalos_value_clone(state, &storage[slot]);
 }
 
-kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* fns) {
+kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_fn* fns) {
     kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
     if (!state) {
         fns->error("malloc");
@@ -450,7 +450,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
             case KALOS_OP_CALL: {
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
-                state->modules[module]->dispatch(state_, export, &state->stack);
+                state->modules[module](state_, export, &state->stack);
                 break;
             }
             case KALOS_OP_GETPROP:

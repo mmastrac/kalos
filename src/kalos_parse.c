@@ -274,10 +274,6 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
     const char* token = parse_state->token;
     if (context) {
         for (int i = 0; i < context->export_count ; i++) {
-            // TODO: Remove this once we migrate 100% to IDL compiler
-            if (!context->exports[i].name) {
-                break;
-            }
             if (strcmp(context->exports[i].name, token) == 0) {
                 res.export_module_index = module_index;
                 switch (context->exports[i].type) {
@@ -849,16 +845,6 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, 
             }
         } else {
             break;
-        }
-        // TODO: Remove this once we migrate 100% to IDL compiler
-        if (!modules[i]->exports) {
-            modules[i]->exports = &modules[i]->exports_arr[0];
-            for (int j = 0; ; j++) {
-                if (!modules[i]->exports[j].name) {
-                    modules[i]->export_count = j;
-                    break;
-                }
-            }
         }
     }
 

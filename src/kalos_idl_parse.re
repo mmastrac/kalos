@@ -65,7 +65,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             );
             continue;
         }
-        <module> "const" ws @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e (const|word) @f ws? ";" {
+        <module> "const" ws @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e const @f ws? ";" {
             copy_string(buffers[2], e, f);
             if (buffers[2][0] == '"') {
                 callbacks->constant_string(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2]);
@@ -75,8 +75,6 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
                 } else {
                     callbacks->constant_number(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), strtol(buffers[2], NULL, 10));
                 }
-            } else {
-                callbacks->constant_symbol(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2]);
             }
             continue;
         }
@@ -86,7 +84,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             continue;
         }
         <function> @a word @b ws? ":" ws? @c type @d ws? (@e "..." @f)? ws? / ","|")" => fcomma {
-            callbacks->function_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), @e != NULL);
+            callbacks->function_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), e != NULL);
             continue;
         }
         <function> ")" :=> fret

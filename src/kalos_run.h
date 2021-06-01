@@ -15,7 +15,7 @@ typedef struct kalos_fn {
 typedef struct kalos_script kalos_script;
 typedef struct kalos_module kalos_module;
 kalos_state kalos_init_for_test(kalos_fn* fns);
-kalos_state kalos_init(kalos_script* script, kalos_module** modules, kalos_fn* fns);
+kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_fn* fns);
 void kalos_trigger(kalos_state state, char* handler);
 void kalos_run_free(kalos_state state);
 

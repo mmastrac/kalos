@@ -111,7 +111,7 @@ static void end_module(void* context) {
     memcpy((uint8_t*)module + sizeof(kalos_module), builder->exports, builder->export_count * sizeof(kalos_export));
     free(builder->exports);
     builder->exports = 0;
-    LOG("%s", module);
+    LOG("end");
 }
 
 static void begin_function(void* context, const char* name) {
@@ -140,19 +140,6 @@ static void end_function(void* context, const char* name, const char* type, cons
     current_export(builder)->entry.function.return_type = strtotype(type);
     current_export(builder)->entry.function.symbol = strpack(builder, symbol);
     LOG("fn %s %s %s", name, type, symbol);
-}
-
-static void constant_symbol(void* context, const char* name, const char* type, const char* symbol) {
-    struct kalos_module_builder* builder = context;
-    new_export(builder);
-    current_export(builder)->name = strpack(builder, name);
-    current_export(builder)->entry.const_symbol = strpack(builder, symbol); 
-    if (strcmp(type, "number") == 0) {
-        current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_NUMBER;
-    } else if (strcmp(type, "string") == 0) {
-        current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_STRING;
-    }
-    LOG("const %s %s %s", name, type, symbol);
 }
 
 static void constant_string(void* context, const char* name, const char* type, const char* s) {
@@ -193,7 +180,6 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
         begin_function,
         function_arg,
         end_function,
-        constant_symbol,
         constant_string,
         constant_number,
         property

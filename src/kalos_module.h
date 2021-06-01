@@ -40,7 +40,6 @@ typedef struct kalos_function {
 typedef union kalos_export_entry {
     kalos_int const_number;
     const char* const_string;
-    const char* const_symbol;
     kalos_function function;
 } kalos_export_entry;
 
@@ -54,15 +53,11 @@ typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* 
 
 typedef struct kalos_module {
     const char* name;
-    kalos_dispatch_fn dispatch;
     kalos_export* exports;
     kalos_int export_count;
-    kalos_export exports_arr[];
 } kalos_module;
 
 // Entry macros
-#define KALOS_MODULE_FORWARD_DEF(x) extern kalos_module kalos_module_##x
-#define KALOS_MODULE_REF(x) (&kalos_module_##x)
 #define KALOS_MODULE_BUILTIN(...) KALOS_MODULE__(builtin, NULL, __VA_ARGS__)
 #define KALOS_MODULE(name, ...) KALOS_MODULE__(name, #name, __VA_ARGS__)
 #define KALOS_MODULE__(name_, name_str_, ...) \
@@ -73,9 +68,7 @@ typedef struct kalos_module {
             default: LOG("Invalid dispatch index!"); \
         }\
     } \
-    kalos_module kalos_module_##name_ = { .name=name_str_, .dispatch=kalos_module_dispatch_##name_, .exports_arr={ \
-        KALOS_FOREACH__(KALOS_DEF__, __VA_ARGS__) \
-    { .name=NULL } } }
+    static int kalos_module_marker_##name_
 
 // https://github.com/pfultz2/Cloak/wiki/C-Preprocessor-tricks,-tips,-and-idioms
 #define KM__CHECK_N(x, n, ...) n
@@ -101,26 +94,13 @@ typedef struct kalos_module {
     X(0,_0) X(1,_1) X(2,_2) X(3,_3) X(4,_4) X(5,_5) X(6,_6) X(7,_7) X(8,_8) X(9,_9) X(10,_10) X(11,_11) X(12,_12) X(13,_13) X(14,_14) X(15,_15) X(16,_16) X(17,_17) X(18,_18) X(19,_19) X(20,_20) X(21,_21) X(22,_22) X(23,_23) X(24,_24) X(25,_25) X(26,_26) X(27,_27) X(28,_28) X(29,_29) X(30,_30) X(31,_31) X(32,_32) X(33,_33) X(34,_34) X(35,_35) X(36,_36) X(37,_37) X(38,_38) X(39,_39) X(40,_40) X(41,_41) X(42,_42) X(43,_43) X(44,_44) X(45,_45) X(46,_46) X(47,_47) X(48,_48) X(49,_49) X(50,_50) X(51,_51) X(52,_52) X(53,_53) X(54,_54) X(55,_55) X(56,_56) X(57,_57) X(58,_58) X(59,_59) X(60,_60) X(61,_61) X(62,_62) X(63,_63) X(64,_64) X(65,_65) X(66,_66) X(67,_67) X(68,_68) X(69,_69) X(70,_70) X(71,_71) X(72,_72) X(73,_73) X(74,_74) X(75,_75) X(76,_76) X(77,_77) X(78,_78) X(79,_79) X(80,_80) X(81,_81) X(82,_82) X(83,_83) X(84,_84) X(85,_85) X(86,_86) X(87,_87) X(88,_88) X(89,_89) X(90,_90) X(91,_91) X(92,_92) X(93,_93) X(94,_94) X(95,_95) X(96,_96) X(97,_97) X(98,_98) X(99,_99)
 
 // Dispatch
-#define KALOS_DEF__(a,b) KALOS_CONCAT__(KALOS_DEF__, KM__PRIMITIVE_COMPARE(b,))(b)
-#define KALOS_DEF__0(x) KALOS_DEF__##x
-#define KALOS_DEF__1(...)
 #define KALOS_SHIM__(a,b) KALOS_CONCAT__(KALOS_SHIM__, KM__PRIMITIVE_COMPARE(b,))(a, b)
 #define KALOS_SHIM__0(index, x) case index: LOG("Index %d", index); { KALOS_SHIM__##x } break;
 #define KALOS_SHIM__1(...)
 
-// Definition phase
-#define KALOS_DEF__PROP_READ(fn, name_, typ) \
-    { .name=#name_, .type= KALOS_EXPORT_TYPE_PROP_READ, .entry={ .function={ .return_type=FUNCTION_TYPE_##typ } } },
-#define KALOS_DEF__PROP_WRITE(fn, name_, typ) \
-    { .name=#name_, .type= KALOS_EXPORT_TYPE_PROP_WRITE, .entry={ .function={ .return_type=FUNCTION_TYPE_##typ } } },
-#define KALOS_DEF__CONST(x, typ, y) \
-    { .name=#x, .type= KALOS_EXPORT_TYPE_CONST_##typ, .entry={ . KALOS_CONST_FIELD__##typ =y } },
 #define KALOS_ARG_COUNT__(a, b, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, ...) \
     (8-(KM__PRIMITIVE_COMPARE(_0,)+KM__PRIMITIVE_COMPARE(_2,)+KM__PRIMITIVE_COMPARE(_4,)+KM__PRIMITIVE_COMPARE(_6,)\
     +KM__PRIMITIVE_COMPARE(_8,)+KM__PRIMITIVE_COMPARE(_10,)+KM__PRIMITIVE_COMPARE(_12,)+KM__PRIMITIVE_COMPARE(_14,)))
-#define KALOS_DEF__FUNCTION(realname_, ...) KALOS_FUNCTION_DEF__(0,,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,), realname_, __VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
-#define KALOS_DEF__FUNCTION_VARARGS(typ_, realname_, ...) KALOS_FUNCTION_DEF__(1,typ_,KALOS_ARG_COUNT__(__VA_ARGS__,,,,,,,,,,,,,,,,,,,,,),realname_, __VA_ARGS__,,,,,,,,,,,,,,,,,,,,,)
-#define KALOS_DEF__DOC(...)
 
 // Shim phase
 #define KALOS_SHIM__PROP_READ(fn, name_, typ) LOG("propread %s", #name_); KALOS_PUSH_##typ(fn( state ) )
@@ -132,18 +112,6 @@ typedef struct kalos_module {
 
 #define KALOS_CONST_FIELD__NUMBER const_number
 #define KALOS_CONST_FIELD__STRING const_string
-
-#define KALOS_ARG__(a,b) KALOS_CONCAT__(KALOS_ARG__, KM__PRIMITIVE_COMPARE(b,))(a, b)
-#define KALOS_ARG__0(name_, type_) { .name=#name_, .type=FUNCTION_TYPE_##type_ },
-#define KALOS_ARG__1(...) {0},
-
-#define KALOS_VARARG_DEF_0(...)
-#define KALOS_VARARG_DEF_1(typ_) .vararg_type=FUNCTION_TYPE_##typ_
-
-#define KALOS_FUNCTION_DEF__(varargs_, vararg_type_, arg_count_, realname_, ret_, name_, p1, p1t, p2, p2t, p3, p3t, p4, p4t, p5, p5t, p6, p6t, p7, p7t, p8, p8t, ...) \
-    { .name=#name_, .type= KALOS_EXPORT_TYPE_FUNCTION, .entry={ .function={ .return_type=FUNCTION_TYPE_##ret_, .arg_count=arg_count_, .args={ \
-        KALOS_ARG__(p1, p1t) KALOS_ARG__(p2, p2t) KALOS_ARG__(p3, p3t) KALOS_ARG__(p4, p4t) KALOS_ARG__(p5, p5t) KALOS_ARG__(p6, p6t) KALOS_ARG__(p7, p7t) KALOS_ARG__(p8, p8t) \
-    }, KALOS_VARARG_DEF_##varargs_(vararg_type_) } } },
 
 #define KALOS_STACK__NUMBER(n, arg_count) , peek(stack, -n-1)->value.number
 #define KALOS_STACK__STRING(n, arg_count) , &peek(stack, -n-1)->value.string
