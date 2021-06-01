@@ -11,6 +11,7 @@ struct kalos_module_builder {
     size_t module_buffer_size;
     size_t module_count;
     const char* module_name;
+    const char* prefix;
     char* string_buffer;
     size_t string_buffer_size;
     size_t string_buffer_index;
@@ -92,6 +93,11 @@ static kalos_function_type strtotype(const char* s) {
     return FUNCTION_TYPE_VOID;
 }
 
+static void prefix(void* context, const char* prefix) {
+    struct kalos_module_builder* builder = context;
+    builder->prefix = strpack(builder, prefix);
+}
+
 static void begin_module(void* context, const char* module) {
     struct kalos_module_builder* builder = context;
     builder->export_count = 0;
@@ -109,6 +115,7 @@ static void end_module(void* context) {
 
     kalos_module* module = (kalos_module*)((uint8_t*)builder->kalos_module_buffer + builder->module_buffer_size - this_module_size);
     module->name = builder->module_name;
+    module->prefix = builder->prefix;
     module->export_count = builder->export_count;
     memcpy((uint8_t*)module + sizeof(kalos_module), builder->exports, builder->export_count * sizeof(kalos_export));
     free(builder->exports);
@@ -166,17 +173,23 @@ static void property(void* context, const char* name, const char* type, const ch
     new_export(builder);
     current_export(builder)->name = strpack(builder, name);
     current_export(builder)->entry.function.symbol = strpack(builder, symbol);
-    current_export(builder)->entry.function.return_type = strtotype(type);
     if (strcmp(mode, "read") == 0) {
         current_export(builder)->type = KALOS_EXPORT_TYPE_PROP_READ;
+        current_export(builder)->entry.function.return_type = strtotype(type);
+        current_export(builder)->entry.function.arg_count = 0;
     } else if (strcmp(mode, "write") == 0) {
         current_export(builder)->type = KALOS_EXPORT_TYPE_PROP_WRITE;
+        current_export(builder)->entry.function.return_type = FUNCTION_TYPE_VOID;
+        current_export(builder)->entry.function.arg_count = 1;
+        current_export(builder)->entry.function.args[0].name = strpack(builder, "_");
+        current_export(builder)->entry.function.args[0].type = strtotype(type);
     }
     LOG("prop %s %s %s %s", name, type, mode, symbol);
 }
 
 kalos_module_parsed kalos_idl_parse_module(const char* s) {
     kalos_idl_callbacks callbacks = {
+        prefix,
         begin_module,
         end_module,
         begin_function,
@@ -219,6 +232,7 @@ kalos_module** kalos_idl_unpack_module(uint8_t* packed_module) {
     for (int i = 0; i < header->module_count; i++) {
         output[i] = m;
         strunpack(strings, &m->name);
+        strunpack(strings, &m->prefix);
         kalos_export* e = (kalos_export*)((uint8_t*)m + sizeof(kalos_module));
         m->exports = e;
         for (int j = 0; j < m->export_count; j++) {
@@ -264,10 +278,6 @@ void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
     printf("%s\n", kalos_string_c(state, *string));
 }
 
-kalos_string kalos_idl_module_name(kalos_state state) {
-    return kalos_string_allocate(state, script_current_module->name);
-}
-
 char* function_type_to_string(kalos_function_type type) {
     switch (type) {
         case FUNCTION_TYPE_ANY:
@@ -292,6 +302,9 @@ static void iter_function_arg(kalos_state state, void* context, uint16_t index, 
     value->type = KALOS_VALUE_STRING;
     value->value.string = kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[index].type));
 }
+
+kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, script_current_module->name); }
+kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix); }
 
 kalos_int kalos_idl_function_id(kalos_state state) { return script_current_fn_index; }
 kalos_string kalos_idl_function_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }

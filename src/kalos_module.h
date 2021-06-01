@@ -53,6 +53,7 @@ typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* 
 
 typedef struct kalos_module {
     const char* name;
+    const char* prefix;
     kalos_export* exports;
     kalos_int export_count;
 } kalos_module;

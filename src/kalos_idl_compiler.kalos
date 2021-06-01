@@ -7,7 +7,7 @@ handle open {
 
 #handle begin_module(module) {
 handle begin_module {
-    println("void kalos_module_dispatch_{module.name}(kalos_state state, int function, kalos_stack* stack) {{");
+    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
 }
 

@@ -33,6 +33,16 @@ void kalos_module_dispatch_module(kalos_state state, int function, kalos_stack* 
 		push_string(stack, x);
 		break;
 	}
+	// id=1 name=prefix arg_count=0 symbol=kalos_idl_module_prefix
+	case 1: {
+		LOG("Invoke %s", "prefix");
+		int arg_count = 0;
+		kalos_stack_fixup_no_varargs(arg_count, stack);
+		kalos_string x = kalos_idl_module_prefix(state);
+		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
+		push_string(stack, x);
+		break;
+	}
 	}
 }
 

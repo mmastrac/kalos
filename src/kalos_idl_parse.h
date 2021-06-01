@@ -2,6 +2,8 @@
 #include "kalos.h"
 
 typedef struct kalos_idl_callbacks {
+    void (*prefix)(void* context, const char* prefix);
+
     void (*begin_module)(void* context, const char* module);
     void (*end_module)(void* context);
 

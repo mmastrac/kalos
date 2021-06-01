@@ -54,6 +54,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <init,module,function,fcomma,fret> ws { continue; }
         <init> end { return true; }
         <init,module> "#" [^\n\x00]* "\n" { /* comment */ continue; }
+        <init> "prefix" ws? @a string @b ws? ";" { callbacks->prefix(context, copy_string(buffers[0], a, b)); continue; }
         <init> "module" ws @a word @b ws? "{" => module { callbacks->begin_module(context, copy_string(buffers[0], a, b)); continue; }
         <module> "prop" ws? "(" ws? @a mode @b ws? ")" ws? @c word @d ws? ":" ws? @e type @f ws? "=" ws? @g word @h ws? ";" {
             callbacks->property(
