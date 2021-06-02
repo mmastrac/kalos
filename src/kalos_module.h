@@ -20,12 +20,11 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_CONST_NUMBER,
     KALOS_EXPORT_TYPE_CONST_STRING,
     KALOS_EXPORT_TYPE_FUNCTION,
-    KALOS_EXPORT_TYPE_PROP_READ,
-    KALOS_EXPORT_TYPE_PROP_WRITE,
+    KALOS_EXPORT_TYPE_PROPERTY,
 } kalos_export_type;
 
 typedef struct kalos_arg {
-    const char* name;
+    kalos_int name_index;
     kalos_function_type type;
 } kalos_arg;
 
@@ -34,17 +33,28 @@ typedef struct kalos_function {
     uint8_t arg_count;
     kalos_function_type vararg_type;
     kalos_function_type return_type;
-    const char* symbol;
+    kalos_int symbol_index;
+    kalos_int invoke_id;
 } kalos_function;
+
+typedef struct kalos_property {
+    kalos_function_type type;
+    kalos_int read_symbol_index;
+    kalos_int read_invoke_id;
+    kalos_int write_symbol_index;
+    kalos_int write_invoke_id;
+} kalos_property;
 
 typedef union kalos_export_entry {
     kalos_int const_number;
-    const char* const_string;
+    kalos_int const_string_index;
     kalos_function function;
+    kalos_property property;
 } kalos_export_entry;
 
 typedef struct kalos_export {
-    const char* name;
+    kalos_int index;
+    kalos_int name_index;
     kalos_export_type type;
     kalos_export_entry entry;
 } kalos_export;
@@ -52,8 +62,34 @@ typedef struct kalos_export {
 typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack);
 
 typedef struct kalos_module {
-    const char* name;
-    const char* prefix;
-    kalos_export* exports;
+    kalos_int index;
+    kalos_int name_index;
+    kalos_int prefix_index;
     kalos_int export_count;
 } kalos_module;
+
+typedef struct kalos_module_parsed {
+    void* data;
+    size_t size;
+} kalos_module_parsed;
+
+typedef struct kalos_module_header {
+    kalos_int version;
+    kalos_int module_count;
+    kalos_int module_offset;
+    kalos_int module_size;
+    kalos_int string_offset;
+    kalos_int string_size;
+    kalos_int unused1;
+    kalos_int unused2;
+} kalos_module_header;
+
+typedef bool (*kalos_module_callback)(void* context, uint16_t index, kalos_module* module);
+typedef bool (*kalos_export_callback)(void* context, uint16_t index, kalos_module* module, kalos_export* export);
+
+kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* name);
+kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name);
+void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback);
+void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_module* module, kalos_export_callback callback);
+
+const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index);

@@ -382,6 +382,7 @@ static inline void op_drop(kalos_state_internal* state, kalos_op op, kalos_value
 
 static kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
     kalos_string string = kalos_string_allocate(state, (const char*)&state->script->script_ops[state->pc]);
+    LOG("push: %s", kalos_string_c(state, string));
     state->pc += kalos_string_length(state, string) + 1;
     return string;
 }
@@ -467,7 +468,7 @@ void kalos_trigger(kalos_state state_, char* handler) {
             state->fns->error("Internal error");
             return;
         }
-        LOG("exec %s (stack = %d)", kalos_op_strings[op], state->stack.stack_index);
+        LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack.stack_index);
         int stack_index = state->stack.stack_index;
         if (kalos_op_input_size[op] != -1) {
             ENSURE_STACK(kalos_op_input_size[op]);

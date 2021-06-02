@@ -63,10 +63,11 @@ void write_file(const char* output, void* data, size_t size) {
 
 int compile_script(int verbose, const char* idl, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
+    const char* idl_data = read_file_string(idl, NULL);
     kalos_script script = {0};
     script.script_ops = malloc(1024);
     script.script_buffer_size = 1024;
-    kalos_module* modules[] = { NULL }; // TODO
+    kalos_module_parsed modules = kalos_idl_parse_module(idl_data);
     kalos_parse(input_data, modules, &script);
     write_file(output, script.script_ops, script.script_buffer_size);
     return 0;

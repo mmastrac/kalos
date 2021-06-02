@@ -20,3 +20,12 @@ module function {
     prop(read) varargs: string = kalos_idl_function_varargs;
     fn arg_type(index: number): string = kalos_idl_function_arg_type;
 }
+
+module property {
+    prop(read) name: string = kalos_idl_function_name;
+    prop(read) read_id: number = kalos_idl_property_read_id;
+    prop(read) write_id: number = kalos_idl_property_write_id;
+    prop(read) type: string = kalos_idl_property_type;
+    prop(read) read_symbol: string = kalos_idl_property_read_symbol;
+    prop(read) write_symbol: string = kalos_idl_property_write_symbol;
+}

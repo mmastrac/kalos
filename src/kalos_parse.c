@@ -82,22 +82,10 @@ struct name_resolution_result {
         };
         struct {
             kalos_module* module;
-            uint8_t module_index;
         };
         struct {
             uint8_t export_module_index;
-            union {
-                struct {
-                    kalos_export* export;
-                    uint8_t export_index;
-                };
-                struct {
-                    kalos_export* export_read;
-                    kalos_export* export_write;
-                    uint8_t export_index_read;
-                    uint8_t export_index_write;
-                };
-            };
+            kalos_export* export;
         };
         kalos_builtin* builtin;
     };
@@ -109,11 +97,10 @@ struct parse_state {
     uint8_t* output_script;
     uint16_t* script_offset;
     int output_script_index;
-    kalos_module** all_modules;
-    uint8_t imported_modules[KALOS_MAX_IMPORTS];
+    kalos_module_parsed all_modules;
+    kalos_module* imported_modules[KALOS_MAX_IMPORTS];
     uint8_t module_index;
     kalos_module* extra_builtins;
-    uint8_t extra_builtins_module_index;
     struct vars_state globals;
     struct vars_state locals;
     const char* failure_message;
@@ -138,7 +125,7 @@ static void parse_expression_paren(struct parse_state* parse_state);
 static void parse_expression_part(struct parse_state* parse_state);
 static int parse_function_call_args(struct parse_state* parse_state);
 static void parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
-static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index, uint8_t export_index);
+static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
 static void parse_handler_statement(struct parse_state* parse_state);
 static void parse_if_statement(struct parse_state* parse_state);
 static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot);
@@ -269,40 +256,26 @@ static void write_next_handler_section(struct parse_state* parse_state, char* na
 }
 
 // Resolution order: builtins, locals, globals, modules
-static struct name_resolution_result resolve_word(struct parse_state* parse_state, kalos_module* context, uint8_t module_index) {
+static struct name_resolution_result resolve_word(struct parse_state* parse_state, kalos_module* context) {
     struct name_resolution_result res = { .type = NAME_RESOLUTION_NOT_FOUND, 0 };
     const char* token = parse_state->token;
     if (context) {
-        for (int i = 0; i < context->export_count ; i++) {
-            if (strcmp(context->exports[i].name, token) == 0) {
-                res.export_module_index = module_index;
-                switch (context->exports[i].type) {
-                    case KALOS_EXPORT_TYPE_FUNCTION:
-                    case KALOS_EXPORT_TYPE_CONST_NUMBER:
-                    case KALOS_EXPORT_TYPE_CONST_STRING:
-                        LOG("%d: Resolved %s as module export", parse_state->lex_state.line, token);
-                        res.type = context->exports[i].type == KALOS_EXPORT_TYPE_FUNCTION ? NAME_RESOLUTION_MODULE_EXPORT_FUNCTION : NAME_RESOLUTION_MODULE_EXPORT_CONST;
-                        res.export = &context->exports[i];
-                        res.export_index = i;
-                        return res;
-                    case KALOS_EXPORT_TYPE_PROP_READ:
-                        res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
-                        res.export_read = &context->exports[i];
-                        res.export_index_read = i;
-                        break;
-                    case KALOS_EXPORT_TYPE_PROP_WRITE:
-                        res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
-                        res.export_write = &context->exports[i];
-                        res.export_index_write = i;
-                        break;
-                }
+        kalos_export* export = kalos_module_find_export(parse_state->all_modules, context, token);
+        if (export) {
+            switch (export->type) {
+                case KALOS_EXPORT_TYPE_CONST_NUMBER:
+                case KALOS_EXPORT_TYPE_CONST_STRING:
+                    res.type = NAME_RESOLUTION_MODULE_EXPORT_CONST;
+                    break;
+                case KALOS_EXPORT_TYPE_FUNCTION:
+                    res.type = NAME_RESOLUTION_MODULE_EXPORT_FUNCTION;
+                    break;
+                case KALOS_EXPORT_TYPE_PROPERTY:
+                    res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
+                    break;
             }
-            if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP && res.export_read && res.export_write) {
-                break;
-            }
-        }
-        if (res.type != NAME_RESOLUTION_NOT_FOUND) {
-            LOG("%d: Resolved %s as module prop", parse_state->lex_state.line, token);
+            res.export = export;
+            res.export_module_index = context->index;
             return res;
         }
     } else {
@@ -330,40 +303,34 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
             if (strcmp(parse_state->globals.vars[i].name, token) == 0) {
                 LOG("%d: Resolved %s as global var", parse_state->lex_state.line, token);
                 res.type = NAME_RESOLUTION_GLOBAL_VAR;
-                res.var=&parse_state->globals.vars[i];
-                res.var_slot=i;
+                res.var = &parse_state->globals.vars[i];
+                res.var_slot = i;
                 return res;
             }
         }
         for (int i = 0; i < parse_state->module_index; i++) {
-            kalos_module* module = parse_state->all_modules[parse_state->imported_modules[i]];
-            if (strcmp(module->name, token) == 0) {
+            kalos_module* module = parse_state->imported_modules[i];
+            if (strcmp(kalos_module_get_string(parse_state->all_modules, module->name_index), token) == 0) {
                 LOG("%d: Resolved %s as module", parse_state->lex_state.line, token);
                 res.type = NAME_RESOLUTION_MODULE;
                 res.module = module;
-                res.module_index = parse_state->imported_modules[i];
                 return res;
             }
         }
         // Fall back to extra builtins
         if (parse_state->extra_builtins) {
-            res = resolve_word(parse_state, parse_state->extra_builtins, parse_state->extra_builtins_module_index);
+            res = resolve_word(parse_state, parse_state->extra_builtins);
             if (res.type != NAME_RESOLUTION_NOT_FOUND) {
                 LOG("%d: Resolved %s as extra builtin", parse_state->lex_state.line, token);
                 return res;
             }
         }
-        for (int i = 0;; i++) {
-            if (!parse_state->all_modules[i]) {
-                break;
-            }
-            if (parse_state->all_modules[i]->name && strcmp(parse_state->all_modules[i]->name, token) == 0) {
-                LOG("%d: Resolved %s as unimported module", parse_state->lex_state.line, token);
-                res.type = NAME_RESOLUTION_UNIMPORTED_MODULE;
-                res.module = parse_state->all_modules[i];
-                res.module_index = i;
-                return res;
-            }
+        kalos_module* module = kalos_module_find_module(parse_state->all_modules, token);
+        if (module) {
+            LOG("%d: Resolved %s as unimported module", parse_state->lex_state.line, token);
+            res.type = NAME_RESOLUTION_UNIMPORTED_MODULE;
+            res.module = module;
+            return res;
         }
     }
 
@@ -441,7 +408,7 @@ static void parse_function_call_builtin(struct parse_state* parse_state, kalos_b
     TRY_EXIT;
 }
 
-static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index, uint8_t export_index) {
+static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index) {
     if (parse_state->const_mode) {
         THROW(ERROR_INVALID_CONST_EXPRESSION);
     }
@@ -459,7 +426,7 @@ static void parse_function_call_export(struct parse_state* parse_state, kalos_ex
     }
     // TODO: merge into the opcode
     TRY(parse_push_number(parse_state, module_index));
-    TRY(parse_push_number(parse_state, export_index));
+    TRY(parse_push_number(parse_state, fn->entry.function.invoke_id));
     TRY(parse_push_op(parse_state, KALOS_OP_CALL));
     TRY_EXIT;
 }
@@ -467,17 +434,16 @@ static void parse_function_call_export(struct parse_state* parse_state, kalos_ex
 static void parse_word_expression(struct parse_state* parse_state, bool statement_context) {
     struct name_resolution_result res;
     kalos_module* context = NULL;
-    uint8_t module_index = 0;
     int peek;
 
     for (;;) {
-        TRY(res = resolve_word(parse_state, context, module_index));
+        TRY(res = resolve_word(parse_state, context));
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PAREN_OPEN) {
             if (res.type == NAME_RESOLUTION_BUILTIN) {
                 TRY(parse_function_call_builtin(parse_state, res.builtin));
             } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_FUNCTION) {
-                TRY(parse_function_call_export(parse_state, res.export, res.export_module_index, res.export_index));
+                TRY(parse_function_call_export(parse_state, res.export, res.export_module_index));
             } else {
                 THROW(ERROR_EXPECTED_FUNCTION);
             }
@@ -495,11 +461,11 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                     TRY(parse_push_number(parse_state, res.var_slot));
                     TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
                 } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
-                    if (!res.export_read) {
+                    if (!res.export->entry.property.read_invoke_id) {
                         THROW(ERROR_PROPERTY_NOT_READABLE);
                     }
                     TRY(parse_push_number(parse_state, res.export_module_index));
-                    TRY(parse_push_number(parse_state, res.export_index_read));
+                    TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
                     TRY(parse_push_op(parse_state, KALOS_OP_CALL));
                 }
             }
@@ -520,11 +486,11 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 TRY(parse_push_number(parse_state, res.var_slot));
                 TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
             } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
-                if (!res.export_write) {
+                if (!res.export->entry.property.write_invoke_id) {
                     THROW(ERROR_PROPERTY_NOT_WRITABLE);
                 }
                 TRY(parse_push_number(parse_state, res.export_module_index));
-                TRY(parse_push_number(parse_state, res.export_index_write));
+                TRY(parse_push_number(parse_state, res.export->entry.property.write_invoke_id));
                 TRY(parse_push_op(parse_state, KALOS_OP_CALL));
             } else {
                 THROW(ERROR_UNKNOWN_VARIABLE);
@@ -536,7 +502,6 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 THROW(ERROR_EXPECTED_MODULE);
             }
             context = res.module;
-            module_index = res.module_index;
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
         } else {
             if (statement_context) {
@@ -552,18 +517,18 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
                     TRY(parse_push_number(parse_state, res.export->entry.const_number));
                 } else {
-                    TRY(parse_push_string(parse_state, res.export->entry.const_string));
+                    TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, res.export->entry.const_string_index)));
                 }
                 goto not_a_var;
             } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
                 if (parse_state->const_mode) {
                     THROW(ERROR_INVALID_CONST_EXPRESSION);
                 }
-                if (!res.export_read) {
+                if (!res.export->entry.property.read_invoke_id) {
                     THROW(ERROR_PROPERTY_NOT_READABLE);
                 }
                 TRY(parse_push_number(parse_state, res.export_module_index));
-                TRY(parse_push_number(parse_state, res.export_index_read));
+                TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
                 TRY(parse_push_op(parse_state, KALOS_OP_CALL));
                 goto not_a_var;
             } else {
@@ -659,7 +624,7 @@ static void parse_for_statement(struct parse_state* parse_state) {
     //   temp = iter(it); loop { i = next(it); if (done) break; ... } drop_iterator();
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
-    TRY(res = resolve_word(parse_state, NULL, 0));
+    TRY(res = resolve_word(parse_state, NULL));
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_IN));
     TRY(parse_expression(parse_state));
     TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR));
@@ -833,20 +798,11 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, kalos_script* script) {
+kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_script* script) {
     struct parse_state parse_state_data = {0};
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;
-    for (int i = 0;; i++) {
-        if (modules[i]) {
-            if (modules[i]->name == NULL || !modules[i]->name[0] || strcmp(modules[i]->name, "builtin") == 0) {
-                parse_state_data.extra_builtins = modules[i];
-                parse_state_data.extra_builtins_module_index = i;
-            }
-        } else {
-            break;
-        }
-    }
+    parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");
 
     kalos_lex_init(s, &parse_state_data.lex_state);
     
@@ -864,9 +820,9 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module** modules, 
         if (token == KALOS_TOKEN_IMPORT) {
             TRY(token = lex(parse_state));
             struct name_resolution_result res;
-            TRY(res = resolve_word(parse_state, NULL, 0));
+            TRY(res = resolve_word(parse_state, NULL));
             if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
-                parse_state->imported_modules[parse_state->module_index++] = res.module_index;
+                parse_state->imported_modules[parse_state->module_index++] = res.module;
             } else if (res.type == NAME_RESOLUTION_MODULE) {
                 THROW(ERROR_DUPLICATE_IMPORT);
             } else {

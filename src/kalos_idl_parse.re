@@ -23,7 +23,7 @@ const char* copy_string(char* buffer, const char* a, const char* b) {
 
 bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks* callbacks) {
     const char* YYMARKER;
-    const char *a, *b, *c, *d, *e, *f, *g, *h;
+    const char *ws, *a, *b, *c, *d, *e, *f, *g, *h;
     enum yyc_state state = yycinit;
 
     char buffers[4][128];
@@ -62,6 +62,18 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
                 copy_string(buffers[0], c, d),
                 copy_string(buffers[1], e, f),
                 copy_string(buffers[2], a, b),
+                copy_string(buffers[3], g, h),
+                NULL
+            );
+            continue;
+        }
+        <module> "prop" ws? "(" ws? "read" ws? "," ws? "write" ws? ")" ws? @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e word @f ws? "," ws? @g word @h @ws? ";" {
+            callbacks->property(
+                context,
+                "read,write",
+                copy_string(buffers[0], a, b),
+                copy_string(buffers[1], c, d),
+                copy_string(buffers[2], e, f),
                 copy_string(buffers[3], g, h)
             );
             continue;

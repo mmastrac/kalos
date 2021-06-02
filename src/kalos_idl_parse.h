@@ -14,7 +14,7 @@ typedef struct kalos_idl_callbacks {
     void (*constant_string)(void* context, const char* name, const char* type, const char* string);
     void (*constant_number)(void* context, const char* name, const char* type, kalos_int number);
 
-    void (*property)(void* context, const char* name, const char* type, const char* mode, const char* symbol);
+    void (*property)(void* context, const char* name, const char* type, const char* mode, const char* symbol, const char* symbol2);
 } kalos_idl_callbacks;
 
 bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks* callbacks);
