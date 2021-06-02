@@ -59,9 +59,9 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <module> "prop" ws? "(" ws? @a mode @b ws? ")" ws? @c word @d ws? ":" ws? @e type @f ws? "=" ws? @g word @h ws? ";" {
             callbacks->property(
                 context,
-                copy_string(buffers[0], c, d),
-                copy_string(buffers[1], e, f),
-                copy_string(buffers[2], a, b),
+                copy_string(buffers[0], c, d), // name
+                copy_string(buffers[1], e, f), // type
+                copy_string(buffers[2], a, b), // mode
                 copy_string(buffers[3], g, h),
                 NULL
             );
@@ -70,11 +70,11 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <module> "prop" ws? "(" ws? "read" ws? "," ws? "write" ws? ")" ws? @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e word @f ws? "," ws? @g word @h @ws? ";" {
             callbacks->property(
                 context,
-                "read,write",
-                copy_string(buffers[0], a, b),
-                copy_string(buffers[1], c, d),
-                copy_string(buffers[2], e, f),
-                copy_string(buffers[3], g, h)
+                copy_string(buffers[0], a, b),  // name
+                copy_string(buffers[1], c, d), // type
+                "read,write", // mode
+                copy_string(buffers[2], e, f), // symbol1
+                copy_string(buffers[3], g, h) // symbol2
             );
             continue;
         }

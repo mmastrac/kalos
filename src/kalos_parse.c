@@ -28,7 +28,7 @@ static kalos_builtin kalos_builtins[] = {
     { NULL },
 };
 
-#define THROW(msg) { LOG("%d: Throw %s (last token was %s)", __LINE__, msg, kalos_token_strings[parse_state->last_token]); parse_state->failure_message = msg; goto fail; } 
+#define THROW(msg) { LOG("%d (kalos_parse.c:%d): Throw %s (last token was %s)", parse_state->lex_state.line, __LINE__, msg, kalos_token_strings[parse_state->last_token]); parse_state->failure_message = msg; goto fail; } 
 #define TRY(x) {x; if (parse_state->failure_message) { LOG("%d: Caught %s", __LINE__, parse_state->failure_message); goto fail; } }
 #define TRY_EXIT fail: {}
 #define NO_OPERATOR_PRECEDENCE -1

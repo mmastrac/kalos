@@ -238,7 +238,6 @@ static const char IDL_COMPILER_IDL[] = {
 static kalos_module_parsed script_modules;
 static kalos_module* script_current_module;
 static kalos_export* script_current_export;
-static kalos_int script_current_fn_index;
 
 void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
     printf("%s", kalos_string_c(state, *string));
@@ -303,13 +302,10 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
     script_current_export = export;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            script_current_fn_index = index;
             kalos_trigger(context->state, "function");
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            if (export->entry.property.read_invoke_id) {
-                kalos_trigger(context->state, "property");
-            }
+            kalos_trigger(context->state, "property");
             break;
         default:
             break;
@@ -331,16 +327,16 @@ void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     script.script_buffer_size = 2048;
     script.script_ops = malloc(2048);
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL);
-    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, parsed_module, &script);
+    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, &script);
     if (result.error) {
         printf("%s\n", result.error);
         exit(1);
     }
-    char* s = malloc(10 * 1024);
-    s[0] = 0;
-    kalos_dump(&script, s);
-    printf("%s", s);
-    free(s);
+    // char* s = malloc(10 * 1024);
+    // s[0] = 0;
+    // kalos_dump(&script, s);
+    // printf("%s", s);
+    // free(s);
     kalos_fn fns = {
         malloc,
         free,
@@ -353,7 +349,7 @@ void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
         kalos_module_idl_property,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
-    struct walk_callback_context context = { .modules = modules, .state = state };
-    script_modules = modules;
-    kalos_module_walk_modules(&context, modules, module_walk_callback);
+    struct walk_callback_context context = { .modules = parsed_module, .state = state };
+    script_modules = parsed_module;
+    kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
 }

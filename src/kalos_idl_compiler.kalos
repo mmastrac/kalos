@@ -71,6 +71,17 @@ handle property {
     }
     if (property.write_id != 0) {
         println("\tcase {property.write_id}: {{");
+        println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
+        print("\t\t{property.write_symbol}(state, ");
+        if (property.type == "string") {
+            print("&peek(stack, -1)->value.string");
+        } else if (property.type == "number" || arg == "bool") {
+            print("peek(stack, -1)->value.number");
+        } else if (property.type == "object") {
+            print("peek(stack, -1)->value.object");
+        }
+        println(");");
+        println("\t\tkalos_stack_cleanup_no_varargs(1, 0, state, stack);");
         println("\t\tbreak;");
         println("\t}}");
     }
