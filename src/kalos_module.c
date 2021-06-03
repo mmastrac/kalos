@@ -12,15 +12,20 @@ kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* n
     return NULL;
 }
 
+static kalos_module_parsed* export_compare_context;
+static int export_compare(const void* v1, const void* v2) {
+    const char* name = v1;
+    const kalos_export* e = v2;
+    return strcmp(name, kalos_module_get_string(*export_compare_context, e->name_index));
+}
+
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name) {
     kalos_export* e = (kalos_export*)((uint8_t *)module + sizeof(kalos_module));
-    for (uint16_t i = 0; i < module->export_count; i++) {
-        if (strcmp(kalos_module_get_string(parsed, e->name_index), name) == 0) {
-            return e;
-        }
-        e = (kalos_export*)((uint8_t *)e + sizeof(kalos_export));
-    }
-    return NULL;
+    export_compare_context = &parsed;
+    // TODO: Re-entrancy/threading
+    kalos_export* result = bsearch(name, e, module->export_count, sizeof(kalos_export), export_compare);
+    export_compare_context = NULL;
+    return result;
 }
 
 void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback) {
