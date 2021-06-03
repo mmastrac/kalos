@@ -2,4 +2,4 @@
 #include "kalos_module.h"
 
 kalos_module_parsed kalos_idl_parse_module(const char* s);
-void kalos_idl_generate_dispatch(kalos_module_parsed);
+bool kalos_idl_generate_dispatch(kalos_module_parsed);

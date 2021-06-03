@@ -208,7 +208,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     struct kalos_module_builder context = {0};
 
     if (!kalos_idl_parse_callback(s, &context, &callbacks)) {
-        printf("fail!");
+        kalos_module_parsed parsed = {0};
+        return parsed;
     }
 
     context.kalos_module_buffer = realloc(context.kalos_module_buffer, sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index);
@@ -322,14 +323,18 @@ bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) 
     return true;
 }
 
-void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
+bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     kalos_script script = {0};
     script.script_buffer_size = 4096;
     script.script_ops = malloc(4096);
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL);
+    if (!modules.data) {
+        printf("ERROR: %s\n", "failed to parse compiler IDL");
+        return false;
+    }
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, &script);
     if (result.error) {
-        printf("%s\n", result.error);
+        printf("ERROR: %s\n", result.error);
         exit(1);
     }
     // char* s = malloc(10 * 1024);
@@ -352,4 +357,5 @@ void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     struct walk_callback_context context = { .modules = parsed_module, .state = state };
     script_modules = parsed_module;
     kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
+    return true;
 }

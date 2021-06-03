@@ -93,8 +93,15 @@ int compile_idl(int verbose, const char* input, const char* output) {
 int compile_dispatch(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data);
-    kalos_idl_generate_dispatch(modules);
-    // write_file(output, modules.data, modules.size);
+    if (!modules.data) {
+        printf("ERROR: failed to compile KIDL\n");
+        exit(1);
+    }
+    if (!kalos_idl_generate_dispatch(modules)) {
+        printf("ERROR: failed to generate dispatch\n");
+        exit(2);
+    }
+    write_file(output, modules.data, modules.size);
     return 0;
 }
 
