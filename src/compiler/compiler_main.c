@@ -3,13 +3,15 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "../scripting/kalos_dump.h"
 #include "../scripting/kalos_idl_compiler.h"
 #include "../scripting/kalos_parse.h"
 
 #define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
 
-int verbose = 0;
+static int verbose = 0;
+static FILE* output_file;
 
 int help(const char* message, const char* cmd) {
     if (strchr(cmd, '/')) {
@@ -90,6 +92,13 @@ int compile_idl(int verbose, const char* input, const char* output) {
     return 0;
 }
 
+void output_printer(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(output_file, fmt, args);
+    va_end(args);
+}
+
 int compile_dispatch(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data);
@@ -97,11 +106,12 @@ int compile_dispatch(int verbose, const char* input, const char* output) {
         printf("ERROR: failed to compile KIDL\n");
         exit(1);
     }
-    if (!kalos_idl_generate_dispatch(modules)) {
+    output_file = fopen(output, "w");
+    if (!kalos_idl_generate_dispatch(modules, output_printer)) {
         printf("ERROR: failed to generate dispatch\n");
         exit(2);
     }
-    write_file(output, modules.data, modules.size);
+    fclose(output_file);
     return 0;
 }
 

@@ -236,16 +236,17 @@ static const char IDL_COMPILER_IDL[] = {
     #include "kalos_idl_compiler.kidl.inc"
 };
 
+static kalos_printer_fn script_output;
 static kalos_module_parsed script_modules;
 static kalos_module* script_current_module;
 static kalos_export* script_current_export;
 
 void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
-    printf("%s", kalos_string_c(state, *string));
+    script_output("%s", kalos_string_c(state, *string));
 }
 
 void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
-    printf("%s\n", kalos_string_c(state, *string));
+    script_output("%s\n", kalos_string_c(state, *string));
 }
 
 char* function_type_to_string(kalos_function_type type) {
@@ -323,7 +324,8 @@ bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) 
     return true;
 }
 
-bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
+bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printer_fn output) {
+    script_output = output;
     kalos_script script = {0};
     script.script_buffer_size = 4096;
     script.script_ops = malloc(4096);
