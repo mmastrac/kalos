@@ -64,12 +64,14 @@ handle function {
 
 handle property {
     if (property.read_id != 0) {
+        println("\t// id={property.read_id} name={property.name} symbol={property.read_symbol}");
         println("\tcase {property.read_id}: {{");
         println("\t\tpush_{property.type}(stack, {property.read_symbol}(state));");
         println("\t\tbreak;");
         println("\t}}");
     }
     if (property.write_id != 0) {
+        println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
         println("\tcase {property.write_id}: {{");
         println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
         print("\t\t{property.write_symbol}(state, ");

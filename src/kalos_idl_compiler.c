@@ -324,8 +324,8 @@ bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) 
 
 void kalos_idl_generate_dispatch(kalos_module_parsed parsed_module) {
     kalos_script script = {0};
-    script.script_buffer_size = 2048;
-    script.script_ops = malloc(2048);
+    script.script_buffer_size = 4096;
+    script.script_ops = malloc(4096);
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL);
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, &script);
     if (result.error) {

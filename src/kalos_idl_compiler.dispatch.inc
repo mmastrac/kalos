@@ -23,10 +23,12 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 
 void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
+	// id=1 name=name symbol=kalos_idl_module_name
 	case 1: {
 		push_string(stack, kalos_idl_module_name(state));
 		break;
 	}
+	// id=2 name=prefix symbol=kalos_idl_module_prefix
 	case 2: {
 		push_string(stack, kalos_idl_module_prefix(state));
 		break;
@@ -36,6 +38,7 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 
 void kalos_module_idl_function(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
+	// id=6 name=arg_count symbol=kalos_idl_function_arg_count
 	case 6: {
 		push_number(stack, kalos_idl_function_arg_count(state));
 		break;
@@ -50,26 +53,32 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 		push_string(stack, x);
 		break;
 	}
+	// id=5 name=args symbol=kalos_idl_function_args
 	case 5: {
 		push_object(stack, kalos_idl_function_args(state));
 		break;
 	}
+	// id=1 name=id symbol=kalos_idl_function_id
 	case 1: {
 		push_number(stack, kalos_idl_function_id(state));
 		break;
 	}
+	// id=3 name=name symbol=kalos_idl_function_name
 	case 3: {
 		push_string(stack, kalos_idl_function_name(state));
 		break;
 	}
+	// id=4 name=realname symbol=kalos_idl_function_realname
 	case 4: {
 		push_string(stack, kalos_idl_function_realname(state));
 		break;
 	}
+	// id=2 name=return_type symbol=kalos_idl_function_return_type
 	case 2: {
 		push_string(stack, kalos_idl_function_return_type(state));
 		break;
 	}
+	// id=7 name=varargs symbol=kalos_idl_function_varargs
 	case 7: {
 		push_string(stack, kalos_idl_function_varargs(state));
 		break;
@@ -79,26 +88,32 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 
 void kalos_module_idl_property(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
+	// id=1 name=name symbol=kalos_idl_function_name
 	case 1: {
 		push_string(stack, kalos_idl_function_name(state));
 		break;
 	}
+	// id=2 name=read_id symbol=kalos_idl_property_read_id
 	case 2: {
 		push_number(stack, kalos_idl_property_read_id(state));
 		break;
 	}
+	// id=5 name=read_symbol symbol=kalos_idl_property_read_symbol
 	case 5: {
 		push_string(stack, kalos_idl_property_read_symbol(state));
 		break;
 	}
+	// id=4 name=type symbol=kalos_idl_property_type
 	case 4: {
 		push_string(stack, kalos_idl_property_type(state));
 		break;
 	}
+	// id=3 name=write_id symbol=kalos_idl_property_write_id
 	case 3: {
 		push_number(stack, kalos_idl_property_write_id(state));
 		break;
 	}
+	// id=6 name=write_symbol symbol=kalos_idl_property_write_symbol
 	case 6: {
 		push_string(stack, kalos_idl_property_write_symbol(state));
 		break;
