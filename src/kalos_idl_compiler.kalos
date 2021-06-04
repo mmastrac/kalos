@@ -20,7 +20,11 @@ handle module.begin {
 
 handle handle_export {
     println("// id={handles.module_index:04x}:{handles.handle_index:04x} name={handles.name}");
-    println("void {module.prefix}trigger_{handles.name}(kalos_state state) {{");
+    if (module.name == "builtin") {
+        println("void {module.prefix}trigger_{handles.name}(kalos_state state) {{");
+    } else {
+        println("void {module.prefix}{module.name}_trigger_{handles.name}(kalos_state state) {{");
+    }
     println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
     println("}}");
     println("");

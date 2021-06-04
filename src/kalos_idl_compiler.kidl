@@ -44,4 +44,5 @@ module handles {
     prop(read) name: string = kalos_idl_export_name;
     prop(read) module_index: number = kalos_idl_handle_module_index;
     prop(read) handle_index: number = kalos_idl_handle_index;
+    prop(read) args: object = kalos_idl_function_args;
 }
