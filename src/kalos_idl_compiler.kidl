@@ -8,6 +8,8 @@ module builtin {
 module module {
     prop(read) name: string = kalos_idl_module_name;
     prop(read) prefix: string = kalos_idl_module_prefix;
+    handle begin(module: object);
+    handle end;
 }
 
 module function {

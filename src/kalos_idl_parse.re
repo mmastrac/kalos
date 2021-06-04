@@ -13,6 +13,8 @@ enum yyc_state {
     yycfunction,
     yycfcomma,
     yycfret,
+    yychandle,
+    yychcomma,
 };
 
 const char* copy_string(char* buffer, const char* a, const char* b) {
@@ -50,8 +52,8 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         mode = "read" | "write";
         type = "number" | "string" | "void" | "any" | "object";
 
-        <init,module,function,fcomma,fret> * { return false; }
-        <init,module,function,fcomma,fret> ws { continue; }
+        <init,module,function,fcomma,fret,handle,hcomma> * { return false; }
+        <init,module,function,fcomma,fret,handle,hcomma> ws { continue; }
         <init> end { return true; }
         <init,module> "#" [^\n\x00]* "\n" { /* comment */ continue; }
         <init> "prefix" ws? @a string @b ws? ";" { callbacks->prefix(context, copy_string(buffers[0], a, b)); continue; }
@@ -111,6 +113,25 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             }
             callbacks->end_function(context, buffers[0], buffers[1], copy_string(buffers[2], c, d));
             continue;
+        }
+        <module> "handle" ws @a word @b ws? "(" ws? => handle {
+            copy_string(buffers[0], a, b);
+            callbacks->begin_handle(context, buffers[0]);
+            continue;
+        }
+        <module> "handle" ws @a word @b ";" {
+            copy_string(buffers[0], a, b);
+            callbacks->begin_handle(context, buffers[0]);
+            callbacks->end_handle(context);
+            continue;
+        }
+        <handle> @a word @b ws? ":" ws? @c type @d ws? (@e "..." @f)? ws? / ","|")" => hcomma {
+            callbacks->handle_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), e != NULL);
+            continue;
+        }
+        <hcomma> "," :=> handle
+        <hcomma,handle> ")" ws? ";" => module {
+            callbacks->end_handle(context);
         }
         <module> "}" => init { callbacks->end_module(context); continue; }
     */

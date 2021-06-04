@@ -153,6 +153,15 @@ static void end_function(void* context, const char* name, const char* type, cons
     LOG("fn %s %s %s", name, type, symbol);
 }
 
+static void begin_handle(void* context, const char* name) {
+}
+
+static void handle_arg(void* context, const char* name, const char* type, bool is_varargs) {
+}
+
+static void end_handle(void* context) {
+}
+
 static void constant_string(void* context, const char* name, const char* type, const char* s) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
@@ -200,6 +209,9 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
         begin_function,
         function_arg,
         end_function,
+        begin_handle,
+        handle_arg,
+        end_handle,
         constant_string,
         constant_number,
         property
