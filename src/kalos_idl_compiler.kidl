@@ -10,6 +10,7 @@ module builtin {
     handle function_export;
     handle property_export;
     handle end_module;
+    handle handle_export;
 }
 
 module module {

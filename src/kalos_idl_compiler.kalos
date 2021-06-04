@@ -17,6 +17,10 @@ handle module.begin {
     println("\tswitch (function) {{");
 }
 
+handle handle_export {
+    println("\t// // //");
+}
+
 #handle function(function) {
 handle function_export {
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");

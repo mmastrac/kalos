@@ -321,6 +321,7 @@ kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_al
 #include "kalos_idl_compiler.dispatch.inc"
 
 struct walk_callback_context {
+    bool handles;
     kalos_module_parsed modules;
     kalos_state state;
 };
@@ -330,10 +331,19 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
     script_current_export = export;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            kalos_trigger(context->state, kalos_make_address(0, 3));
+            if (!context->handles) {
+                kalos_trigger(context->state, kalos_make_address(0, 3));
+            }
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            kalos_trigger(context->state, kalos_make_address(0, 4));
+            if (!context->handles) {
+                kalos_trigger(context->state, kalos_make_address(0, 4));
+            }
+            break;
+        case KALOS_EXPORT_TYPE_HANDLE:
+            if (context->handles) {
+                kalos_trigger(context->state, kalos_make_address(0, 6));
+            }
             break;
         default:
             break;
@@ -344,7 +354,10 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
 bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) {
     struct walk_callback_context* context = context_;
     script_current_module = module;
+    context->handles = true;
+    kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
     kalos_trigger(context->state, kalos_make_address(0, 2));
+    context->handles = false;
     kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
     kalos_trigger(context->state, kalos_make_address(0, 5));
     return true;
@@ -365,7 +378,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         printf("ERROR: %s\n", result.error);
         return false;
     }
-    // char* s = malloc(10 * 1024);
+    // char* s = malloc(30 * 1024);
     // s[0] = 0;
     // kalos_dump(&script, s);
     // printf("%s", s);

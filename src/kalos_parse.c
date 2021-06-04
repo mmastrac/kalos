@@ -791,6 +791,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         if (peek == KALOS_TOKEN_PERIOD && res.type == NAME_RESOLUTION_MODULE) {
             context = res.module;
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
             continue;
         }
         if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
