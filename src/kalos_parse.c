@@ -782,8 +782,19 @@ static bool parse_statement(struct parse_state* parse_state) {
 static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
-    TRY(res = resolve_word(parse_state, NULL));
-    if (res.type != NAME_RESOLUTION_MODULE_EXPORT || res.export->type != KALOS_EXPORT_TYPE_HANDLE) {
+    kalos_module* context = NULL;
+    for (;;) {
+        TRY(res = resolve_word(parse_state, context));
+        int peek;
+        TRY(peek = lex_peek(parse_state));
+        if (peek == KALOS_TOKEN_PERIOD && res.type == NAME_RESOLUTION_MODULE) {
+            context = res.module;
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+            continue;
+        }
+        if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
+            break;
+        }
         THROW(ERROR_UNKNOWN_HANDLE);
     }
     TRY(write_next_handler_section(parse_state, parse_state->token));

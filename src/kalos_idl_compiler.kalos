@@ -12,6 +12,11 @@ handle begin_module {
     println("\tswitch (function) {{");
 }
 
+handle module.begin {
+    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack) {{");
+    println("\tswitch (function) {{");
+}
+
 #handle function(function) {
 handle function_export {
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
