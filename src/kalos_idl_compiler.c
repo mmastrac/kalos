@@ -335,17 +335,17 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
             if (!context->handles) {
-                kalos_trigger(context->state, kalos_make_address(0, 3));
+                kalos_module_idl_trigger_function_export(context->state);
             }
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
             if (!context->handles) {
-                kalos_trigger(context->state, kalos_make_address(0, 4));
+                kalos_module_idl_trigger_property_export(context->state);
             }
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
             if (context->handles) {
-                kalos_trigger(context->state, kalos_make_address(0, 6));
+                kalos_module_idl_trigger_handle_export(context->state);
             }
             break;
         default:
@@ -359,10 +359,10 @@ bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) 
     script_current_module = module;
     context->handles = true;
     kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
-    kalos_trigger(context->state, kalos_make_address(0, 2));
+    kalos_module_idl_trigger_begin_module(context->state);
     context->handles = false;
     kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
-    kalos_trigger(context->state, kalos_make_address(0, 5));
+    kalos_module_idl_trigger_end_module(context->state);
     return true;
 }
 
@@ -399,6 +399,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         kalos_module_idl_handles,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
+    kalos_module_idl_trigger_open(state);
     struct walk_callback_context context = { .modules = parsed_module, .state = state };
     script_modules = parsed_module;
     kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
