@@ -70,9 +70,7 @@ struct name_resolution_result {
         NAME_RESOLUTION_LOCAL_VAR,
         NAME_RESOLUTION_GLOBAL_VAR,
         NAME_RESOLUTION_MODULE,
-        NAME_RESOLUTION_MODULE_EXPORT_CONST,
-        NAME_RESOLUTION_MODULE_EXPORT_FUNCTION,
-        NAME_RESOLUTION_MODULE_EXPORT_PROP,
+        NAME_RESOLUTION_MODULE_EXPORT,
         NAME_RESOLUTION_UNIMPORTED_MODULE,
     } type;
     union {
@@ -262,18 +260,7 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
     if (context) {
         kalos_export* export = kalos_module_find_export(parse_state->all_modules, context, token);
         if (export) {
-            switch (export->type) {
-                case KALOS_EXPORT_TYPE_CONST_NUMBER:
-                case KALOS_EXPORT_TYPE_CONST_STRING:
-                    res.type = NAME_RESOLUTION_MODULE_EXPORT_CONST;
-                    break;
-                case KALOS_EXPORT_TYPE_FUNCTION:
-                    res.type = NAME_RESOLUTION_MODULE_EXPORT_FUNCTION;
-                    break;
-                case KALOS_EXPORT_TYPE_PROPERTY:
-                    res.type = NAME_RESOLUTION_MODULE_EXPORT_PROP;
-                    break;
-            }
+            res.type = NAME_RESOLUTION_MODULE_EXPORT;
             res.export = export;
             res.export_module_index = context->index;
             return res;
@@ -442,7 +429,7 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
         if (peek == KALOS_TOKEN_PAREN_OPEN) {
             if (res.type == NAME_RESOLUTION_BUILTIN) {
                 TRY(parse_function_call_builtin(parse_state, res.builtin));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_FUNCTION) {
+            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_FUNCTION) {
                 TRY(parse_function_call_export(parse_state, res.export, res.export_module_index));
             } else {
                 THROW(ERROR_EXPECTED_FUNCTION);
@@ -460,7 +447,7 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 } else if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
                     TRY(parse_push_number(parse_state, res.var_slot));
                     TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
-                } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
+                } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
                     if (!res.export->entry.property.read_invoke_id) {
                         THROW(ERROR_PROPERTY_NOT_READABLE);
                     }
@@ -485,7 +472,7 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
             } else if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
                 TRY(parse_push_number(parse_state, res.var_slot));
                 TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
+            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
                 if (!res.export->entry.property.write_invoke_id) {
                     THROW(ERROR_PROPERTY_NOT_WRITABLE);
                 }
@@ -513,26 +500,26 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
             } else if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
                 TRY(parse_push_number(parse_state, res.var_slot));
                 TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_CONST) {
+            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT) {
                 if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
                     TRY(parse_push_number(parse_state, res.export->entry.const_number));
-                } else {
+                    goto not_a_var;
+                } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_STRING) {
                     TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, res.export->entry.const_string_index)));
+                    goto not_a_var;
+                } else if (res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
+                    if (parse_state->const_mode) {
+                        THROW(ERROR_INVALID_CONST_EXPRESSION);
+                    }
+                    if (!res.export->entry.property.read_invoke_id) {
+                        THROW(ERROR_PROPERTY_NOT_READABLE);
+                    }
+                    TRY(parse_push_number(parse_state, res.export_module_index));
+                    TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
+                    TRY(parse_push_op(parse_state, KALOS_OP_CALL));
+                } else {
+                    THROW(ERROR_UNKNOWN_VARIABLE);
                 }
-                goto not_a_var;
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT_PROP) {
-                if (parse_state->const_mode) {
-                    THROW(ERROR_INVALID_CONST_EXPRESSION);
-                }
-                if (!res.export->entry.property.read_invoke_id) {
-                    THROW(ERROR_PROPERTY_NOT_READABLE);
-                }
-                TRY(parse_push_number(parse_state, res.export_module_index));
-                TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
-                TRY(parse_push_op(parse_state, KALOS_OP_CALL));
-                goto not_a_var;
-            } else {
-                THROW(ERROR_UNKNOWN_VARIABLE);
             }
 
             if (parse_state->const_mode && !res.var->is_const) {
