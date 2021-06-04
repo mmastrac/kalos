@@ -107,9 +107,9 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 		push_number(stack, kalos_idl_function_id(state));
 		break;
 	}
-	// id=3 name=name symbol=kalos_idl_function_name
+	// id=3 name=name symbol=kalos_idl_export_name
 	case 3: {
-		push_string(stack, kalos_idl_function_name(state));
+		push_string(stack, kalos_idl_export_name(state));
 		break;
 	}
 	// id=4 name=realname symbol=kalos_idl_function_realname
@@ -132,9 +132,9 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 
 void kalos_module_idl_property(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
-	// id=1 name=name symbol=kalos_idl_function_name
+	// id=1 name=name symbol=kalos_idl_export_name
 	case 1: {
-		push_string(stack, kalos_idl_function_name(state));
+		push_string(stack, kalos_idl_export_name(state));
 		break;
 	}
 	// id=2 name=read_id symbol=kalos_idl_property_read_id
@@ -177,9 +177,9 @@ void kalos_module_idl_handles(kalos_state state, int function, kalos_stack* stac
 		push_number(stack, kalos_idl_handle_module_index(state));
 		break;
 	}
-	// id=1 name=name symbol=kalos_idl_function_name
+	// id=1 name=name symbol=kalos_idl_export_name
 	case 1: {
-		push_string(stack, kalos_idl_function_name(state));
+		push_string(stack, kalos_idl_export_name(state));
 		break;
 	}
 	}
