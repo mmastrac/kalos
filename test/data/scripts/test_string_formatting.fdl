@@ -6,4 +6,5 @@ handle init {
     print("{1234}");
     print("{{1}}");
     print("\n");
+    print("{123:04x}");
 }

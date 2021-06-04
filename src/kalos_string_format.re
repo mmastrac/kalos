@@ -40,7 +40,7 @@ bool kalos_parse_string_format(const char* s, kalos_string_format* string_format
             memset(string_format, 0, sizeof(*string_format));
             if (zero_pad) {
                 string_format->fill = '0';
-                string_format->align = '=';
+                string_format->align = '>';
             }
             if (fill) {
                 string_format->fill = *fill;
