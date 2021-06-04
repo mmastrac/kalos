@@ -21,6 +21,7 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_CONST_STRING,
     KALOS_EXPORT_TYPE_FUNCTION,
     KALOS_EXPORT_TYPE_PROPERTY,
+    KALOS_EXPORT_TYPE_HANDLE,
 } kalos_export_type;
 
 typedef struct kalos_arg {

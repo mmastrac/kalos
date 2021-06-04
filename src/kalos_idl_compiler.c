@@ -154,12 +154,23 @@ static void end_function(void* context, const char* name, const char* type, cons
 }
 
 static void begin_handle(void* context, const char* name) {
+    struct kalos_module_builder* builder = context;
+    new_export(builder);
+    current_export(builder)->name_index = strpack(builder, name);
+    current_export(builder)->type = KALOS_EXPORT_TYPE_HANDLE;
+    LOG("handle %s", name);
 }
 
 static void handle_arg(void* context, const char* name, const char* type, bool is_varargs) {
+    struct kalos_module_builder* builder = context;
+    int arg = current_export(builder)->entry.function.arg_count++;
+    current_export(builder)->entry.function.args[arg].name_index = strpack(builder, name);
+    current_export(builder)->entry.function.args[arg].type = strtotype(type);
+    LOG("arg %s %s", name, type);
 }
 
 static void end_handle(void* context) {
+    LOG("handle");
 }
 
 static void constant_string(void* context, const char* name, const char* type, const char* s) {
