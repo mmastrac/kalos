@@ -360,7 +360,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
-        exit(1);
+        return false;
     }
     // char* s = malloc(10 * 1024);
     // s[0] = 0;
