@@ -109,6 +109,8 @@ int compile_dispatch(int verbose, const char* input, const char* output) {
     output_file = fopen(output, "w");
     if (!kalos_idl_generate_dispatch(modules, output_printer)) {
         printf("ERROR: failed to generate dispatch\n");
+        fclose(output_file);
+        unlink(output);
         exit(2);
     }
     fclose(output_file);
