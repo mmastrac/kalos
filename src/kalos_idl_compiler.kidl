@@ -39,3 +39,9 @@ module property {
     prop(read) read_symbol: string = kalos_idl_property_read_symbol;
     prop(read) write_symbol: string = kalos_idl_property_write_symbol;
 }
+
+module handles {
+    prop(read) name: string = kalos_idl_function_name;
+    prop(read) module_index: number = kalos_idl_handle_module_index;
+    prop(read) handle_index: number = kalos_idl_handle_index;
+}

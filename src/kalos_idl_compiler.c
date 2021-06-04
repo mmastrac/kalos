@@ -318,6 +318,9 @@ kalos_string kalos_idl_property_read_symbol(kalos_state state) { return kalos_st
 kalos_string kalos_idl_property_write_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.property.write_symbol_index)); }
 kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.property.type)); }
 
+kalos_int kalos_idl_handle_index(kalos_state state) { return script_current_export->entry.function.invoke_id; }
+kalos_int kalos_idl_handle_module_index(kalos_state state) { return script_current_module->index; }
+
 #include "kalos_idl_compiler.dispatch.inc"
 
 struct walk_callback_context {
@@ -393,6 +396,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         kalos_module_idl_module,
         kalos_module_idl_function,
         kalos_module_idl_property,
+        kalos_module_idl_handles,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
     struct walk_callback_context context = { .modules = parsed_module, .state = state };

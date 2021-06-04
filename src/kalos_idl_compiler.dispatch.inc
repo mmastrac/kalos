@@ -1,3 +1,9 @@
+// id=: name=begin_module
+// id=: name=end_module
+// id=: name=function_export
+// id=: name=handle_export
+// id=: name=open
+// id=: name=property_export
 void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=2 name=print arg_count=1 symbol=kalos_idl_compiler_print
@@ -21,6 +27,8 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 	}
 }
 
+// id=: name=begin
+// id=: name=end
 void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=1 name=name symbol=kalos_idl_module_name
@@ -116,6 +124,26 @@ void kalos_module_idl_property(kalos_state state, int function, kalos_stack* sta
 	// id=6 name=write_symbol symbol=kalos_idl_property_write_symbol
 	case 6: {
 		push_string(stack, kalos_idl_property_write_symbol(state));
+		break;
+	}
+	}
+}
+
+void kalos_module_idl_handles(kalos_state state, int function, kalos_stack* stack) {
+	switch (function) {
+	// id=3 name=handle_index symbol=kalos_idl_handle_index
+	case 3: {
+		push_number(stack, kalos_idl_handle_index(state));
+		break;
+	}
+	// id=2 name=module_index symbol=kalos_idl_handle_module_index
+	case 2: {
+		push_number(stack, kalos_idl_handle_module_index(state));
+		break;
+	}
+	// id=1 name=name symbol=kalos_idl_function_name
+	case 1: {
+		push_string(stack, kalos_idl_function_name(state));
 		break;
 	}
 	}
