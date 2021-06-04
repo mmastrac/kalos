@@ -18,6 +18,7 @@ typedef enum kalos_string_format_sign {
 } kalos_string_format_sign;
 
 // The output buffer's format uses this struct for the string formatting token
+#pragma pack(push, 1)
 typedef struct kalos_string_format {
     uint8_t fill; // Zero = space fill
     kalos_string_format_align align;
@@ -27,5 +28,6 @@ typedef struct kalos_string_format {
     uint8_t precision;
     uint8_t type;
 } kalos_string_format;
+#pragma pack(pop)
 
 bool kalos_parse_string_format(const char* s, kalos_string_format* string_format);

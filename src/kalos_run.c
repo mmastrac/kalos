@@ -435,7 +435,7 @@ kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_f
     state->script = script;
     state->fns = fns;
     LOG("%s", "Triggering global");
-    kalos_trigger((kalos_state)state, "");
+    kalos_trigger((kalos_state)state, kalos_make_address(-1, -1));
     return (kalos_state)state;
 }
 
@@ -451,9 +451,9 @@ kalos_state kalos_init_for_test(kalos_fn* fns) {
     return (kalos_state)state;
 }
 
-void kalos_trigger(kalos_state state_, char* handler) {
+void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->pc = kalos_find_section(state->script, handler);
+    state->pc = kalos_find_section(state->script, handle_address);
     if (state->pc == 0) {
         return;
     }

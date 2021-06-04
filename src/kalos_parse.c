@@ -116,7 +116,7 @@ static void parse_push_op(struct parse_state* parse_state, kalos_op op);
 static void parse_push_string(struct parse_state* parse_state, const char* s);
 static void parse_push_token(struct parse_state* parse_state);
 static void fixup_goto_op(struct parse_state* parse_state, int offset, int pc);
-static void write_next_handler_section(struct parse_state* parse_state, char* handler_name);
+static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address);
 
 static bool parse_assert_token(struct parse_state* parse_state, int token);
 static void parse_expression(struct parse_state* parse_state);
@@ -236,15 +236,15 @@ static void fixup_goto_op(struct parse_state* parse_state, int offset, int pc) {
     LOG("FIXUP: @%d %d", offset, pc);
 }
 
-static void write_next_handler_section(struct parse_state* parse_state, char* name) {
+static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handle_address) {
     if (parse_state->next_handler_fixup != 0) {
         TRY(parse_push_op(parse_state, KALOS_OP_END));
         parse_state->output_script[parse_state->next_handler_fixup] = parse_state->output_script_index & 0xff;
         parse_state->output_script[parse_state->next_handler_fixup + 1] = (parse_state->output_script_index >> 8) & 0xff;
     }
 
-    strcpy((char*)&parse_state->output_script[parse_state->output_script_index], name);
-    parse_state->output_script_index += strlen(name) + 1;
+    memcpy(&parse_state->output_script[parse_state->output_script_index], &handle_address, sizeof(handle_address));
+    parse_state->output_script_index += sizeof(handle_address);
 
     // Next offset
     parse_state->next_handler_fixup = parse_state->output_script_index;
@@ -783,6 +783,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
     kalos_module* context = NULL;
+    kalos_int module_index, handle_index;
     for (;;) {
         TRY(res = resolve_word(parse_state, context));
         int peek;
@@ -793,11 +794,13 @@ static void parse_handler_statement(struct parse_state* parse_state) {
             continue;
         }
         if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
+            module_index = res.export_module_index;
+            handle_index = res.export->entry.function.invoke_id;
             break;
         }
         THROW(ERROR_UNKNOWN_HANDLE);
     }
-    TRY(write_next_handler_section(parse_state, parse_state->token));
+    TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handle_index)));
     TRY(parse_statement_block(parse_state));
     TRY_EXIT;
 }
@@ -812,7 +815,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     
     struct parse_state* parse_state = &parse_state_data;
 
-    TRY(write_next_handler_section(parse_state, ""));
+    TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLE_ADDRESS));
 
     for (;;) {
         int token;

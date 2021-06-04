@@ -85,6 +85,18 @@ typedef struct kalos_module_header {
     kalos_int unused2;
 } kalos_module_header;
 
+typedef struct kalos_export_address {
+    kalos_int module_index;
+    kalos_int export_index;
+} kalos_export_address;
+
+static const kalos_export_address KALOS_GLOBAL_HANDLE_ADDRESS = { .module_index = -1, .export_index = -1 };
+
+static kalos_export_address kalos_make_address(kalos_int module_index, kalos_int export_index) {
+    kalos_export_address res = { .module_index=module_index, .export_index=export_index };
+    return res;
+}
+
 typedef bool (*kalos_module_callback)(void* context, uint16_t index, kalos_module* module);
 typedef bool (*kalos_export_callback)(void* context, uint16_t index, kalos_module* module, kalos_export* export);
 

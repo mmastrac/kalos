@@ -19,6 +19,7 @@ struct kalos_module_builder {
     kalos_export* exports;
     size_t export_count;
     size_t function_index;
+    size_t handle_index;
     size_t function_arg_count;
 };
 
@@ -102,6 +103,7 @@ static void begin_module(void* context, const char* module) {
     builder->module_count++;
     builder->module_name_index = strpack(builder, module);
     builder->function_index = 1;
+    builder->handle_index = 1;
     LOG("module %s", module);
 }
 
@@ -158,6 +160,7 @@ static void begin_handle(void* context, const char* name) {
     new_export(builder);
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_HANDLE;
+    current_export(builder)->entry.function.invoke_id = builder->handle_index++;
     LOG("handle %s", name);
 }
 
@@ -327,10 +330,10 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
     script_current_export = export;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            kalos_trigger(context->state, "function_export");
+            kalos_trigger(context->state, kalos_make_address(0, 3));
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            kalos_trigger(context->state, "property_export");
+            kalos_trigger(context->state, kalos_make_address(0, 4));
             break;
         default:
             break;
@@ -341,9 +344,9 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
 bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) {
     struct walk_callback_context* context = context_;
     script_current_module = module;
-    kalos_trigger(context->state, "begin_module");
+    kalos_trigger(context->state, kalos_make_address(0, 2));
     kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
-    kalos_trigger(context->state, "end_module");
+    kalos_trigger(context->state, kalos_make_address(0, 5));
     return true;
 }
 
