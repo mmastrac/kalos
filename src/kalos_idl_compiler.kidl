@@ -3,6 +3,12 @@ prefix "kalos_module_idl_";
 module builtin {
     fn println(s: string) = kalos_idl_compiler_println;
     fn print(s: string) = kalos_idl_compiler_print;
+
+    # Old handles
+    handle begin_module;
+    handle function;
+    handle property;
+    handle end_module;
 }
 
 module module {

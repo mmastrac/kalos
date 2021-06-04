@@ -39,6 +39,7 @@ static const char* ERROR_UNEXPECTED_HANDLER = "Unexpected handler";
 static const char* ERROR_BREAK_CONTINUE_WITHOUT_LOOP = "Break or continue but no loop";
 static const char* ERROR_INTERNAL_ERROR = "Internal error";
 static const char* ERROR_UNKNOWN_VARIABLE = "Unknown variable";
+static const char* ERROR_UNKNOWN_HANDLE = "Unknown handle";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
@@ -780,6 +781,11 @@ static bool parse_statement(struct parse_state* parse_state) {
 
 static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+    // struct name_resolution_result res;
+    // TRY(res = resolve_word(parse_state, NULL));
+    // if (res.type != NAME_RESOLUTION_MODULE_EXPORT || res.export->type != KALOS_EXPORT_TYPE_HANDLE) {
+    //     THROW(ERROR_UNKNOWN_HANDLE);
+    // }
     TRY(write_next_handler_section(parse_state, parse_state->token));
     TRY(parse_statement_block(parse_state));
     TRY_EXIT;
