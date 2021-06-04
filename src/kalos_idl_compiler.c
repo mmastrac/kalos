@@ -327,10 +327,10 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
     script_current_export = export;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            kalos_trigger(context->state, "function");
+            kalos_trigger(context->state, "function_export");
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            kalos_trigger(context->state, "property");
+            kalos_trigger(context->state, "property_export");
             break;
         default:
             break;

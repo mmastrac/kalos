@@ -13,7 +13,7 @@ handle begin_module {
 }
 
 #handle function(function) {
-handle function {
+handle function_export {
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
     println("\tcase {function.id}: {{");
     println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
@@ -62,7 +62,7 @@ handle function {
     println("\t}}");
 }
 
-handle property {
+handle property_export {
     if (property.read_id != 0) {
         println("\t// id={property.read_id} name={property.name} symbol={property.read_symbol}");
         println("\tcase {property.read_id}: {{");
