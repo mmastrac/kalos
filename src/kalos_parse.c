@@ -455,6 +455,8 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                     TRY(parse_push_number(parse_state, res.export_module_index));
                     TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
                     TRY(parse_push_op(parse_state, KALOS_OP_CALL));
+                } else {
+                    THROW(ERROR_UNKNOWN_VARIABLE);
                 }
             }
             TRY(parse_expression(parse_state));
@@ -521,6 +523,8 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                 } else {
                     THROW(ERROR_UNKNOWN_VARIABLE);
                 }
+            } else {
+                THROW(ERROR_UNKNOWN_VARIABLE);
             }
 
             if (parse_state->const_mode && !res.var->is_const) {

@@ -114,7 +114,7 @@ handle property_export {
         print("\t\t{property.write_symbol}(state, ");
         if (property.type == "string") {
             print("&peek(stack, -1)->value.string");
-        } else if (property.type == "number" || arg == "bool") {
+        } else if (property.type == "number" || property.type == "bool") {
             print("peek(stack, -1)->value.number");
         } else if (property.type == "object") {
             print("peek(stack, -1)->value.object");
