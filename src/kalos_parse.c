@@ -840,6 +840,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
             TRY(parse_var_statement(parse_state, &parse_state->globals));
         } else if (token == KALOS_TOKEN_HANDLE) {
+            memset(&parse_state->locals, 0, sizeof(parse_state->locals));
             TRY(parse_handler_statement(parse_state));
         } else {
             THROW(ERROR_UNEXPECTED_TOKEN);

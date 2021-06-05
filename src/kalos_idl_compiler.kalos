@@ -21,10 +21,23 @@ handle module.begin {
 handle handle_export {
     println("// id={handles.module_index:04x}:{handles.handle_index:04x} name={handles.name}");
     if (module.name == "builtin") {
-        println("void {module.prefix}trigger_{handles.name}(kalos_state state) {{");
+        print("void {module.prefix}trigger_{handles.name}(kalos_state state");
     } else {
-        println("void {module.prefix}{module.name}_trigger_{handles.name}(kalos_state state) {{");
+        print("void {module.prefix}{module.name}_trigger_{handles.name}(kalos_state state");
     }
+    var index = 0;
+    # for arg in function.args {
+    #     print(", ");
+    #     if (arg == "string") {
+    #         print("kalos_string a{index}");
+    #     } else if (arg == "number" || arg == "bool") {
+    #         print("kalos_int a{index}");
+    #     } else if (arg == "object") {
+    #         print("kalos_object* a{index}");
+    #     }
+    #     index += 1;
+    # }
+    println(") {{");
     println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
     println("}}");
     println("");
