@@ -787,10 +787,14 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
     kalos_module* context = NULL;
+    kalos_export* handle = NULL;
     kalos_int module_index, handle_index;
+    int peek, token;
+    if (strcmp(parse_state->token, "test") == 0) {
+        
+    }
     for (;;) {
         TRY(res = resolve_word(parse_state, context));
-        int peek;
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PERIOD && res.type == NAME_RESOLUTION_MODULE) {
             context = res.module;
@@ -801,9 +805,32 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
             module_index = res.export_module_index;
             handle_index = res.export->entry.function.invoke_id;
+            handle = res.export;
             break;
         }
         THROW(ERROR_UNKNOWN_HANDLE);
+    }
+    TRY(peek = lex_peek(parse_state));
+    if (peek == KALOS_TOKEN_PAREN_OPEN) {
+        struct vars_state* locals = &parse_state->locals;
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
+        TRY(token = lex(parse_state));
+        if (token != KALOS_TOKEN_PAREN_CLOSE) {
+            for (;;) {
+                if (token == KALOS_TOKEN_WORD) {
+                    int slot = locals->var_index++;
+                    strcpy(locals->vars[slot].name, parse_state->token);
+                    TRY(token = lex(parse_state));
+                    if (token == KALOS_TOKEN_COMMA) {
+                        TRY(token = lex(parse_state));
+                        continue;
+                    } else if (token == KALOS_TOKEN_PAREN_CLOSE) {
+                        break;
+                    }
+                }
+                THROW(ERROR_UNEXPECTED_TOKEN);
+            }
+        }
     }
     TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handle_index)));
     TRY(parse_statement_block(parse_state));

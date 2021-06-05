@@ -1,0 +1,5 @@
+import test;
+
+handle test.with_args(s) {
+    print(s);
+}
