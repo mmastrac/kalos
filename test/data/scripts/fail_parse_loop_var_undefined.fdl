@@ -1,0 +1,5 @@
+F2
+handle init {
+    for i in range(0, 10) {
+    }
+}

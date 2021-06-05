@@ -26,17 +26,18 @@ handle handle_export {
         print("void {module.prefix}{module.name}_trigger_{handles.name}(kalos_state state");
     }
     var index = 0;
-    # for arg in function.args {
-    #     print(", ");
-    #     if (arg == "string") {
-    #         print("kalos_string a{index}");
-    #     } else if (arg == "number" || arg == "bool") {
-    #         print("kalos_int a{index}");
-    #     } else if (arg == "object") {
-    #         print("kalos_object* a{index}");
-    #     }
-    #     index += 1;
-    # }
+    var arg;
+    for arg in function.args {
+        print(", ");
+        if (arg == "string") {
+            print("kalos_string a{index}");
+        } else if (arg == "number" || arg == "bool") {
+            print("kalos_int a{index}");
+        } else if (arg == "object") {
+            print("kalos_object* a{index}");
+        }
+        index += 1;
+    }
     println(") {{");
     println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
     println("}}");

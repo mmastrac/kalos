@@ -1,5 +1,9 @@
 handle init {
     var i;
+    # Prints nothing but should not fail
+    for i in range(0, 0) {
+        print(i);
+    }
     for i in range(0, 10) {
         print(i);
     }

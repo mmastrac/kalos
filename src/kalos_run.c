@@ -611,6 +611,29 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 break;
         }
 
+        // printf("stack %s:", kalos_op_strings[op]);
+        // for (int i = 0; i < state->stack.stack_index; i++) {
+        //     printf(" %d=", i);
+        //     switch (state->stack.stack[i].type) {
+        //         case KALOS_VALUE_NONE:
+        //             printf("(none)");
+        //             break;
+        //         case KALOS_VALUE_BOOL:
+        //             printf("(bool)%d", state->stack.stack[i].value.number);
+        //             break;
+        //         case KALOS_VALUE_NUMBER:
+        //             printf("%d", state->stack.stack[i].value.number);
+        //             break;
+        //         case KALOS_VALUE_STRING:
+        //             printf("\"%s\"", kalos_string_c(state, state->stack.stack[i].value.string));
+        //             break;
+        //         case KALOS_VALUE_OBJECT:
+        //             printf("(object)");
+        //             break;
+        //     }
+        // }
+        // printf("\n");
+
         // Confirm stack is correct
         if (kalos_op_input_size[op] != -1 && kalos_op_output_size[op] != -1) {
             int diff = state->stack.stack_index - stack_index;
