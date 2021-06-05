@@ -16,6 +16,10 @@ typedef struct kalos_script kalos_script;
 typedef struct kalos_module kalos_module;
 kalos_state kalos_init_for_test(kalos_fn* fns);
 kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_fn* fns);
+void kalos_load_arg_object(kalos_state state, kalos_int index, kalos_object* arg);
+void kalos_load_arg_number(kalos_state state, kalos_int index, kalos_int arg);
+void kalos_load_arg_string(kalos_state state, kalos_int index, kalos_string arg);
+void kalos_load_arg_bool(kalos_state state, kalos_int index, bool arg);
 void kalos_trigger(kalos_state state, kalos_export_address handle_address);
 void kalos_run_free(kalos_state state);
 

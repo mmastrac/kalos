@@ -56,6 +56,7 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 
 // id=0001:0001 name=begin
 void kalos_module_idl_module_trigger_begin(kalos_state state, kalos_object* a0) {
+	kalos_load_arg_object(state, 0, a0);
 	kalos_trigger(state, kalos_make_address(0x1, 0x1));
 }
 

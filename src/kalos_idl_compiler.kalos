@@ -39,6 +39,10 @@ handle handle_export {
         index += 1;
     }
     println(") {{");
+    index = 0;
+    for arg in function.args {
+        println("\tkalos_load_arg_{arg}(state, {index}, a{index});");
+    }
     println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
     println("}}");
     println("");
