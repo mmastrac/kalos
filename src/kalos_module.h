@@ -5,6 +5,7 @@
 
 #define MAX_KALOS_EXPORT_NAME_LENGTH 64
 #define MAX_KALOS_ARGS 8
+#define MAX_KALOS_OBJ_PROPS 8
 
 typedef enum kalos_function_type {
     FUNCTION_TYPE_VOID,
@@ -46,15 +47,20 @@ typedef struct kalos_property {
     kalos_int write_invoke_id;
 } kalos_property;
 
+typedef struct kalos_object_def {
+    uint8_t property_count;
+    kalos_property properties[MAX_KALOS_OBJ_PROPS];
+} kalos_object_def;
+
 typedef union kalos_export_entry {
     kalos_int const_number;
     kalos_int const_string_index;
     kalos_function function;
     kalos_property property;
+    kalos_object_def object;
 } kalos_export_entry;
 
 typedef struct kalos_export {
-    kalos_int index;
     kalos_int name_index;
     kalos_export_type type;
     kalos_export_entry entry;

@@ -20,7 +20,7 @@ struct kalos_module_builder {
     size_t export_count;
     size_t function_index;
     size_t handle_index;
-    size_t function_arg_count;
+    bool in_object;
 };
 
 int export_compare(void* context, const void* v1, const void* v2) {
@@ -92,6 +92,19 @@ static kalos_function_type strtotype(const char* s) {
     return FUNCTION_TYPE_VOID;
 }
 
+static void error(void* context, const char* start, uint16_t error_pos) {
+    uint16_t row = 0, col = 0;
+    for (int i = 0; i < error_pos; i++) {
+        if (start[i] == '\n') {
+            row++;
+            col = 0;
+        } else {
+            col++;
+        }
+    }
+    printf("Error on line %d, column %d\n", row + 1, col + 1);
+}
+
 static void prefix(void* context, const char* prefix) {
     struct kalos_module_builder* builder = context;
     builder->prefix_index = strpack(builder, unstring((char*)prefix));
@@ -125,16 +138,21 @@ static void end_module(void* context) {
     LOG("end");
 }
 
-static void begin_object(void* context, const char* module) {
+static void begin_object(void* context, const char* name) {
+    struct kalos_module_builder* builder = context;
+    new_export(builder);
+    current_export(builder)->name_index = strpack(builder, name);
+    builder->in_object = true;
 }
 
 static void end_object(void* context) {
+    struct kalos_module_builder* builder = context;
+    builder->in_object = false;
 }
 
 static void begin_function(void* context, const char* name) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
-    current_export(builder)->index = builder->export_count - 1;
     current_export(builder)->type = KALOS_EXPORT_TYPE_FUNCTION;
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->entry.function.invoke_id = builder->function_index++;
@@ -202,27 +220,35 @@ static void constant_number(void* context, const char* name, const char* type, k
 
 static void property(void* context, const char* name, const char* type, const char* mode, const char* symbol, const char* symbol2) {
     struct kalos_module_builder* builder = context;
-    new_export(builder);
-    current_export(builder)->name_index = strpack(builder, name);
-    current_export(builder)->type = KALOS_EXPORT_TYPE_PROPERTY;
-    current_export(builder)->entry.property.type = strtotype(type);
+    kalos_property* property;
+    if (builder->in_object) {
+        int prop = current_export(builder)->entry.object.property_count++;
+        property = &current_export(builder)->entry.object.properties[prop];
+    } else {
+        new_export(builder);
+        current_export(builder)->name_index = strpack(builder, name);
+        current_export(builder)->type = KALOS_EXPORT_TYPE_PROPERTY;
+        property = &current_export(builder)->entry.property;
+    }
+    property->type = strtotype(type);
     if (strcmp(mode, "read") == 0) {
-        current_export(builder)->entry.property.read_invoke_id = builder->function_index++;
-        current_export(builder)->entry.property.read_symbol_index = strpack(builder, symbol);
+        property->read_invoke_id = builder->function_index++;
+        property->read_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "write") == 0) {
-        current_export(builder)->entry.property.write_invoke_id = builder->function_index++;
-        current_export(builder)->entry.property.write_symbol_index = strpack(builder, symbol);
+        property->write_invoke_id = builder->function_index++;
+        property->write_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "read,write") == 0) {
-        current_export(builder)->entry.property.read_invoke_id = builder->function_index++;
-        current_export(builder)->entry.property.read_symbol_index = strpack(builder, symbol);
-        current_export(builder)->entry.property.write_invoke_id = builder->function_index++;
-        current_export(builder)->entry.property.write_symbol_index = strpack(builder, symbol2);
+        property->read_invoke_id = builder->function_index++;
+        property->read_symbol_index = strpack(builder, symbol);
+        property->write_invoke_id = builder->function_index++;
+        property->write_symbol_index = strpack(builder, symbol2);
     }
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
 }
 
 kalos_module_parsed kalos_idl_parse_module(const char* s) {
     kalos_idl_callbacks callbacks = {
+        error,
         prefix,
         begin_module,
         end_module,
