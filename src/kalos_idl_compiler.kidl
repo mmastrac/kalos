@@ -11,6 +11,11 @@ module builtin {
     handle property_export;
     handle end_module;
     handle handle_export;
+
+    object module {
+        prop(read) name: string = kalos_idl_module_name;
+        prop(read) prefix: string = kalos_idl_module_prefix;
+    }
 }
 
 module module {

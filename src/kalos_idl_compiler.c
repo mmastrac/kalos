@@ -125,6 +125,12 @@ static void end_module(void* context) {
     LOG("end");
 }
 
+static void begin_object(void* context, const char* module) {
+}
+
+static void end_object(void* context) {
+}
+
 static void begin_function(void* context, const char* name) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
@@ -220,6 +226,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
         prefix,
         begin_module,
         end_module,
+        begin_object,
+        end_object,
         begin_function,
         function_arg,
         end_function,

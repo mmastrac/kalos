@@ -790,9 +790,6 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     kalos_export* handle = NULL;
     kalos_int module_index, handle_index;
     int peek, token;
-    if (strcmp(parse_state->token, "test") == 0) {
-        
-    }
     for (;;) {
         TRY(res = resolve_word(parse_state, context));
         TRY(peek = lex_peek(parse_state));

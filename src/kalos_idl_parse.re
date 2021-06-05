@@ -15,6 +15,7 @@ enum yyc_state {
     yycfret,
     yychandle,
     yychcomma,
+    yycobject,
 };
 
 const char* copy_string(char* buffer, const char* a, const char* b) {
@@ -52,13 +53,15 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         mode = "read" | "write";
         type = "number" | "string" | "void" | "any" | "object";
 
-        <init,module,function,fcomma,fret,handle,hcomma> * { return false; }
-        <init,module,function,fcomma,fret,handle,hcomma> ws { continue; }
+        <init,module,object,function,fcomma,fret,handle,hcomma> * { return false; }
+        <init,module,object,function,fcomma,fret,handle,hcomma> ws { continue; }
         <init> end { return true; }
-        <init,module> "#" [^\n\x00]* "\n" { /* comment */ continue; }
+        <init,module,object> "#" [^\n\x00]* "\n" { /* comment */ continue; }
         <init> "prefix" ws? @a string @b ws? ";" { callbacks->prefix(context, copy_string(buffers[0], a, b)); continue; }
         <init> "module" ws @a word @b ws? "{" => module { callbacks->begin_module(context, copy_string(buffers[0], a, b)); continue; }
-        <module> "prop" ws? "(" ws? @a mode @b ws? ")" ws? @c word @d ws? ":" ws? @e type @f ws? "=" ws? @g word @h ws? ";" {
+        <module> "object" ws? @a word @b @ws? "{" => object { callbacks->begin_object(context, copy_string(buffers[0], a, b)); continue; } 
+        <object> "}" => module { callbacks->end_object(context); continue; }
+        <module,object> "prop" ws? "(" ws? @a mode @b ws? ")" ws? @c word @d ws? ":" ws? @e type @f ws? "=" ws? @g word @h ws? ";" {
             callbacks->property(
                 context,
                 copy_string(buffers[0], c, d), // name
@@ -69,7 +72,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             );
             continue;
         }
-        <module> "prop" ws? "(" ws? "read" ws? "," ws? "write" ws? ")" ws? @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e word @f ws? "," ws? @g word @h @ws? ";" {
+        <module,object> "prop" ws? "(" ws? "read" ws? "," ws? "write" ws? ")" ws? @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e word @f ws? "," ws? @g word @h @ws? ";" {
             callbacks->property(
                 context,
                 copy_string(buffers[0], a, b),  // name

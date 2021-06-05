@@ -7,6 +7,9 @@ typedef struct kalos_idl_callbacks {
     void (*begin_module)(void* context, const char* module);
     void (*end_module)(void* context);
 
+    void (*begin_object)(void* context, const char* object);
+    void (*end_object)(void* context);
+
     void (*begin_function)(void* context, const char* name);
     void (*function_arg)(void* context, const char* name, const char* type, bool is_varargs);
     void (*end_function)(void* context, const char* name, const char* type, const char* symbol);
