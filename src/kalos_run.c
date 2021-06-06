@@ -681,6 +681,13 @@ kalos_object* kalos_allocate_object(kalos_state state_, size_t context_size) {
     return object;
 }
 
+kalos_object* kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch dispatch) {
+    kalos_object* object = kalos_allocate_object(state, 0);
+    object->context = context;
+    object->dispatch = dispatch;
+    return object;
+}
+
 void* kaloc_mem_alloc(kalos_state state_, size_t size) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     return state->fns->alloc(size);

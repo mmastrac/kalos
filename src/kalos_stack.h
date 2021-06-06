@@ -6,10 +6,12 @@
 
 typedef struct kalos_object kalos_object;
 typedef struct kalos_value kalos_value;
+typedef struct kalos_stack kalos_stack;
 typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object* object, char* property);
 typedef kalos_object* (*kalos_iterstart)(kalos_state state, kalos_object* object);
 typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object* object, bool* done);
 typedef void (*kalos_object_free)(kalos_state state, kalos_object* object);
+typedef void (*kalos_object_dispatch)(kalos_state state, kalos_object* object, int function, kalos_stack* stack);
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -26,6 +28,7 @@ struct kalos_object {
     kalos_propget propget;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
+    kalos_object_dispatch dispatch;
 };
 
 typedef union kalos_value_union {

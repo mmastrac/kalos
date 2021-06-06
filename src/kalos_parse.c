@@ -488,11 +488,23 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
             return;
         } else if (peek == KALOS_TOKEN_PERIOD) {
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+            if (res.type == NAME_RESOLUTION_LOCAL_VAR || res.type == NAME_RESOLUTION_GLOBAL_VAR) {
+                TRY(parse_push_number(parse_state, res.var_slot));
+                if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
+                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
+                } else {
+                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
+                }
+                // object property
+                // TODO
+                THROW(ERROR_INTERNAL_ERROR);
+            } else if (res.type == NAME_RESOLUTION_MODULE) {
+                context = res.module;
+                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+            }
             if (res.type != NAME_RESOLUTION_MODULE) {
                 THROW(ERROR_EXPECTED_MODULE);
             }
-            context = res.module;
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
         } else {
             if (statement_context) {
                 THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT);

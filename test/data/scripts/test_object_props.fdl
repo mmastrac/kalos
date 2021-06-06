@@ -1,0 +1,9 @@
+import test;
+
+handle init {
+    var ax = test.make_a();
+    print("{ax.a}\n");
+    var bx = test.make_b();
+    print("{bx.a}\n");
+    print("{bx.b}\n");
+}
