@@ -23,8 +23,8 @@ module module {
     handle end;
 
     object module {
-        prop(read) name: string = kalos_idl_module_name;
-        prop(read) prefix: string = kalos_idl_module_prefix;
+        prop(read) name: string = kalos_idl_obj_module_name;
+        prop(read) prefix: string = kalos_idl_obj_module_prefix;
     }
 }
 

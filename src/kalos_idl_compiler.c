@@ -390,6 +390,8 @@ static void iter_function_arg(kalos_state state, void* context, uint16_t index, 
 
 kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
 kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
+kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
+kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
 kalos_string kalos_idl_export_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 
 kalos_int kalos_idl_function_id(kalos_state state) { return script_current_export->entry.function.invoke_id; }
@@ -444,7 +446,7 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
                 kalos_module_idl_trigger_begin_object(context->state);
                 for (int i = 0; i < export->entry.object.property_count; i++) {
                     script_current_property = &export->entry.object.properties[i];
-                    kalos_module_idl_trigger_object_property(context->state);
+                    kalos_module_idl_trigger_property_export(context->state);
                 }
                 script_current_property = NULL;
                 kalos_module_idl_trigger_end_object(context->state);

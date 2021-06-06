@@ -80,9 +80,21 @@ void kalos_module_idl_module_trigger_end(kalos_state state) {
 	kalos_trigger(state, kalos_make_address(0x1, 0x2));
 }
 
-//kalos_module_idl_object_module_props
-//
-//
+//kalos_module_idl_module_object_module_props
+void kalos_module_idl_module_object_module_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+	switch (function) {
+	// id=2 name=module symbol=kalos_idl_obj_module_name
+	case 2: {
+		push_string(stack, kalos_idl_obj_module_name(state, object));
+		break;
+	}
+	// id=4 name=module symbol=kalos_idl_obj_module_prefix
+	case 4: {
+		push_string(stack, kalos_idl_obj_module_prefix(state, object));
+		break;
+	}
+	}
+}
 
 void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {
 	switch (function) {
