@@ -49,6 +49,18 @@ void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_
     }
 }
 
+kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name) {
+    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_property_address* prop_addr = (kalos_property_address*)((uint8_t *)parsed.data + header->props_offset);
+    for (int i = 0; i < header->props_count; i++) {
+        if (strcmp(kalos_module_get_string(parsed, prop_addr[i].name_index), name) == 0) {
+            return 2 + (write ? (i * 2 + 1) : (i * 2));
+        } 
+    }
+
+    return 0;
+}
+
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index) {
     kalos_module_header* header = (kalos_module_header*)parsed.data;
     return (const char *)parsed.data + header->string_offset + index;

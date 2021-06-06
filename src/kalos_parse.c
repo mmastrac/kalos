@@ -40,6 +40,7 @@ static const char* ERROR_BREAK_CONTINUE_WITHOUT_LOOP = "Break or continue but no
 static const char* ERROR_INTERNAL_ERROR = "Internal error";
 static const char* ERROR_UNKNOWN_VARIABLE = "Unknown variable";
 static const char* ERROR_UNKNOWN_HANDLE = "Unknown handle";
+static const char* ERROR_UNKNOWN_PROPERTY = "Unknown property";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
@@ -496,13 +497,18 @@ static void parse_word_expression(struct parse_state* parse_state, bool statemen
                     TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
                 }
                 // object property
-                // TODO
-                THROW(ERROR_INTERNAL_ERROR);
+                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+                kalos_int index = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token);
+                if (index == 0) {
+                    THROW(ERROR_UNKNOWN_PROPERTY);
+                }
+                TRY(parse_push_number(parse_state, index));
+                TRY(parse_push_op(parse_state, KALOS_OP_GETPROP));
+                return;
             } else if (res.type == NAME_RESOLUTION_MODULE) {
                 context = res.module;
                 TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
-            }
-            if (res.type != NAME_RESOLUTION_MODULE) {
+            } else {
                 THROW(ERROR_EXPECTED_MODULE);
             }
         } else {

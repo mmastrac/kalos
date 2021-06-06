@@ -92,7 +92,7 @@ typedef struct kalos_module_header {
     kalos_int module_offset;
     kalos_int module_size;
     kalos_int props_offset;
-    kalos_int props_size;
+    kalos_int props_count;
     kalos_int string_offset;
     kalos_int string_size;
 } kalos_module_header;
@@ -103,8 +103,7 @@ typedef struct kalos_export_address {
 } kalos_export_address;
 
 typedef struct kalos_property_address {
-    bool write;
-    kalos_value_type type;
+    kalos_function_type type;
     kalos_int name_index;
 } kalos_property_address;
 
@@ -122,5 +121,5 @@ kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* n
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name);
 void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback);
 void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_module* module, kalos_export_callback callback);
-
+kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name);
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index);

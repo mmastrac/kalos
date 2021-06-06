@@ -327,6 +327,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     kalos_int module_prop_index = 0;
     const char* current_name = "";
     kalos_function_type current_type;
+    kalos_property_address* prop_addrs = NULL;
+    int prop_addr_count = 0;
     for (int i = 0; i < context.object_props_count; i++) {
         kalos_object_property* p = object_props[i];
         // TODO: Typing will require us to split props by type
@@ -334,10 +336,19 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
             module_prop_index++;
             current_name = kalos_module_get_string(parsed, p->name_index);
             current_type = p->property.type;
+            prop_addr_count++;
+            prop_addrs = realloc(prop_addrs, prop_addr_count * sizeof(prop_addrs[0]));
+            prop_addrs[prop_addr_count - 1].name_index = p->name_index;
+            prop_addrs[prop_addr_count - 1].type = p->property.type;
         }
         p->property.read_invoke_id = p->property.read_invoke_id ? module_prop_index * 2 : 0;
-        p->property.write_invoke_id = p->property.write_invoke_id ? module_prop_index * 2 : 0;
+        p->property.write_invoke_id = p->property.write_invoke_id ? module_prop_index * 2 + 1 : 0;
     }
+    header->props_offset = parsed.size;
+    header->props_count = prop_addr_count;
+    parsed.data = realloc(parsed.data, parsed.size + prop_addr_count * sizeof(prop_addrs[0]));
+    memcpy((uint8_t*)parsed.data + parsed.size, prop_addrs, prop_addr_count * sizeof(prop_addrs[0]));
+    parsed.size += prop_addr_count * sizeof(prop_addrs[0]);
 
     return parsed;
 }
