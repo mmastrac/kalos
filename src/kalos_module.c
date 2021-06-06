@@ -32,7 +32,7 @@ void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_
     kalos_module_header* header = (kalos_module_header*)parsed.data;
     kalos_module* m = (kalos_module*)((uint8_t *)parsed.data + header->module_offset);
     for (uint16_t i = 0; i < header->module_count; i++) {
-        if (!callback(context, i, m)) {
+        if (!callback(context, parsed, i, m)) {
             return;
         }
         m = (kalos_module*)((uint8_t *)m + sizeof(kalos_module) + m->export_count * sizeof(kalos_export));
@@ -42,7 +42,7 @@ void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_
 void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_module* module, kalos_export_callback callback) {
     kalos_export* e = (kalos_export*)((uint8_t *)module + sizeof(kalos_module));
     for (uint16_t i = 0; i < module->export_count; i++) {
-        if (!callback(context, i, module, e)) {
+        if (!callback(context, parsed, i, module, e)) {
             return;
         }
         e = (kalos_export*)((uint8_t *)e + sizeof(kalos_export));

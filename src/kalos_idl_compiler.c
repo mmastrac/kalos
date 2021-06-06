@@ -17,6 +17,7 @@ struct kalos_module_builder {
     size_t string_buffer_size;
     size_t string_buffer_index;
     kalos_export* exports;
+    size_t object_props_count;
     size_t export_count;
     size_t function_index;
     size_t handle_index;
@@ -142,6 +143,7 @@ static void begin_object(void* context, const char* name) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
     current_export(builder)->name_index = strpack(builder, name);
+    current_export(builder)->type = KALOS_EXPORT_TYPE_OBJECT;
     builder->in_object = true;
 }
 
@@ -223,7 +225,9 @@ static void property(void* context, const char* name, const char* type, const ch
     kalos_property* property;
     if (builder->in_object) {
         int prop = current_export(builder)->entry.object.property_count++;
-        property = &current_export(builder)->entry.object.properties[prop];
+        property = &current_export(builder)->entry.object.properties[prop].property;
+        current_export(builder)->entry.object.properties[prop].name_index = strpack(builder, name);
+        builder->object_props_count++;
     } else {
         new_export(builder);
         current_export(builder)->name_index = strpack(builder, name);
@@ -232,18 +236,47 @@ static void property(void* context, const char* name, const char* type, const ch
     }
     property->type = strtotype(type);
     if (strcmp(mode, "read") == 0) {
-        property->read_invoke_id = builder->function_index++;
+        property->read_invoke_id = builder->in_object ? 1 : builder->function_index++;
         property->read_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "write") == 0) {
-        property->write_invoke_id = builder->function_index++;
+        property->write_invoke_id = builder->in_object ? 1 : builder->function_index++;
         property->write_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "read,write") == 0) {
-        property->read_invoke_id = builder->function_index++;
+        property->read_invoke_id = builder->in_object ? 1 : builder->function_index++;
+        property->write_invoke_id = builder->in_object ? 1 : builder->function_index++;
         property->read_symbol_index = strpack(builder, symbol);
-        property->write_invoke_id = builder->function_index++;
         property->write_symbol_index = strpack(builder, symbol2);
     }
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
+}
+
+int property_compare(void* context, const void* v1, const void* v2) {
+    kalos_module_parsed* parsed = context;
+    kalos_object_property** e1 = (kalos_object_property**)v1;
+    kalos_object_property** e2 = (kalos_object_property**)v2;
+
+    int res = strcmp(kalos_module_get_string(*parsed, (*e1)->name_index), kalos_module_get_string(*parsed, (*e2)->name_index));
+    if (res != 0) {
+        return res;
+    }
+
+    return (int)(*e1)->property.type - (int)(*e2)->property.type;
+}
+
+bool object_prop_export_callback(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
+    kalos_object_property*** object_props = context;
+    if (export->type == KALOS_EXPORT_TYPE_OBJECT) {
+        for (int i = 0; i < export->entry.object.property_count; i++) {
+            **object_props = &export->entry.object.properties[i];
+            (*object_props)++;
+        }
+    }
+    return true;
+}
+
+bool object_prop_module_callback(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module) {
+    kalos_module_walk_exports(context, parsed, module, object_prop_export_callback);
+    return true;
 }
 
 kalos_module_parsed kalos_idl_parse_module(const char* s) {
@@ -285,6 +318,26 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     free(context.string_buffer);
 
     kalos_module_parsed parsed = { .data=context.kalos_module_buffer, .size=sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index };
+
+    // Post-process object properties
+    kalos_object_property** object_props = malloc(sizeof(kalos_object_property*) * context.object_props_count);
+    kalos_object_property** object_props_ptr = object_props;
+    kalos_module_walk_modules(&object_props_ptr, parsed, object_prop_module_callback);
+    qsort_r(object_props, context.object_props_count, sizeof(object_props[0]), &parsed, property_compare);
+    kalos_int module_prop_index = 0;
+    const char* current_name = "";
+    kalos_function_type current_type;
+    for (int i = 0; i < context.object_props_count; i++) {
+        kalos_object_property* p = object_props[i];
+        if (strcmp(kalos_module_get_string(parsed, p->name_index), current_name) != 0 || current_type != p->property.type) {
+            module_prop_index++;
+            current_name = kalos_module_get_string(parsed, p->name_index);
+            current_type = p->property.type;
+        }
+        p->property.read_invoke_id = p->property.read_invoke_id ? module_prop_index * 2 : 0;
+        p->property.write_invoke_id = p->property.write_invoke_id ? module_prop_index * 2 : 0;
+    }
+
     return parsed;
 }
 
@@ -300,6 +353,7 @@ static kalos_printer_fn script_output;
 static kalos_module_parsed script_modules;
 static kalos_module* script_current_module;
 static kalos_export* script_current_export;
+static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
     script_output("%s", kalos_string_c(state, *string));
@@ -346,11 +400,14 @@ kalos_int kalos_idl_function_arg_count(kalos_state state) { return script_curren
 kalos_string kalos_idl_function_varargs(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
 kalos_string kalos_idl_function_arg_type(kalos_state state, kalos_int arg) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[arg].type)); }
 
-kalos_int kalos_idl_property_read_id(kalos_state state) { return script_current_export->entry.property.read_invoke_id; }
-kalos_int kalos_idl_property_write_id(kalos_state state) { return script_current_export->entry.property.write_invoke_id; }
-kalos_string kalos_idl_property_read_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.property.read_symbol_index)); }
-kalos_string kalos_idl_property_write_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.property.write_symbol_index)); }
-kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.property.type)); }
+kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
+
+kalos_string kalos_idl_property_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
+kalos_int kalos_idl_property_read_id(kalos_state state) { return prop()->read_invoke_id; }
+kalos_int kalos_idl_property_write_id(kalos_state state) { return prop()->write_invoke_id; }
+kalos_string kalos_idl_property_read_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read_symbol_index)); }
+kalos_string kalos_idl_property_write_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
+kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 
 kalos_int kalos_idl_handle_index(kalos_state state) { return script_current_export->entry.function.invoke_id; }
 kalos_int kalos_idl_handle_module_index(kalos_state state) { return script_current_module->index; }
@@ -363,7 +420,7 @@ struct walk_callback_context {
     kalos_state state;
 };
 
-bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, kalos_export* export) {
+bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;
     script_current_export = export;
     switch (export->type) {
@@ -382,20 +439,31 @@ bool export_walk_callback(void* context_, uint16_t index, kalos_module* module, 
                 kalos_module_idl_trigger_handle_export(context->state);
             }
             break;
+        case KALOS_EXPORT_TYPE_OBJECT:
+            if (context->handles) {
+                kalos_module_idl_trigger_begin_object(context->state);
+                for (int i = 0; i < export->entry.object.property_count; i++) {
+                    script_current_property = &export->entry.object.properties[i];
+                    kalos_module_idl_trigger_object_property(context->state);
+                }
+                script_current_property = NULL;
+                kalos_module_idl_trigger_end_object(context->state);
+            }
+            break;
         default:
             break;
     }
     return true;
 }
 
-bool module_walk_callback(void* context_, uint16_t index, kalos_module* module) {
+bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module) {
     struct walk_callback_context* context = context_;
     script_current_module = module;
     context->handles = true;
-    kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
+    kalos_module_walk_exports(context, parsed, module, export_walk_callback);
     kalos_module_idl_trigger_begin_module(context->state);
     context->handles = false;
-    kalos_module_walk_exports(context, context->modules, module, export_walk_callback);
+    kalos_module_walk_exports(context, parsed, module, export_walk_callback);
     kalos_module_idl_trigger_end_module(context->state);
     return true;
 }
@@ -431,6 +499,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         kalos_module_idl_function,
         kalos_module_idl_property,
         kalos_module_idl_handles,
+        kalos_module_idl_object,
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
     kalos_module_idl_trigger_open(state);

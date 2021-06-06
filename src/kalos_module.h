@@ -23,6 +23,7 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_FUNCTION,
     KALOS_EXPORT_TYPE_PROPERTY,
     KALOS_EXPORT_TYPE_HANDLE,
+    KALOS_EXPORT_TYPE_OBJECT,
 } kalos_export_type;
 
 typedef struct kalos_arg {
@@ -47,9 +48,14 @@ typedef struct kalos_property {
     kalos_int write_invoke_id;
 } kalos_property;
 
+typedef struct kalos_object_property {
+    kalos_property property;
+    kalos_int name_index;
+} kalos_object_property;
+
 typedef struct kalos_object_def {
     uint8_t property_count;
-    kalos_property properties[MAX_KALOS_OBJ_PROPS];
+    kalos_object_property properties[MAX_KALOS_OBJ_PROPS];
 } kalos_object_def;
 
 typedef union kalos_export_entry {
@@ -85,16 +91,22 @@ typedef struct kalos_module_header {
     kalos_int module_count;
     kalos_int module_offset;
     kalos_int module_size;
+    kalos_int props_offset;
+    kalos_int props_size;
     kalos_int string_offset;
     kalos_int string_size;
-    kalos_int unused1;
-    kalos_int unused2;
 } kalos_module_header;
 
 typedef struct kalos_export_address {
     kalos_int module_index;
     kalos_int export_index;
 } kalos_export_address;
+
+typedef struct kalos_property_address {
+    bool write;
+    kalos_value_type type;
+    kalos_int name_index;
+} kalos_property_address;
 
 static const kalos_export_address KALOS_GLOBAL_HANDLE_ADDRESS = { .module_index = -1, .export_index = -1 };
 
@@ -103,8 +115,8 @@ static kalos_export_address kalos_make_address(kalos_int module_index, kalos_int
     return res;
 }
 
-typedef bool (*kalos_module_callback)(void* context, uint16_t index, kalos_module* module);
-typedef bool (*kalos_export_callback)(void* context, uint16_t index, kalos_module* module, kalos_export* export);
+typedef bool (*kalos_module_callback)(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module);
+typedef bool (*kalos_export_callback)(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export);
 
 kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* name);
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name);

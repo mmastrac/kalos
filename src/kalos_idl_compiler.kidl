@@ -11,6 +11,9 @@ module builtin {
     handle property_export;
     handle end_module;
     handle handle_export;
+    handle object_property;
+    handle begin_object;
+    handle end_object;
 }
 
 module module {
@@ -50,4 +53,8 @@ module handles {
     prop(read) module_index: number = kalos_idl_handle_module_index;
     prop(read) handle_index: number = kalos_idl_handle_index;
     prop(read) args: object = kalos_idl_function_args;
+}
+
+module object {
+    prop(read) name: string = kalos_idl_export_name;
 }
