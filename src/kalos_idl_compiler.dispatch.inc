@@ -81,7 +81,7 @@ void kalos_module_idl_module_trigger_end(kalos_state state) {
 }
 
 //kalos_module_idl_module_object_module_props
-void kalos_module_idl_module_object_module_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_module_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=2 name=module symbol=kalos_idl_obj_module_name
 	case 2: {
@@ -93,7 +93,9 @@ void kalos_module_idl_module_object_module_props(kalos_state state, kalos_object
 		push_string(stack, kalos_idl_obj_module_prefix(state, object));
 		break;
 	}
+	default: return false;
 	}
+	return true;
 }
 
 void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {

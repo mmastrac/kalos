@@ -53,7 +53,7 @@ handle handle_export {
 
 handle begin_object {
     println("//{module.prefix}{module.name}_object_{object.name}_props");
-    println("void {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
+    println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
     in_object = true;
 }
@@ -63,7 +63,9 @@ handle object_property {
 }
 
 handle end_object {
+    println("\tdefault: return false;");
     println("\t}}");
+    println("\treturn true;");
     println("}}");
     println("");
     in_object = false;

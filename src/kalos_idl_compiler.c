@@ -329,7 +329,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     kalos_function_type current_type;
     for (int i = 0; i < context.object_props_count; i++) {
         kalos_object_property* p = object_props[i];
-        if (strcmp(kalos_module_get_string(parsed, p->name_index), current_name) != 0 || current_type != p->property.type) {
+        // TODO: Typing will require us to split props by type
+        if (strcmp(kalos_module_get_string(parsed, p->name_index), current_name) != 0/* || current_type != p->property.type*/) {
             module_prop_index++;
             current_name = kalos_module_get_string(parsed, p->name_index);
             current_type = p->property.type;
