@@ -30,7 +30,7 @@ static kalos_builtin kalos_builtins[] = {
 
 #define THROW(msg) { LOG("%d (kalos_parse.c:%d): Throw %s (last token was %s)", parse_state->lex_state.line, __LINE__, msg, kalos_token_strings[parse_state->last_token]); parse_state->failure_message = msg; goto fail; } 
 #define TRY(x) {x; if (parse_state->failure_message) { LOG("%d: Caught %s", __LINE__, parse_state->failure_message); goto fail; } }
-#define TRY_EXIT fail: {}
+#define TRY_EXIT fail: { }
 #define NO_OPERATOR_PRECEDENCE -1
 
 static const char* ERROR_INVALID_TOKEN = "Invalid token";
@@ -846,10 +846,8 @@ static bool parse_statement(struct parse_state* parse_state) {
         return false;
     }
 
-    return true;
-
     TRY_EXIT;
-    return false;
+    return true;
 }
 
 static void parse_handler_statement(struct parse_state* parse_state) {
