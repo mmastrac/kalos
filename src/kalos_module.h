@@ -111,8 +111,8 @@ typedef struct kalos_property_address {
 
 static const kalos_export_address KALOS_GLOBAL_HANDLE_ADDRESS = { .module_index = -1, .export_index = -1 };
 
-static kalos_export_address kalos_make_address(kalos_int module_index, kalos_int export_index) {
-    kalos_export_address res = { .module_index=module_index, .export_index=export_index };
+static inline kalos_export_address kalos_make_address(kalos_int module_index, kalos_int export_index) {
+    struct kalos_export_address res = { module_index, export_index };
     return res;
 }
 
