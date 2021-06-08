@@ -32,6 +32,7 @@ static kalos_builtin kalos_builtins[] = {
 #define TRY(x) {x; if (parse_state->failure_message) { LOG("%d: Caught %s", __LINE__, parse_state->failure_message); goto fail; } }
 #define TRY_EXIT fail: { }
 #define NO_OPERATOR_PRECEDENCE -1
+#define loop for (;;)
 
 static const char* ERROR_INVALID_TOKEN = "Invalid token";
 static const char* ERROR_UNEXPECTED_TOKEN = "Unexpected token";
@@ -392,7 +393,7 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
 static int parse_function_call_args(struct parse_state* parse_state) {
     kalos_token peek, param_count = 0;
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
-    for (;;) {
+    loop {
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PAREN_CLOSE) {
             break;
@@ -615,7 +616,7 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
     }
 
     kalos_token peek;
-    for (;;) {
+    loop {
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PERIOD) {
             if (pending.load.op) {
@@ -714,7 +715,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
         TRY(parse_push_token(parse_state));
     } else if (token == KALOS_TOKEN_STRING || token == KALOS_TOKEN_STRING_INTERPOLATION) {
         bool first = true;
-        for (;;) {
+        loop {
             if (token == KALOS_TOKEN_STRING_INTERPOLATION) {
                 bool needs_add = false;
                 if (parse_state->token[0]) {
@@ -768,7 +769,7 @@ static void parse_expression(struct parse_state* parse_state) {
     // Start with the first element
     TRY(parse_expression_part(parse_state));
 
-    for (;;) {
+    loop {
         // Peek ahead to see if we have an operator
         TRY(peek = lex_peek(parse_state));
         int8_t precedence = get_operator_precedence(peek);
@@ -802,7 +803,7 @@ static void parse_expression_paren(struct parse_state* parse_state) {
 
 static void parse_statement_block(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
-    for (;;) {
+    loop {
         TRY(if (!parse_statement(parse_state)) { break; });
     }
     TRY_EXIT;
@@ -857,7 +858,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     kalos_export* handle = NULL;
     kalos_int module_index, handle_index;
     kalos_token peek, token;
-    for (;;) {
+    loop {
         TRY(res = resolve_word(parse_state, context));
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PERIOD && res.type == NAME_RESOLUTION_MODULE) {
@@ -880,7 +881,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
         TRY(token = lex(parse_state));
         if (token != KALOS_TOKEN_PAREN_CLOSE) {
-            for (;;) {
+            loop {
                 if (token == KALOS_TOKEN_WORD) {
                     int slot = locals->var_index++;
                     strcpy(locals->vars[slot].name, parse_state->token);
@@ -913,7 +914,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
 
     TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLE_ADDRESS));
 
-    for (;;) {
+    loop {
         int token;
         TRY(token = lex(parse_state));
         if (token == KALOS_TOKEN_EOF) {
