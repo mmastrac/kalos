@@ -101,6 +101,7 @@ struct pending_op {
 struct pending_ops {
     struct pending_op load, store;
     bool is_const;
+    bool req_dup;
 };
 
 struct parse_state {
@@ -452,7 +453,9 @@ static void parse_word_statement(struct parse_state* parse_state) {
     } else if (is_assignment_token(peek)) {
         TRY(parse_assert_token(parse_state, peek));
         // We'll need two copies of the data
-        // TRY(parse_push_op(parse_state, KALOS_OP_DUP));
+        if (pending.req_dup) {
+            TRY(parse_push_op(parse_state, KALOS_OP_DUP));
+        }
         TRY(parse_flush_pending_op(parse_state, &pending, false, false));
         TRY(parse_expression(parse_state));
         kalos_op op = 0;
@@ -582,7 +585,7 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
         THROW(ERROR_INTERNAL_ERROR);
     }
     if (reset) {
-        ops->is_const = ops->load.op = ops->store.op = 0;
+        ops->is_const = ops->req_dup = ops->load.op = ops->store.op = 0;
     }
     TRY_EXIT;
 }
@@ -648,6 +651,7 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                 }
             } else {
                 // Object property
+                pending.req_dup = true;
                 TRY(pending.load.data[0] = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token));
                 if (pending.load.data[0]) {
                     pending.load.op = KALOS_OP_GETPROP;

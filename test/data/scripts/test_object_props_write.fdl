@@ -8,4 +8,6 @@ handle init {
     print("{ax.c} {bx.c}\n");
     ax.c = 100;
     print("{ax.c} {bx.c}\n");
+    ax.c += 1;
+    print("{ax.c} {bx.c}\n");
 }
