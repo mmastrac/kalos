@@ -560,7 +560,7 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
         TRY(parse_push_number(parse_state, pending->data[0]));
         TRY(parse_push_number(parse_state, pending->data[1]));
         TRY(parse_push_op(parse_state, pending->op));
-    } else if (pending->op == KALOS_OP_GETPROP) {
+    } else if (pending->op == KALOS_OP_GETPROP || pending->op == KALOS_OP_SETPROP) {
         TRY(parse_push_number(parse_state, pending->data[0]));
         TRY(parse_push_op(parse_state, pending->op));
     } else if (pending->op == KALOS_OP_PUSH_STRING) {
@@ -635,8 +635,14 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                 }
             } else {
                 // Object property
-                pending.load.op = KALOS_OP_GETPROP;
                 TRY(pending.load.data[0] = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token));
+                if (pending.load.data[0]) {
+                    pending.load.op = KALOS_OP_GETPROP;
+                }
+                TRY(pending.store.data[0] = kalos_module_lookup_property(parse_state->all_modules, true, parse_state->token));
+                if (pending.store.data[0]) {
+                    pending.store.op = KALOS_OP_SETPROP;
+                }
             }
         } else if (peek == KALOS_TOKEN_PAREN_OPEN) {
             if (res.type == NAME_RESOLUTION_BUILTIN) {

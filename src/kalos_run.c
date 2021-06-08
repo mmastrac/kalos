@@ -537,6 +537,17 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 kalos_object_release(state, object);
                 break;
             }
+            case KALOS_OP_SETPROP: {
+                int prop = pop(&state->stack)->value.number;
+                kalos_value* value = pop(&state->stack);
+                kalos_object* object = pop(&state->stack)->value.object;
+                *push_raw(&state->stack) = *value;
+                if (!object->dispatch || !object->dispatch(state, object, prop, &state->stack)) {
+                    value_error(state);
+                }
+                kalos_object_release(state, object);
+                break;
+            }
 
 #define is_NUMBER(index) (peek(&state->stack, -index-1)->type == KALOS_VALUE_NUMBER || peek(&state->stack, -index-1)->type == KALOS_VALUE_BOOL)
 #define is_BOOL(index) (peek(&state->stack, -index-1)->type == KALOS_VALUE_BOOL)
