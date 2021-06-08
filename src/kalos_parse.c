@@ -144,7 +144,7 @@ static void parse_statement_block(struct parse_state* parse_state);
 static bool parse_statement(struct parse_state* parse_state);
 static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state);
 static struct pending_ops parse_word_recursively(struct parse_state* parse_state);
-static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_op* pending);
+static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_ops* pending, bool write, bool reset);
 
 static int lex(struct parse_state* parse_state) {
     parse_state->last_token = kalos_lex(&parse_state->lex_state, &parse_state->token[0]);
@@ -446,13 +446,13 @@ static void parse_word_statement(struct parse_state* parse_state) {
     if (peek == KALOS_TOKEN_EQ) {
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
         TRY(parse_expression(parse_state));
-        TRY(parse_flush_pending_op(parse_state, &pending.store));
+        TRY(parse_flush_pending_op(parse_state, &pending, true, true));
         return;
     } else if (is_assignment_token(peek)) {
         TRY(parse_assert_token(parse_state, peek));
         // We'll need two copies of the data
         // TRY(parse_push_op(parse_state, KALOS_OP_DUP));
-        TRY(parse_flush_pending_op(parse_state, &pending.load));
+        TRY(parse_flush_pending_op(parse_state, &pending, false, false));
         TRY(parse_expression(parse_state));
         kalos_op op = 0;
         #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: op = KALOS_OP_##y; break;
@@ -463,10 +463,10 @@ static void parse_word_statement(struct parse_state* parse_state) {
         if (op) {
             TRY(parse_push_op(parse_state, op));
         }
-        TRY(parse_flush_pending_op(parse_state, &pending.store));
+        TRY(parse_flush_pending_op(parse_state, &pending, true, true));
         return;
     } else if (peek == KALOS_TOKEN_SEMI) {
-        TRY(parse_flush_pending_op(parse_state, &pending.load));
+        TRY(parse_flush_pending_op(parse_state, &pending, false, true));
         return;
     }
 
@@ -479,7 +479,7 @@ static void parse_word_expression(struct parse_state* parse_state) {
     struct pending_ops pending;
     kalos_token peek;
     TRY(pending = parse_word_recursively(parse_state));
-    TRY(parse_flush_pending_op(parse_state, &pending.load));
+    TRY(parse_flush_pending_op(parse_state, &pending, false, true));
     TRY_EXIT;
 }
 
@@ -554,7 +554,8 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     TRY_EXIT;
 }
 
-static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_op* pending) {
+static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_ops* ops, bool write, bool reset) {
+    struct pending_op* pending = write ? &ops->store : &ops->load;
     if (pending->op == KALOS_OP_LOAD_GLOBAL || pending->op == KALOS_OP_STORE_GLOBAL ||
         pending->op == KALOS_OP_LOAD_LOCAL || pending->op == KALOS_OP_STORE_LOCAL) {
         TRY(parse_push_number(parse_state, pending->data[0]));
@@ -576,7 +577,9 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
     } else {
         THROW(ERROR_INTERNAL_ERROR);
     }
-    pending->op = 0;
+    if (reset) {
+        ops->load.op = ops->store.op = 0;
+    }
     TRY_EXIT;
 }
 
@@ -611,7 +614,7 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_PERIOD) {
             if (pending.load.op) {
-                TRY(parse_flush_pending_op(parse_state, &pending.load));
+                TRY(parse_flush_pending_op(parse_state, &pending, false, true));
             }
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
