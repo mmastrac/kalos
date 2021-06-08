@@ -218,7 +218,7 @@ static void parse_push_string(struct parse_state* parse_state, const char* s) {
 
 static void parse_push_token(struct parse_state* parse_state) {
     if (parse_state->last_token == KALOS_TOKEN_INTEGER) {
-        parse_push_number(parse_state, atoi(parse_state->token));
+        TRY(parse_push_number(parse_state, atoi(parse_state->token)));
     } else if (parse_state->last_token == KALOS_TOKEN_TRUE) {
         parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_TRUE;
     } else if (parse_state->last_token == KALOS_TOKEN_FALSE) {
@@ -226,7 +226,7 @@ static void parse_push_token(struct parse_state* parse_state) {
     } else if (parse_state->last_token == KALOS_TOKEN_STRING 
         || parse_state->last_token == KALOS_TOKEN_STRING_INTERPOLATION
         || parse_state->last_token == KALOS_TOKEN_WORD) {
-        parse_push_string(parse_state, parse_state->token);
+        TRY(parse_push_string(parse_state, parse_state->token));
     } else if (parse_state->last_token == KALOS_TOKEN_STRING_FORMAT_SPEC) {
         kalos_string_format format;
         if (!kalos_parse_string_format(parse_state->token, &format)) {
@@ -513,7 +513,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
     if (peek == KALOS_TOKEN_IF) {
         // Recurse for else if
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_IF));
-        parse_if_statement(parse_state);
+        TRY(parse_if_statement(parse_state));
     } else {
         TRY(parse_statement_block(parse_state));
     }
