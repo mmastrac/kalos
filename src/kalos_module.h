@@ -26,6 +26,7 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_OBJECT,
 } kalos_export_type;
 
+#pragma pack(push, 1)
 typedef struct kalos_arg {
     kalos_int name_index;
     kalos_function_type type;
@@ -106,6 +107,7 @@ typedef struct kalos_property_address {
     kalos_function_type type;
     kalos_int name_index;
 } kalos_property_address;
+#pragma pack(pop)
 
 static const kalos_export_address KALOS_GLOBAL_HANDLE_ADDRESS = { .module_index = -1, .export_index = -1 };
 

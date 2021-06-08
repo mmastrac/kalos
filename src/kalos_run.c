@@ -510,6 +510,9 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
+            case KALOS_OP_DUP:
+                kalos_value_clone_to(state, peek(&state->stack, 0), push_raw(&state->stack));
+                break;
             case KALOS_OP_ITERATOR_NEXT: {
                 state->stack.stack_index++; // push the iterator back on the stack
                 kalos_value* iterator = peek(&state->stack, 0);

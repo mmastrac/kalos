@@ -65,12 +65,11 @@ struct vars_state {
     int var_index;
 };
 
-struct name_resolution_result {
+typedef struct name_resolution_result {
     enum {
         NAME_RESOLUTION_NOT_FOUND,
         NAME_RESOLUTION_BUILTIN,
-        NAME_RESOLUTION_LOCAL_VAR,
-        NAME_RESOLUTION_GLOBAL_VAR,
+        NAME_RESOLUTION_VAR,
         NAME_RESOLUTION_MODULE,
         NAME_RESOLUTION_MODULE_EXPORT,
         NAME_RESOLUTION_UNIMPORTED_MODULE,
@@ -79,6 +78,7 @@ struct name_resolution_result {
         struct {
             struct var_state* var;
             uint8_t var_slot;
+            kalos_op load_op, store_op;
         };
         struct {
             kalos_module* module;
@@ -89,6 +89,17 @@ struct name_resolution_result {
         };
         kalos_builtin* builtin;
     };
+    struct name_resolution_result* next;
+    struct name_resolution_result* prev;
+} name_resolution_result;
+
+struct pending_op {
+    kalos_op op;
+    kalos_int data[2];
+};
+
+struct pending_ops {
+    struct pending_op load, store;
 };
 
 struct parse_state {
@@ -124,14 +135,16 @@ static void parse_expression(struct parse_state* parse_state);
 static void parse_expression_paren(struct parse_state* parse_state);
 static void parse_expression_part(struct parse_state* parse_state);
 static int parse_function_call_args(struct parse_state* parse_state);
-static void parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
-static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
+static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
+static struct pending_op parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
 static void parse_handler_statement(struct parse_state* parse_state);
 static void parse_if_statement(struct parse_state* parse_state);
 static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot);
 static void parse_statement_block(struct parse_state* parse_state);
 static bool parse_statement(struct parse_state* parse_state);
 static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state);
+static struct pending_ops parse_word_recursively(struct parse_state* parse_state);
+static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_op* pending);
 
 static int lex(struct parse_state* parse_state) {
     parse_state->last_token = kalos_lex(&parse_state->lex_state, &parse_state->token[0]);
@@ -282,18 +295,22 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
         for (int i = 0; i < parse_state->locals.var_index; i++) {
             if (strcmp(parse_state->locals.vars[i].name, token) == 0) {
                 LOG("%d: Resolved %s as local var", parse_state->lex_state.line, token);
-                res.type = NAME_RESOLUTION_LOCAL_VAR;
+                res.type = NAME_RESOLUTION_VAR;
                 res.var = &parse_state->locals.vars[i];
                 res.var_slot = i;
+                res.load_op = KALOS_OP_LOAD_LOCAL;
+                res.store_op = KALOS_OP_STORE_LOCAL;
                 return res;
             }
         }
         for (int i = 0; i < parse_state->globals.var_index; i++) {
             if (strcmp(parse_state->globals.vars[i].name, token) == 0) {
                 LOG("%d: Resolved %s as global var", parse_state->lex_state.line, token);
-                res.type = NAME_RESOLUTION_GLOBAL_VAR;
+                res.type = NAME_RESOLUTION_VAR;
                 res.var = &parse_state->globals.vars[i];
                 res.var_slot = i;
+                res.load_op = KALOS_OP_LOAD_GLOBAL;
+                res.store_op = KALOS_OP_STORE_GLOBAL;
                 return res;
             }
         }
@@ -346,7 +363,7 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
     }
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     strcpy(var_state->vars[slot].name, parse_state->token);
-    int peek;
+    kalos_token peek;
     TRY(peek = lex_peek(parse_state));
     if (peek == KALOS_TOKEN_EQ) {
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
@@ -363,7 +380,7 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
 }
 
 static int parse_function_call_args(struct parse_state* parse_state) {
-    int peek, param_count = 0;
+    kalos_token peek, param_count = 0;
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
     for (;;) {
         TRY(peek = lex_peek(parse_state));
@@ -384,7 +401,7 @@ static int parse_function_call_args(struct parse_state* parse_state) {
     return param_count;
 }
 
-static void parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn) {
+static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn) {
     if (parse_state->const_mode) {
         THROW(ERROR_INVALID_CONST_EXPRESSION);
     }
@@ -393,11 +410,11 @@ static void parse_function_call_builtin(struct parse_state* parse_state, kalos_b
     if (param_count != fn->param_count) {
         THROW(ERROR_UNEXPECTED_PARAMETERS);
     }
-    TRY(parse_push_op(parse_state, fn->op));
     TRY_EXIT;
+    return fn->op;
 }
 
-static void parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index) {
+static struct pending_op parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index) {
     if (parse_state->const_mode) {
         THROW(ERROR_INVALID_CONST_EXPRESSION);
     }
@@ -413,146 +430,53 @@ static void parse_function_call_export(struct parse_state* parse_state, kalos_ex
             THROW(ERROR_UNEXPECTED_PARAMETERS);
         }
     }
-    // TODO: merge into the opcode
-    TRY(parse_push_number(parse_state, module_index));
-    TRY(parse_push_number(parse_state, fn->entry.function.invoke_id));
-    TRY(parse_push_op(parse_state, KALOS_OP_CALL));
+    TRY_EXIT;
+    struct pending_op op = { .op = KALOS_OP_CALL, .data = { module_index, fn->entry.function.invoke_id } };
+    return op;
+}
+
+static void parse_word_statement(struct parse_state* parse_state) {
+    struct pending_ops pending;
+    kalos_token peek;
+    TRY(pending = parse_word_recursively(parse_state));
+    TRY(peek = lex_peek(parse_state));
+    if (peek == KALOS_TOKEN_EQ) {
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
+        TRY(parse_expression(parse_state));
+        TRY(parse_flush_pending_op(parse_state, &pending.store));
+        return;
+    } else if (is_assignment_token(peek)) {
+        TRY(parse_assert_token(parse_state, peek));
+        // We'll need two copies of the data
+        // TRY(parse_push_op(parse_state, KALOS_OP_DUP));
+        TRY(parse_flush_pending_op(parse_state, &pending.load));
+        TRY(parse_expression(parse_state));
+        kalos_op op = 0;
+        #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: op = KALOS_OP_##y; break;
+        switch (peek) {
+            #include "kalos_constants.inc"
+            default: break;
+        }
+        if (op) {
+            TRY(parse_push_op(parse_state, op));
+        }
+        TRY(parse_flush_pending_op(parse_state, &pending.store));
+        return;
+    } else if (peek == KALOS_TOKEN_SEMI) {
+        TRY(parse_flush_pending_op(parse_state, &pending.load));
+        return;
+    }
+
+    THROW(ERROR_UNEXPECTED_TOKEN);
+
     TRY_EXIT;
 }
 
-static void parse_word_expression(struct parse_state* parse_state, bool statement_context) {
-    struct name_resolution_result res;
-    kalos_module* context = NULL;
-    int peek;
-
-    for (;;) {
-        TRY(res = resolve_word(parse_state, context));
-        TRY(peek = lex_peek(parse_state));
-        if (peek == KALOS_TOKEN_PAREN_OPEN) {
-            if (res.type == NAME_RESOLUTION_BUILTIN) {
-                TRY(parse_function_call_builtin(parse_state, res.builtin));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_FUNCTION) {
-                TRY(parse_function_call_export(parse_state, res.export, res.export_module_index));
-            } else {
-                THROW(ERROR_EXPECTED_FUNCTION);
-            }
-            return;
-        } else if (is_assignment_token(peek)) {
-            if (!statement_context) {
-                THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT);
-            }
-            TRY(parse_assert_token(parse_state, peek));
-            if (peek != KALOS_TOKEN_EQ) {
-                if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
-                    TRY(parse_push_number(parse_state, res.var_slot));
-                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
-                } else if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
-                    TRY(parse_push_number(parse_state, res.var_slot));
-                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
-                } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
-                    if (!res.export->entry.property.read_invoke_id) {
-                        THROW(ERROR_PROPERTY_NOT_READABLE);
-                    }
-                    TRY(parse_push_number(parse_state, res.export_module_index));
-                    TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
-                    TRY(parse_push_op(parse_state, KALOS_OP_CALL));
-                } else {
-                    THROW(ERROR_UNKNOWN_VARIABLE);
-                }
-            }
-            TRY(parse_expression(parse_state));
-            kalos_op op = 0;
-            #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: op = KALOS_OP_##y; break;
-            switch (peek) {
-                #include "kalos_constants.inc"
-                default: break;
-            }
-            if (op) {
-                TRY(parse_push_op(parse_state, op));
-            }
-            if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
-                TRY(parse_push_number(parse_state, res.var_slot));
-                TRY(parse_push_op(parse_state, KALOS_OP_STORE_GLOBAL));
-            } else if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
-                TRY(parse_push_number(parse_state, res.var_slot));
-                TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
-                if (!res.export->entry.property.write_invoke_id) {
-                    THROW(ERROR_PROPERTY_NOT_WRITABLE);
-                }
-                TRY(parse_push_number(parse_state, res.export_module_index));
-                TRY(parse_push_number(parse_state, res.export->entry.property.write_invoke_id));
-                TRY(parse_push_op(parse_state, KALOS_OP_CALL));
-            } else {
-                THROW(ERROR_UNKNOWN_VARIABLE);
-            }
-            return;
-        } else if (peek == KALOS_TOKEN_PERIOD) {
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
-            if (res.type == NAME_RESOLUTION_LOCAL_VAR || res.type == NAME_RESOLUTION_GLOBAL_VAR) {
-                TRY(parse_push_number(parse_state, res.var_slot));
-                if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
-                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
-                } else {
-                    TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
-                }
-                // object property
-                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
-                kalos_int index = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token);
-                if (index == 0) {
-                    THROW(ERROR_UNKNOWN_PROPERTY);
-                }
-                TRY(parse_push_number(parse_state, index));
-                TRY(parse_push_op(parse_state, KALOS_OP_GETPROP));
-                return;
-            } else if (res.type == NAME_RESOLUTION_MODULE) {
-                context = res.module;
-                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
-            } else {
-                THROW(ERROR_EXPECTED_MODULE);
-            }
-        } else {
-            if (statement_context) {
-                THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT);
-            }
-            if (res.type == NAME_RESOLUTION_LOCAL_VAR) {
-                TRY(parse_push_number(parse_state, res.var_slot));
-                TRY(parse_push_op(parse_state, KALOS_OP_LOAD_LOCAL));
-            } else if (res.type == NAME_RESOLUTION_GLOBAL_VAR) {
-                TRY(parse_push_number(parse_state, res.var_slot));
-                TRY(parse_push_op(parse_state, KALOS_OP_LOAD_GLOBAL));
-            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT) {
-                if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
-                    TRY(parse_push_number(parse_state, res.export->entry.const_number));
-                    goto not_a_var;
-                } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_STRING) {
-                    TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, res.export->entry.const_string_index)));
-                    goto not_a_var;
-                } else if (res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
-                    if (parse_state->const_mode) {
-                        THROW(ERROR_INVALID_CONST_EXPRESSION);
-                    }
-                    if (!res.export->entry.property.read_invoke_id) {
-                        THROW(ERROR_PROPERTY_NOT_READABLE);
-                    }
-                    TRY(parse_push_number(parse_state, res.export_module_index));
-                    TRY(parse_push_number(parse_state, res.export->entry.property.read_invoke_id));
-                    TRY(parse_push_op(parse_state, KALOS_OP_CALL));
-                } else {
-                    THROW(ERROR_UNKNOWN_VARIABLE);
-                }
-            } else {
-                THROW(ERROR_UNKNOWN_VARIABLE);
-            }
-
-            if (parse_state->const_mode && !res.var->is_const) {
-                THROW(ERROR_INVALID_CONST_EXPRESSION);
-            }
-            not_a_var:
-            return;
-        }
-    }
-
+static void parse_word_expression(struct parse_state* parse_state) {
+    struct pending_ops pending;
+    kalos_token peek;
+    TRY(pending = parse_word_recursively(parse_state));
+    TRY(parse_flush_pending_op(parse_state, &pending.load));
     TRY_EXIT;
 }
 
@@ -564,7 +488,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
     TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
     TRY(parse_statement_block(parse_state));
 
-    int peek;
+    kalos_token peek;
     TRY(peek = lex_peek(parse_state));
     if (peek != KALOS_TOKEN_ELSE) {
         fixup_goto_op(parse_state, fixup_offset, parse_state->output_script_index);
@@ -625,6 +549,111 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     parse_state->loop_continue = saved_break;
 
     TRY_EXIT;
+}
+
+static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_op* pending) {
+    if (pending->op == KALOS_OP_LOAD_GLOBAL || pending->op == KALOS_OP_STORE_GLOBAL ||
+        pending->op == KALOS_OP_LOAD_LOCAL || pending->op == KALOS_OP_STORE_LOCAL) {
+        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_op(parse_state, pending->op));
+    } else if (pending->op == KALOS_OP_CALL) {
+        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_number(parse_state, pending->data[1]));
+        TRY(parse_push_op(parse_state, pending->op));
+    } else if (pending->op == KALOS_OP_GETPROP) {
+        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_op(parse_state, pending->op));
+    } else if (pending->op == KALOS_OP_PUSH_STRING) {
+        TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, pending->data[0])));
+    } else if (pending->op == KALOS_OP_PUSH_INTEGER) {
+        TRY(parse_push_number(parse_state, pending->data[0]));
+    } else if (pending->op != 0) {
+        // No associated data
+        TRY(parse_push_op(parse_state, pending->op));
+    } else {
+        THROW(ERROR_INTERNAL_ERROR);
+    }
+    pending->op = 0;
+    TRY_EXIT;
+}
+
+static struct pending_ops parse_word_recursively(struct parse_state* parse_state) {
+    // Dotted identifiers have the form |-- qualifier (0-1) --| |-- expression chain (0-n) --| |-- l-value (0-1) --|
+    // Examples: module.prop.value, module.prop[foo(1)], module.fn(1,2,3).bar
+
+    // The right-most element must be l-value compatible when used in an assignment context, but we don't
+    // always know whether we're in an assignment context until we've parsed further along.
+    name_resolution_result res;
+    struct pending_ops pending = {0};
+
+    TRY(res = resolve_word(parse_state, NULL));
+    if (res.type == NAME_RESOLUTION_NOT_FOUND) {
+        THROW(ERROR_UNKNOWN_VARIABLE);
+    } else if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
+        THROW(ERROR_EXPECTED_MODULE);
+    } else if (res.type == NAME_RESOLUTION_VAR) {
+        pending.load.data[0] = pending.store.data[0] = res.var_slot;
+        pending.load.op = res.load_op;
+        pending.store.op = res.store_op;
+    } else if (res.type == NAME_RESOLUTION_MODULE || res.type == NAME_RESOLUTION_BUILTIN || res.type == NAME_RESOLUTION_MODULE_EXPORT) {
+        // These are acceptable, no pending ops
+    } else {
+        THROW(ERROR_INTERNAL_ERROR);
+    }
+
+    kalos_token peek;
+    for (;;) {
+        TRY(peek = lex_peek(parse_state));
+        if (peek == KALOS_TOKEN_PERIOD) {
+            if (pending.load.op) {
+                TRY(parse_flush_pending_op(parse_state, &pending.load));
+            }
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+            if (res.type == NAME_RESOLUTION_MODULE) {
+                // Module property
+                TRY(res = resolve_word(parse_state, res.module));
+                if (res.type == NAME_RESOLUTION_MODULE_EXPORT) {
+                    if (res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
+                        pending.load.op = pending.store.op = KALOS_OP_CALL;
+                        pending.load.data[0] = pending.store.data[0] = res.export_module_index;
+                        pending.load.data[1] = res.export->entry.property.read_invoke_id;
+                        pending.store.data[1] = res.export->entry.property.write_invoke_id;
+                    } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
+                        pending.load.op = KALOS_OP_PUSH_INTEGER;
+                        pending.load.data[0] = res.export->entry.const_number;
+                    } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_STRING) {
+                        pending.load.op = KALOS_OP_PUSH_STRING;
+                        pending.load.data[0] = res.export->entry.const_string_index;
+                    } else if (res.export->type == KALOS_EXPORT_TYPE_FUNCTION) {
+                        continue;
+                    } else {
+                        THROW(ERROR_UNKNOWN_PROPERTY);
+                    }
+                } else {
+                    THROW(ERROR_UNKNOWN_PROPERTY);
+                }
+            } else {
+                // Object property
+                pending.load.op = KALOS_OP_GETPROP;
+                TRY(pending.load.data[0] = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token));
+            }
+        } else if (peek == KALOS_TOKEN_PAREN_OPEN) {
+            if (res.type == NAME_RESOLUTION_BUILTIN) {
+                TRY(pending.load.op = parse_function_call_builtin(parse_state, res.builtin));
+            } else if (res.type == NAME_RESOLUTION_MODULE_EXPORT) {
+                TRY(pending.load = parse_function_call_export(parse_state, res.export, res.export_module_index));
+            }
+            continue;
+        } else if (peek == KALOS_TOKEN_SQBRA_OPEN) {
+            // TODO: Implement indexing
+            THROW(ERROR_UNEXPECTED_TOKEN);
+        } else {
+            break;
+        }
+    }
+    TRY_EXIT;
+    return pending;
 }
 
 static void parse_for_statement(struct parse_state* parse_state) {
@@ -700,7 +729,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
             }
         }
     } else if (token == KALOS_TOKEN_WORD) {
-        parse_word_expression(parse_state, false);
+        TRY(parse_word_expression(parse_state));
     } else if (token == KALOS_TOKEN_PAREN_OPEN) {
         TRY(parse_expression(parse_state));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
@@ -710,7 +739,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
 }
 
 static void parse_expression(struct parse_state* parse_state) {
-    int peek;
+    kalos_token peek;
     uint8_t op_stack[16] = {0};
     uint8_t op_stack_idx = 0;
 
@@ -758,7 +787,7 @@ static void parse_statement_block(struct parse_state* parse_state) {
 }
 
 static bool parse_statement(struct parse_state* parse_state) {
-    int peek, token;
+    kalos_token peek, token;
     TRY(token = lex(parse_state));
     if (token == KALOS_TOKEN_BRA_CLOSE) {
         return false;
@@ -788,7 +817,7 @@ static bool parse_statement(struct parse_state* parse_state) {
         TRY(parse_push_op(parse_state, KALOS_OP_DEBUGGER));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_WORD) {
-        TRY(parse_word_expression(parse_state, true));
+        TRY(parse_word_statement(parse_state));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else {
         THROW(ERROR_UNEXPECTED_TOKEN);
@@ -807,7 +836,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     kalos_module* context = NULL;
     kalos_export* handle = NULL;
     kalos_int module_index, handle_index;
-    int peek, token;
+    kalos_token peek, token;
     for (;;) {
         TRY(res = resolve_word(parse_state, context));
         TRY(peek = lex_peek(parse_state));
