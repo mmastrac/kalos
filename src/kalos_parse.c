@@ -597,7 +597,9 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
     } else if (res.type == NAME_RESOLUTION_VAR) {
         pending.load.data[0] = pending.store.data[0] = res.var_slot;
         pending.load.op = res.load_op;
-        pending.store.op = res.store_op;
+        if (!res.var[res.var_slot].is_const) {
+            pending.store.op = res.store_op;
+        }
     } else if (res.type == NAME_RESOLUTION_MODULE || res.type == NAME_RESOLUTION_BUILTIN || res.type == NAME_RESOLUTION_MODULE_EXPORT) {
         // These are acceptable, no pending ops
     } else {
