@@ -100,6 +100,7 @@ struct pending_op {
 
 struct pending_ops {
     struct pending_op load, store;
+    bool is_const;
 };
 
 struct parse_state {
@@ -556,6 +557,9 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
 
 static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_ops* ops, bool write, bool reset) {
     struct pending_op* pending = write ? &ops->store : &ops->load;
+    if (parse_state->const_mode && !ops->is_const) {
+        THROW(ERROR_INVALID_CONST_EXPRESSION);
+    }
     if (pending->op == KALOS_OP_LOAD_GLOBAL || pending->op == KALOS_OP_STORE_GLOBAL ||
         pending->op == KALOS_OP_LOAD_LOCAL || pending->op == KALOS_OP_STORE_LOCAL) {
         TRY(parse_push_number(parse_state, pending->data[0]));
@@ -578,7 +582,7 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
         THROW(ERROR_INTERNAL_ERROR);
     }
     if (reset) {
-        ops->load.op = ops->store.op = 0;
+        ops->is_const = ops->load.op = ops->store.op = 0;
     }
     TRY_EXIT;
 }
@@ -600,9 +604,8 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
     } else if (res.type == NAME_RESOLUTION_VAR) {
         pending.load.data[0] = pending.store.data[0] = res.var_slot;
         pending.load.op = res.load_op;
-        if (!res.var[res.var_slot].is_const) {
-            pending.store.op = res.store_op;
-        }
+        pending.store.op = res.store_op; // consts still have a store op because they are technically vars
+        pending.is_const = res.var->is_const;
     } else if (res.type == NAME_RESOLUTION_MODULE || res.type == NAME_RESOLUTION_BUILTIN || res.type == NAME_RESOLUTION_MODULE_EXPORT) {
         // These are acceptable, no pending ops
     } else {
@@ -628,9 +631,11 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                         pending.load.data[1] = res.export->entry.property.read_invoke_id;
                         pending.store.data[1] = res.export->entry.property.write_invoke_id;
                     } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
+                        pending.is_const = true;
                         pending.load.op = KALOS_OP_PUSH_INTEGER;
                         pending.load.data[0] = res.export->entry.const_number;
                     } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_STRING) {
+                        pending.is_const = true;
                         pending.load.op = KALOS_OP_PUSH_STRING;
                         pending.load.data[0] = res.export->entry.const_string_index;
                     } else if (res.export->type == KALOS_EXPORT_TYPE_FUNCTION) {
