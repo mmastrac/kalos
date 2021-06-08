@@ -129,7 +129,8 @@ static void parse_push_number(struct parse_state* parse_state, int number);
 static void parse_push_op(struct parse_state* parse_state, kalos_op op);
 static void parse_push_string(struct parse_state* parse_state, const char* s);
 static void parse_push_token(struct parse_state* parse_state);
-static void fixup_goto_op(struct parse_state* parse_state, int offset, int pc);
+static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op);
+static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc);
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address);
 
 static bool parse_assert_token(struct parse_state* parse_state, int token);
@@ -246,17 +247,24 @@ static void parse_push_op(struct parse_state* parse_state, kalos_op op) {
     LOG("OP: %s", kalos_op_strings[op]);
 }
 
-static void fixup_goto_op(struct parse_state* parse_state, int offset, int pc) {
-    parse_state->output_script[offset + 1] = pc & 0xff;
-    parse_state->output_script[offset + 2] = (pc >> 8) & 0xff;
+static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op) {
+    TRY(parse_push_number(parse_state, 0));
+    int offset = parse_state->output_script_index - 2;
+    TRY(parse_push_op(parse_state, op));
+    TRY_EXIT;
+    return offset;
+}
+
+static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc) {
+    parse_state->output_script[offset] = pc & 0xff;
+    parse_state->output_script[offset + 1] = (pc >> 8) & 0xff;
     LOG("FIXUP: @%d %d", offset, pc);
 }
 
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handle_address) {
     if (parse_state->next_handler_fixup != 0) {
         TRY(parse_push_op(parse_state, KALOS_OP_END));
-        parse_state->output_script[parse_state->next_handler_fixup] = parse_state->output_script_index & 0xff;
-        parse_state->output_script[parse_state->next_handler_fixup + 1] = (parse_state->output_script_index >> 8) & 0xff;
+        TRY(parse_fixup_offset(parse_state, parse_state->next_handler_fixup, parse_state->output_script_index));
     }
 
     memcpy(&parse_state->output_script[parse_state->output_script_index], &handle_address, sizeof(handle_address));
@@ -488,26 +496,22 @@ static void parse_word_expression(struct parse_state* parse_state) {
 }
 
 static void parse_if_statement(struct parse_state* parse_state) {
+    int fixup_offset, fixup_offset_else;
     TRY(parse_expression_paren(parse_state));
     TRY(parse_push_op(parse_state, KALOS_OP_LOGICAL_NOT));
-    int fixup_offset = parse_state->output_script_index;
-    TRY(parse_push_number(parse_state, 0));
-    TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
+    TRY(fixup_offset = parse_push_goto_forward(parse_state, KALOS_OP_GOTO_IF));
     TRY(parse_statement_block(parse_state));
 
     kalos_token peek;
     TRY(peek = lex_peek(parse_state));
     if (peek != KALOS_TOKEN_ELSE) {
-        fixup_goto_op(parse_state, fixup_offset, parse_state->output_script_index);
+        TRY(parse_fixup_offset(parse_state, fixup_offset, parse_state->output_script_index));
         return;
     }
 
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_ELSE));
-
-    int fixup_offset_else = parse_state->output_script_index;
-    TRY(parse_push_number(parse_state, 0));
-    TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
-    fixup_goto_op(parse_state, fixup_offset, parse_state->output_script_index);
+    TRY(fixup_offset_else = parse_push_goto_forward(parse_state, KALOS_OP_GOTO));
+    TRY(parse_fixup_offset(parse_state, fixup_offset, parse_state->output_script_index));
 
     TRY(peek = lex_peek(parse_state));
     if (peek == KALOS_TOKEN_IF) {
@@ -518,7 +522,7 @@ static void parse_if_statement(struct parse_state* parse_state) {
         TRY(parse_statement_block(parse_state));
     }
 
-    fixup_goto_op(parse_state, fixup_offset_else, parse_state->output_script_index);
+    TRY(parse_fixup_offset(parse_state, fixup_offset_else, parse_state->output_script_index));
 
     TRY_EXIT;
 }
@@ -526,18 +530,14 @@ static void parse_if_statement(struct parse_state* parse_state) {
 static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot) {
     int saved_break = parse_state->loop_break;
     int saved_continue = parse_state->loop_continue;
+    int initial_fixup, break_fixup;
 
-    // Initial entry
-    int initial_fixup = parse_state->output_script_index;
-    TRY(parse_push_number(parse_state, 0));
-    TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
-    // Break
-    int break_fixup = parse_state->output_script_index;
+    // Initial entry and break
+    TRY(initial_fixup = parse_push_goto_forward(parse_state, KALOS_OP_GOTO));
     parse_state->loop_break = parse_state->output_script_index;
-    TRY(parse_push_number(parse_state, 0));
-    TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
+    TRY(break_fixup = parse_push_goto_forward(parse_state, KALOS_OP_GOTO));
 
-    fixup_goto_op(parse_state, initial_fixup, parse_state->output_script_index);
+    TRY(parse_fixup_offset(parse_state, initial_fixup, parse_state->output_script_index));
     parse_state->loop_continue = parse_state->output_script_index;
     if (iterator) {
         TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR_NEXT));
@@ -549,8 +549,7 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     TRY(parse_statement_block(parse_state));
     TRY(parse_push_number(parse_state, parse_state->loop_continue));
     TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
-
-    fixup_goto_op(parse_state, break_fixup, parse_state->output_script_index);
+    TRY(parse_fixup_offset(parse_state, break_fixup, parse_state->output_script_index));
 
     parse_state->loop_break = saved_break;
     parse_state->loop_continue = saved_break;
