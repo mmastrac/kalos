@@ -24,8 +24,9 @@ struct kalos_module_builder {
     bool in_object;
 };
 
-int export_compare(void* context, const void* v1, const void* v2) {
-    struct kalos_module_builder* builder = context;
+static void* export_compare_context;
+int export_compare(const void* v1, const void* v2) {
+    struct kalos_module_builder* builder = export_compare_context;
     const kalos_export* e1 = v1;
     const kalos_export* e2 = v2;
     int cmp = strcmp(e1->name_index + builder->string_buffer, e2->name_index + builder->string_buffer);
@@ -123,7 +124,9 @@ static void begin_module(void* context, const char* module) {
 
 static void end_module(void* context) {
     struct kalos_module_builder* builder = context;
-    qsort_r(builder->exports, builder->export_count, sizeof(kalos_export), context, export_compare);
+    export_compare_context = context;
+    qsort(builder->exports, builder->export_count, sizeof(kalos_export), export_compare);
+    export_compare_context = NULL;
     size_t this_module_size = sizeof(kalos_module) + sizeof(kalos_export) * builder->export_count;
     builder->module_buffer_size += this_module_size;
     builder->kalos_module_buffer = realloc(builder->kalos_module_buffer, builder->module_buffer_size);
@@ -250,8 +253,9 @@ static void property(void* context, const char* name, const char* type, const ch
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
 }
 
-int property_compare(void* context, const void* v1, const void* v2) {
-    kalos_module_parsed* parsed = context;
+static void* property_compare_context;
+int property_compare(const void* v1, const void* v2) {
+    kalos_module_parsed* parsed = property_compare_context;
     kalos_object_property** e1 = (kalos_object_property**)v1;
     kalos_object_property** e2 = (kalos_object_property**)v2;
 
@@ -317,13 +321,17 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     memcpy((uint8_t*)context.kalos_module_buffer + header->string_offset, context.string_buffer, context.string_buffer_index);
     free(context.string_buffer);
 
-    kalos_module_parsed parsed = { .data=context.kalos_module_buffer, .size=sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index };
+    kalos_module_parsed parsed;
+    parsed.data=context.kalos_module_buffer;
+    parsed.size=sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index;
 
     // Post-process object properties
     kalos_object_property** object_props = malloc(sizeof(kalos_object_property*) * context.object_props_count);
     kalos_object_property** object_props_ptr = object_props;
     kalos_module_walk_modules(&object_props_ptr, parsed, object_prop_module_callback);
-    qsort_r(object_props, context.object_props_count, sizeof(object_props[0]), &parsed, property_compare);
+    property_compare_context = &parsed;
+    qsort(object_props, context.object_props_count, sizeof(object_props[0]), property_compare);
+    property_compare_context = NULL;
     kalos_int module_prop_index = 0;
     const char* current_name = "";
     kalos_function_type current_type;
@@ -505,7 +513,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     kalos_fn fns = {
         malloc,
         free,
-        NULL,
+        NULL
     };
     kalos_dispatch_fn dispatch[] = {
         kalos_module_idl_builtin,
@@ -513,11 +521,13 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         kalos_module_idl_function,
         kalos_module_idl_property,
         kalos_module_idl_handles,
-        kalos_module_idl_object,
+        kalos_module_idl_object
     };
     kalos_state state = kalos_init(&script, dispatch, &fns);
     kalos_module_idl_trigger_open(state);
-    struct walk_callback_context context = { .modules = parsed_module, .state = state };
+    struct walk_callback_context context;
+    context.modules = parsed_module;
+    context.state = state;
     script_modules = parsed_module;
     kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
     return true;

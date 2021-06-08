@@ -431,10 +431,10 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
         }
     }
     struct pending_op op = {0};
-    TRY_EXIT;
     op.op = KALOS_OP_CALL;
     op.data[0] = module_index;
     op.data[1] = fn->entry.function.invoke_id;
+    TRY_EXIT;
     return op;
 }
 
