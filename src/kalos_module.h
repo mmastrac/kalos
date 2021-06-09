@@ -73,7 +73,7 @@ typedef struct kalos_export {
     kalos_export_entry entry;
 } kalos_export;
 
-typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack);
+typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack, bool retval);
 
 typedef struct kalos_module {
     kalos_int index;

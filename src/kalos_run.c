@@ -524,11 +524,12 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 kalos_value_move_to(state, &next, push_raw(&state->stack));
                 break;
             }
+            case KALOS_OP_CALL_NORET:
             case KALOS_OP_CALL: {
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
                 LOG("%d:%d %p", export, module, state->modules[module]);
-                state->modules[module](state_, export, &state->stack);
+                state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
                 break;
             }
             case KALOS_OP_GETPROP: {

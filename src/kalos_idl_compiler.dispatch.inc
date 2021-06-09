@@ -44,7 +44,7 @@ void kalos_module_idl_trigger_property_export(kalos_state state) {
 	kalos_trigger(state, kalos_make_address(0x0, 0x4));
 }
 
-void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=2 name=print arg_count=1 symbol=kalos_idl_compiler_print
 	case 2: {
@@ -98,7 +98,7 @@ bool kalos_module_idl_module_object_module_props(kalos_state state, kalos_object
 	return true;
 }
 
-void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=1 name=name symbol=kalos_idl_module_name
 	case 1: {
@@ -113,7 +113,7 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 	}
 }
 
-void kalos_module_idl_function(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_function(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=6 name=arg_count symbol=kalos_idl_function_arg_count
 	case 6: {
@@ -164,7 +164,7 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 	}
 }
 
-void kalos_module_idl_property(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_property(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=1 name=name symbol=kalos_idl_export_name
 	case 1: {
@@ -199,7 +199,7 @@ void kalos_module_idl_property(kalos_state state, int function, kalos_stack* sta
 	}
 }
 
-void kalos_module_idl_handles(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_handles(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=4 name=args symbol=kalos_idl_function_args
 	case 4: {
@@ -224,7 +224,7 @@ void kalos_module_idl_handles(kalos_state state, int function, kalos_stack* stac
 	}
 }
 
-void kalos_module_idl_object(kalos_state state, int function, kalos_stack* stack) {
+void kalos_module_idl_object(kalos_state state, int function, kalos_stack* stack, bool r) {
 	switch (function) {
 	// id=1 name=name symbol=kalos_idl_export_name
 	case 1: {
