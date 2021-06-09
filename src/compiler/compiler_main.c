@@ -1,6 +1,5 @@
 #include <fcntl.h>
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -34,6 +33,10 @@ int help(const char* message, const char* cmd) {
 
 const char* read_file_string(const char* input, size_t* n) {
     FILE* fd = fopen(input, "rb");
+    if (!fd) {
+        printf("ERROR: Failed to open %s\n", input);
+        exit(1);
+    }
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
     char* buf = malloc(PAGE_ROUND_UP(size + 1, 16));
@@ -78,7 +81,9 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
 int dump_script(int verbose, const char* input) {
     size_t n;
     uint8_t* input_data = read_file(input, &n);
-    kalos_script script = { .script_ops = (uint8_t*)input_data, .script_buffer_size = n };
+    kalos_script script;
+    script.script_ops = (uint8_t*)input_data;
+    script.script_buffer_size = n;
     char* buffer = malloc(10 * 1024);
     kalos_dump(&script, buffer);
     printf("%s\n", buffer);
