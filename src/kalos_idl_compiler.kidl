@@ -5,6 +5,7 @@ module builtin {
     fn print(s: string) = kalos_idl_compiler_print;
 
     # Old handles
+    handle close;
     handle open;
     handle begin_module;
     handle function_export;

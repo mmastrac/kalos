@@ -515,20 +515,13 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         free,
         NULL
     };
-    kalos_dispatch_fn dispatch[] = {
-        kalos_module_idl_builtin,
-        kalos_module_idl_module,
-        kalos_module_idl_function,
-        kalos_module_idl_property,
-        kalos_module_idl_handles,
-        kalos_module_idl_object
-    };
-    kalos_state state = kalos_init(&script, dispatch, &fns);
+    kalos_state state = kalos_init(&script, kalos_module_idl_dispatch, &fns);
     kalos_module_idl_trigger_open(state);
     struct walk_callback_context context;
     context.modules = parsed_module;
     context.state = state;
     script_modules = parsed_module;
     kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
+    kalos_module_idl_trigger_close(state);
     return true;
 }
