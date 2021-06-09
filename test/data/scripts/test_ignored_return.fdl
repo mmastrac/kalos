@@ -1,0 +1,6 @@
+import test;
+
+handle init {
+    # This should not leak memory
+    test.concat("a", "b", "c", "d", "e", "f", "g", "h");
+}

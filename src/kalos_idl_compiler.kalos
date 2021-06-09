@@ -115,7 +115,16 @@ handle function_export {
         println("\t\tkalos_stack_cleanup_varargs(arg_count, ofs, state, stack);");
     }
     if (function.return_type != "void") {
-        println("\t\tpush_{function.return_type}(stack, x);");
+        println("\t\tif (retval) {{");
+        println("\t\t\tpush_{function.return_type}(stack, x);");
+        if (function.return_type == "string") {
+            println("\t\t}} else {{");
+            println("\t\t\tkalos_string_release(state, x);");
+        } else if (function.return_type == "object") {
+            println("\t\t}} else {{");
+            println("\t\t\tkalos_object_release(state, x);");
+        }
+        println("\t\t}}");
     }
     println("\t\tbreak;");
     println("\t}}");

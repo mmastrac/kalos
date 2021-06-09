@@ -127,7 +127,11 @@ void kalos_module_idl_function(kalos_state state, int function, kalos_stack* sta
 		kalos_stack_fixup_no_varargs(arg_count, stack);
 		kalos_string x = kalos_idl_function_arg_type(state, peek(stack, -1)->value.number);
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
-		push_string(stack, x);
+		if (retval) {
+			push_string(stack, x);
+		} else {
+			kalos_string_release(state, x);
+		}
 		break;
 	}
 
