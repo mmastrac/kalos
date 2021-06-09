@@ -478,7 +478,7 @@ static void parse_word_statement(struct parse_state* parse_state) {
         }
         TRY(parse_flush_pending_op(parse_state, &pending, true, true));
         return;
-    } else if (peek == KALOS_TOKEN_SEMI) {
+    } else if (peek == KALOS_TOKEN_SEMI && pending.load.op == KALOS_OP_CALL) {
         TRY(parse_flush_pending_op(parse_state, &pending, false, true));
         return;
     }
