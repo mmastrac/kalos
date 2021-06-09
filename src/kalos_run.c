@@ -451,6 +451,11 @@ kalos_state kalos_init_for_test(kalos_fn* fns) {
     return (kalos_state)state;
 }
 
+void kalos_load_arg_any(kalos_state state_, kalos_int index, kalos_value* arg) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_value_move_to(state, arg, &state->locals[index]);
+}
+
 void kalos_load_arg_object(kalos_state state_, kalos_int index, kalos_object* arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->locals[index].type = KALOS_VALUE_OBJECT;

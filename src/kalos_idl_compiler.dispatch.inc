@@ -86,8 +86,9 @@ void kalos_module_idl_kidl(kalos_state state, int function, kalos_stack* stack, 
 }
 
 // id=0002:0001 name=begin
-void kalos_module_idl_module_trigger_begin(kalos_state state, kalos_object* a0) {
-	kalos_load_arg_object(state, 0, a0);
+void kalos_module_idl_module_trigger_begin(kalos_state state, kalos_value* a0, kalos_object* a1) {
+	kalos_load_arg_any(state, 0, a0);
+	kalos_load_arg_object(state, 1, a1);
 	kalos_trigger(state, kalos_make_address(0x2, 0x1));
 }
 

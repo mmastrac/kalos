@@ -514,7 +514,10 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     script_current_module = module;
     context->handles = true;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback);
-    kalos_module_idl_module_trigger_begin(context->state, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_props));
+    kalos_value ctx;
+    ctx.type = KALOS_VALUE_STRING;
+    ctx.value.string = kalos_string_allocate(context->state, "");
+    kalos_module_idl_module_trigger_begin(context->state, &ctx, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_props));
     context->handles = false;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback);
     kalos_module_idl_module_trigger_end(context->state);

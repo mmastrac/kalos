@@ -23,7 +23,7 @@ module kidl {
 module module {
     prop(read) name: string = kalos_idl_module_name;
     prop(read) prefix: string = kalos_idl_module_prefix;
-    handle begin(module: object);
+    handle begin(context: any, module: object);
     handle end;
 
     object module {

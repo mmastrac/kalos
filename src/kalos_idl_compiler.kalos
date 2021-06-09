@@ -18,7 +18,7 @@ handle close {
     println("}};");
 }
 
-handle module.begin(m) {
+handle module.begin(context, m) {
     #module.walk_exports();
     println("void {m.prefix}{m.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
@@ -43,7 +43,7 @@ handle handle_export {
         } else if (arg == "object") {
             print("kalos_object* a{index}");
         } else if (arg == "any") {
-            print("kalos_value a{index}");
+            print("kalos_value* a{index}");
         }
         index += 1;
     }
@@ -51,6 +51,7 @@ handle handle_export {
     index = 0;
     for arg in function.args {
         println("\tkalos_load_arg_{arg}(state, {index}, a{index});");
+        index = index + 1;
     }
     println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
     println("}}");
@@ -96,6 +97,8 @@ handle function_export {
         print("kalos_int x = ");
     } else if (function.return_type == "object") {
         print("kalos_object* x = ");
+    } else if (function.return_type == "any") {
+        print("kalos_value x = ");
     }
     var arg;
     var index = 0;
