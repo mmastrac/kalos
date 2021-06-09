@@ -18,16 +18,10 @@ handle close {
     println("}};");
 }
 
-#handle begin_module(module) {
-handle begin_module {
-    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
+handle module.begin(m) {
+    println("void {m.prefix}{m.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
-    dispatch += "\t{module.prefix}{module.name},\n";
-}
-
-handle module.begin {
-    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
-    println("\tswitch (function) {{");
+    dispatch += "\t{m.prefix}{m.name},\n";
 }
 
 handle handle_export {

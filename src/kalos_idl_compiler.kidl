@@ -7,7 +7,6 @@ module builtin {
     # Old handles
     handle close;
     handle open;
-    handle begin_module;
     handle function_export;
     handle property_export;
     handle end_module;

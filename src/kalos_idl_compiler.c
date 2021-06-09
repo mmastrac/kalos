@@ -303,6 +303,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     };
 
     struct kalos_module_builder context = {0};
+    context.prefix_index = -1;
 
     if (!kalos_idl_parse_callback(s, &context, &callbacks)) {
         kalos_module_parsed parsed = {0};
@@ -401,7 +402,7 @@ static void iter_function_arg(kalos_state state, void* context, uint16_t index, 
 }
 
 kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix_index ? kalos_module_get_string(script_modules, script_current_module->prefix_index) : "kalos_idl_"); }
+kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix_index != -1 ? kalos_module_get_string(script_modules, script_current_module->prefix_index) : "kalos_idl_"); }
 kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
 kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
 kalos_string kalos_idl_export_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
@@ -475,7 +476,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     script_current_module = module;
     context->handles = true;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback);
-    kalos_module_idl_trigger_begin_module(context->state);
+    kalos_module_idl_module_trigger_begin(context->state, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_props));
     context->handles = false;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback);
     kalos_module_idl_trigger_end_module(context->state);
