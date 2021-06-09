@@ -401,7 +401,7 @@ static void iter_function_arg(kalos_state state, void* context, uint16_t index, 
 }
 
 kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
+kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix_index ? kalos_module_get_string(script_modules, script_current_module->prefix_index) : "kalos_idl_"); }
 kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
 kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
 kalos_string kalos_idl_export_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
