@@ -361,14 +361,6 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     return parsed;
 }
 
-static const char IDL_COMPILER_SCRIPT[] = {
-    #include "kalos_idl_compiler.kalos.inc"
-};
-
-static const char IDL_COMPILER_IDL[] = {
-    #include "kalos_idl_compiler.kidl.inc"
-};
-
 static kalos_printer_fn script_output;
 static kalos_module_parsed script_modules;
 static kalos_module* script_current_module;
@@ -491,6 +483,14 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 }
 
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printer_fn output) {
+    // TODO: Watcom takes forever to compile if these aren't static
+    static const char IDL_COMPILER_SCRIPT[] = {
+        #include "kalos_idl_compiler.kalos.inc"
+    };
+
+    static const char IDL_COMPILER_IDL[] = {
+        #include "kalos_idl_compiler.kidl.inc"
+    };
     script_output = output;
     kalos_script script = {0};
     script.script_buffer_size = 4096;

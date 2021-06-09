@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "kalos.h"
+#include "kalos_module.h"
 
 typedef void (*kalos_error_fn)(char* error);
 

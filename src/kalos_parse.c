@@ -830,7 +830,7 @@ static bool parse_statement(struct parse_state* parse_state) {
         TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_CONTINUE) {
-        if (parse_state->loop_break == 0) {
+        if (parse_state->loop_continue == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
         }
         TRY(parse_push_number(parse_state, parse_state->loop_continue));

@@ -2,6 +2,7 @@
     "name": "kalos-language",
     "displayName": "Kalos Language",
     "description": "Syntax highlighting for Kalos",
+    "publisher": "Kalos",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.56.0"
