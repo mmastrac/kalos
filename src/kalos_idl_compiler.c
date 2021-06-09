@@ -463,6 +463,8 @@ kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_al
 kalos_int kalos_idl_handle_index(kalos_state state) { return script_current_export->entry.function.invoke_id; }
 kalos_int kalos_idl_handle_module_index(kalos_state state) { return script_current_module->index; }
 
+void kalos_idl_walk_modules(kalos_state state, kalos_value* context) { }
+
 #include "kalos_idl_compiler.dispatch.inc"
 
 struct walk_callback_context {

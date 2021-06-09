@@ -19,6 +19,7 @@ handle close {
 }
 
 handle module.begin(m) {
+    #module.walk_exports();
     println("void {m.prefix}{m.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
     dispatch += "\t{m.prefix}{m.name},\n";
@@ -41,6 +42,8 @@ handle handle_export {
             print("kalos_int a{index}");
         } else if (arg == "object") {
             print("kalos_object* a{index}");
+        } else if (arg == "any") {
+            print("kalos_value a{index}");
         }
         index += 1;
     }
@@ -105,6 +108,8 @@ handle function_export {
             print("peek(stack, {-index-arg_offset})->value.number");
         } else if (arg == "object") {
             print("peek(stack, {-index-arg_offset})->value.object");
+        } else if (arg == "any") {
+            print("peek(stack, {-index-arg_offset})");
         }
         index += 1;
     }
@@ -126,6 +131,9 @@ handle function_export {
         } else if (function.return_type == "object") {
             println("\t\t}} else {{");
             println("\t\t\tkalos_object_release(state, x);");
+        } else if (function.return_type == "any") {
+            println("\t\t}} else {{");
+            println("\t\t\tkalos_clear(state, x);");
         }
         println("\t\t}}");
     }

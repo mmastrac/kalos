@@ -15,6 +15,11 @@ module builtin {
     handle end_object;
 }
 
+module kidl {
+    fn walk_modules(context: any) = kalos_idl_walk_modules;
+    prop(read) prefix: string = kalos_idl_module_prefix;
+}
+
 module module {
     prop(read) name: string = kalos_idl_module_name;
     prop(read) prefix: string = kalos_idl_module_prefix;
