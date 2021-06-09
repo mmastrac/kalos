@@ -12,12 +12,12 @@ handle open {
 
 #handle begin_module(module) {
 handle begin_module {
-    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack) {{");
+    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
 }
 
 handle module.begin {
-    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack) {{");
+    println("void {module.prefix}{module.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
 }
 
