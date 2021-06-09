@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "kalos_lex.h"
 
 enum yyc_state {
@@ -77,6 +78,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <instring,instringmulti> "\\n" { *output++ = '\n'; continue; }
         <instring,instringmulti> "\\r" { *output++ = '\r'; continue; }
         <instring,instringmulti> "\\t" { *output++ = '\t'; continue; }
+        <instring,instringmulti> "\\x" @ch [a-fA-F0-9][a-fA-F0-9] { char n[3] = { ch[0], ch[1], 0 }; *output++ = (char)strtol(n, NULL, 16); continue; }
         <instring> [\n\r] { return KALOS_TOKEN_ERROR; }
         <instringmulti> @ch [\n\r] { *output++ = *ch; continue; }
         <instring,instringmulti> "\\" [a-z] { return KALOS_TOKEN_ERROR; }

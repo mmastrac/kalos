@@ -58,7 +58,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <init,module,object,function,fcomma,fret,handle,hcomma> ws { continue; }
         <init> end { return true; }
         <init,module,object> "#" [^\n\x00]* "\n" { /* comment */ continue; }
-        <init> "prefix" ws? @a string @b ws? ";" { callbacks->prefix(context, copy_string(buffers[0], a, b)); continue; }
+        <init> "prefix" ws? @a string @b ws? ";" { if (!callbacks->prefix(context, copy_string(buffers[0], a, b))) return false; continue; }
         <init> "module" ws @a word @b ws? "{" => module { callbacks->begin_module(context, copy_string(buffers[0], a, b)); continue; }
         <module> "object" ws? @a word @b ws? "{" => object { callbacks->begin_object(context, copy_string(buffers[0], a, b)); continue; } 
         <object> "}" => module { callbacks->end_object(context); continue; }
@@ -87,7 +87,9 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <module> "const" ws @a word @b ws? ":" ws? @c type @d ws? "=" ws? @e const @f ws? ";" {
             copy_string(buffers[2], e, f);
             if (buffers[2][0] == '"') {
-                callbacks->constant_string(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2]);
+                if (!callbacks->constant_string(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), buffers[2])) {
+                    return false;
+                }
             } else if (isdigit(buffers[2][0])) {
                 if (buffers[2][1] == 'x') {
                     callbacks->constant_number(context, copy_string(buffers[0], a, b), copy_string(buffers[1], c, d), strtol(buffers[2]+2, NULL, 16));

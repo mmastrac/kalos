@@ -6,4 +6,5 @@ handle init {
     print(test.PI_ISH);
     print(test.HELLO_WORLD);
     print(X);
+    print(test.ESCAPE == "\x60");
 }

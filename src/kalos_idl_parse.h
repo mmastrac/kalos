@@ -3,7 +3,7 @@
 
 typedef struct kalos_idl_callbacks {
     void (*error)(void* context, const char* start, uint16_t error_offset);
-    void (*prefix)(void* context, const char* prefix);
+    bool (*prefix)(void* context, const char* prefix);
 
     void (*begin_module)(void* context, const char* module);
     void (*end_module)(void* context);
@@ -19,7 +19,7 @@ typedef struct kalos_idl_callbacks {
     void (*handle_arg)(void* context, const char* name, const char* type, bool is_varargs);
     void (*end_handle)(void* context);
 
-    void (*constant_string)(void* context, const char* name, const char* type, const char* string);
+    bool (*constant_string)(void* context, const char* name, const char* type, const char* string);
     void (*constant_number)(void* context, const char* name, const char* type, kalos_int number);
 
     void (*property)(void* context, const char* name, const char* type, const char* mode, const char* symbol, const char* symbol2);

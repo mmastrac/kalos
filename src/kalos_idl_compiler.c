@@ -64,7 +64,33 @@ static char* unstring(char* s) {
     int len = strlen(s);
     int out = 0;
     for (int i = 1; i < len - 1; i++) {
-        s[out] = s[i];
+        if (s[i] == '\\') {
+            i++;
+            switch (s[i]) {
+                case '\\': s[out] = '\\'; break;
+                case 'r': s[out] = '\r'; break;
+                case 'n': s[out] = '\n'; break;
+                case 't': s[out] = '\t'; break;
+                case 'x': {
+                    char n[3];
+                    if (i >= len - 3) {
+                        return NULL;
+                    }
+                    n[0] = s[++i];
+                    n[1] = s[++i];
+                    n[2] = 0;
+                    char* e;
+                    s[out] = (char)strtol(n, &e, 16);
+                    if (e != n + 2) {
+                        return NULL;
+                    }
+                    break;
+                }
+                default: return NULL;
+            }
+        } else {
+            s[out] = s[i];
+        }
         out++;
     }
     s[out] = 0;
@@ -107,9 +133,14 @@ static void error(void* context, const char* start, uint16_t error_pos) {
     printf("Error on line %d, column %d\n", row + 1, col + 1);
 }
 
-static void prefix(void* context, const char* prefix) {
+static bool prefix(void* context, const char* prefix) {
     struct kalos_module_builder* builder = context;
-    builder->prefix_index = strpack(builder, unstring((char*)prefix));
+    prefix = unstring((char*)prefix);
+    if (!prefix) {
+        return false;
+    }
+    builder->prefix_index = strpack(builder, prefix);
+    return true;
 }
 
 static void begin_module(void* context, const char* module) {
@@ -205,13 +236,18 @@ static void end_handle(void* context) {
     LOG("handle");
 }
 
-static void constant_string(void* context, const char* name, const char* type, const char* s) {
+static bool constant_string(void* context, const char* name, const char* type, const char* s) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_CONST_STRING;
-    current_export(builder)->entry.const_string_index = strpack(builder, unstring((char*)s));
+    s = unstring((char*)s);
+    if (!s) {
+        return false;
+    }
+    current_export(builder)->entry.const_string_index = strpack(builder, s);
     LOG("const %s %s %s", name, type, s);
+    return true;
 }
 
 static void constant_number(void* context, const char* name, const char* type, kalos_int number) {
