@@ -479,7 +479,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     kalos_module_idl_module_trigger_begin(context->state, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_props));
     context->handles = false;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback);
-    kalos_module_idl_trigger_end_module(context->state);
+    kalos_module_idl_module_trigger_end(context->state);
     return true;
 }
 

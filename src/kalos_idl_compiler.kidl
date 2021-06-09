@@ -9,7 +9,6 @@ module builtin {
     handle open;
     handle function_export;
     handle property_export;
-    handle end_module;
     handle handle_export;
     handle object_property;
     handle begin_object;

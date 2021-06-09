@@ -165,8 +165,7 @@ handle property_export {
     }
 }
 
-#handle end_module(module) {
-handle end_module {
+handle module.end {
     println("\t}}");
     println("}}");
     println("");
