@@ -37,7 +37,7 @@ handle handle_export {
     for arg in function.args {
         print(", ");
         if (arg == "string") {
-            print("kalos_string a{index}");
+            print("kalos_string* a{index}");
         } else if (arg == "number" || arg == "bool") {
             print("kalos_int a{index}");
         } else if (arg == "object") {
@@ -163,7 +163,7 @@ handle property_export {
         println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
         print("\t\t{property.write_symbol}(state{maybe_object}, ");
         if (property.type == "string") {
-            print("&peek(stack, -1)->value.string");
+            print("peek(stack, -1)->value.string");
         } else if (property.type == "number" || property.type == "bool") {
             print("peek(stack, -1)->value.number");
         } else if (property.type == "object") {

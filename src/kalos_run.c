@@ -468,10 +468,10 @@ void kalos_load_arg_number(kalos_state state_, kalos_int index, kalos_int arg) {
     state->locals[index].value.number = arg;
 }
 
-void kalos_load_arg_string(kalos_state state_, kalos_int index, kalos_string arg) {
+void kalos_load_arg_string(kalos_state state_, kalos_int index, kalos_string* arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->locals[index].type = KALOS_VALUE_STRING;
-    state->locals[index].value.string = arg;
+    state->locals[index].value.string = kalos_string_take(state, arg);
 }
 
 void kalos_load_arg_bool(kalos_state state_, kalos_int index, bool arg) {
