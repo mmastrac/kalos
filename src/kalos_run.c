@@ -484,21 +484,18 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->pc = kalos_find_section(state->script, handle_address);
     if (state->pc == 0) {
-        for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
-            kalos_clear(state, &state->locals[i]);
-        }
-        return;
+        goto done;
     }
     for (;;) {
         if (state->pc >= state->script->script_buffer_size) {
             state->fns->error("Internal error");
-            return;
+            goto done;
         }
         kalos_op op = state->script->script_ops[state->pc++];
         kalos_value *v1, *v2;
         if (op >= KALOS_OP_MAX || state->stack.stack_index < 0) {
             state->fns->error("Internal error");
-            return;
+            goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack.stack_index);
         int stack_index = state->stack.stack_index;
@@ -511,10 +508,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
         }
         switch (op) {
             case KALOS_OP_END:
-                for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
-                    kalos_clear(state, &state->locals[i]);
-                }
-                return;
+                goto done;
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
@@ -698,6 +692,11 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
             int diff = state->stack.stack_index - stack_index;
             ASSERT(diff == kalos_op_output_size[op] - kalos_op_input_size[op]);
         }
+    }
+
+    done:
+    for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
+        kalos_clear(state, &state->locals[i]);
     }
 }
 
