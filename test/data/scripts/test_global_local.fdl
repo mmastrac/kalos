@@ -1,9 +1,11 @@
 var foo = 1 + 2;
+var snoo = "";
 
 handle init {
     var baz = 30;
     var bar;
 
+    snoo = "a" + "b"; # attempt to leak a global
     bar = foo + 1;
     print(bar + baz);
 }

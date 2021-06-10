@@ -496,7 +496,7 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     script_current_export = export;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION: {
-            kalos_value v = kalos_value_clone(context->state, &context->script_context);
+            // kalos_value v = kalos_value_clone(context->state, &context->script_context);
             // kalos_module_idl_module_trigger_function(context->state, &v, NULL);
             break;
         }
@@ -563,16 +563,33 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     return true;
 }
 
-static ssize_t total_allocated;
+static int32_t total_allocated = 0;
+static uint16_t allocation_id;
+struct allocation_record {
+    uint16_t id;
+    size_t size;
+};
 
 static void* internal_malloc(size_t size) {
-    total_allocated++;
-    return malloc(size);
+    total_allocated += size;
+    LOG("alloc #%d %d", allocation_id, size);
+    // Stash the size in the allocation
+    struct allocation_record info;
+    info.size = size;
+    info.id = allocation_id++;
+    uint8_t* allocated = malloc(size + sizeof(info));
+    memcpy(allocated, &info, sizeof(info));
+    return allocated + sizeof(info);
 }
 
-static void internal_free(void* ptr) {
-    total_allocated--;
-    free(ptr);
+static void internal_free(void* memory) {
+    uint8_t* allocated = memory;
+    struct allocation_record info;
+    allocated -= sizeof(info);
+    memcpy(&info, allocated, sizeof(info));
+    LOG("free #%d %d", info.id, info.size);
+    total_allocated -= info.size;
+    free(allocated);
 }
 
 static void internal_error(char* error) {
@@ -619,11 +636,10 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     struct walk_callback_context context;
     context.modules = parsed_module;
     context.state = state;
-    // kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
     if (total_allocated != 0) {
-        printf("WARNING: IDL compiler leaked %d allocation(s)\n", (int)total_allocated);
+        printf("WARNING: IDL compiler leaked %d bytes(s)\n", (int)total_allocated);
     }
     return true;
 }
