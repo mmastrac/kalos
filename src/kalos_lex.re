@@ -186,6 +186,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "break" { return KALOS_TOKEN_BREAK; }
         <init> "continue" { return KALOS_TOKEN_CONTINUE; }
         <init> "debugger" { return KALOS_TOKEN_DEBUGGER; }
+        <init> "return" { return KALOS_TOKEN_RETURN; }
         <init> "for" { return KALOS_TOKEN_FOR; }
         <init> "in" { return KALOS_TOKEN_IN; }
         <init> "true" { return KALOS_TOKEN_TRUE; }

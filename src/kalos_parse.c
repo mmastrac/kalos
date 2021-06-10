@@ -840,6 +840,9 @@ static bool parse_statement(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_DEBUGGER) {
         TRY(parse_push_op(parse_state, KALOS_OP_DEBUGGER));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
+    } else if (token == KALOS_TOKEN_RETURN) {
+        TRY(parse_push_op(parse_state, KALOS_OP_END));
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_WORD) {
         TRY(parse_word_statement(parse_state));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
