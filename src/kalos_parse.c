@@ -120,7 +120,7 @@ struct parse_state {
     const char* failure_message;
     kalos_token last_token;
     int loop_break, loop_continue;
-    int next_handler_fixup;
+    kalos_section_header* last_section_header;
     char token[128];
     bool const_mode;
 };
@@ -263,18 +263,15 @@ static void parse_fixup_offset(struct parse_state* parse_state, int offset, int 
 }
 
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handle_address) {
-    if (parse_state->next_handler_fixup != 0) {
+    if (parse_state->last_section_header) {
         TRY(parse_push_op(parse_state, KALOS_OP_END));
-        TRY(parse_fixup_offset(parse_state, parse_state->next_handler_fixup, parse_state->output_script_index));
+        parse_state->last_section_header->next_section = parse_state->output_script_index;
     }
 
-    memcpy(&parse_state->output_script[parse_state->output_script_index], &handle_address, sizeof(handle_address));
-    parse_state->output_script_index += sizeof(handle_address);
-
-    // Next offset
-    parse_state->next_handler_fixup = parse_state->output_script_index;
-    parse_state->output_script[parse_state->output_script_index++] = 0;
-    parse_state->output_script[parse_state->output_script_index++] = 0;
+    parse_state->last_section_header = (kalos_section_header*)&parse_state->output_script[parse_state->output_script_index];
+    memset(parse_state->last_section_header, 0, sizeof(*parse_state->last_section_header));
+    parse_state->last_section_header->handle_address = handle_address;
+    parse_state->output_script_index += sizeof(*parse_state->last_section_header);
 
     TRY_EXIT;
 }
@@ -942,6 +939,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         } else if (token == KALOS_TOKEN_HANDLE) {
             memset(&parse_state->locals, 0, sizeof(parse_state->locals));
             TRY(parse_handler_statement(parse_state));
+            parse_state->last_section_header->locals_size = parse_state->locals.var_index;
         } else {
             THROW(ERROR_UNEXPECTED_TOKEN);
         }

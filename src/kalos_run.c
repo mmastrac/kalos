@@ -482,7 +482,8 @@ void kalos_load_arg_bool(kalos_state state_, kalos_int index, bool arg) {
 
 void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->pc = kalos_find_section(state->script, handle_address);
+    kalos_section_header* header;
+    state->pc = kalos_find_section(state->script, handle_address, &header);
     if (state->pc == 0) {
         goto done;
     }

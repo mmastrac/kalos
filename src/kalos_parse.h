@@ -16,6 +16,14 @@ typedef struct kalos_script {
     uint16_t script_buffer_size;
 } kalos_script;
 
+#pragma pack(push, 1)
+typedef struct kalos_section_header {
+    kalos_export_address handle_address;
+    kalos_int locals_size;
+    kalos_int next_section;
+} kalos_section_header;
+#pragma pack(pop)
+
 typedef struct kalos_parse_result {
     bool success;
     const char* error;

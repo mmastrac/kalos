@@ -5,13 +5,13 @@
 #include "kalos_parse.h"
 #include "kalos_string_format.h"
 
-static bool kalos_dump_section(void* context, kalos_script* script, kalos_export_address handle_address, uint16_t offset) {
+static bool kalos_dump_section(void* context, kalos_script* script, kalos_section_header* header, uint16_t offset) {
     char** out = context;
     char* s = *out;
-    if (handle_address.module_index == -1 && handle_address.export_index == -1) {
-        s += sprintf(s, "<global>\n");
+    if (header->handle_address.module_index == -1 && header->handle_address.export_index == -1) {
+        s += sprintf(s, "<global> locals=%d\n", header->locals_size);
     } else {
-        s += sprintf(s, "%04x:%04x\n", handle_address.module_index, handle_address.export_index);
+        s += sprintf(s, "%04x:%04x locals=%d\n", header->handle_address.module_index, header->handle_address.export_index, header->locals_size);
     }
 
     for (;;) {
@@ -99,40 +99,44 @@ void kalos_dump(kalos_script* script, char* s) {
 void kalos_walk(kalos_script* script, void* context, kalos_walk_fn walk_fn) {
     int offset = 0;
     for (;;) {
-        kalos_export_address handle_address;
-        memcpy(&handle_address, &script->script_ops[offset], sizeof(handle_address));
-        offset += sizeof(handle_address);
-        uint16_t next_section = script->script_ops[offset++];
-        next_section |= script->script_ops[offset++] << 8;
-        if (!walk_fn(context, script, handle_address, offset)) {
+        kalos_section_header* header = (kalos_section_header*)&script->script_ops[offset];
+        offset += sizeof(*header);
+        if (!walk_fn(context, script, header, offset)) {
             break;
         }
-        if (next_section == 0) {
+        if (header->next_section == 0) {
             break;
         }
-        offset = next_section;
+        offset = header->next_section;
     }
 }
 
 struct kalos_walk_find_section {
     kalos_export_address handle_address;
+    kalos_section_header* header;
     uint16_t pc;
 };
 
 #pragma warning 303 9
-static bool kalos_find_section_walk(void* context_, kalos_script* script, kalos_export_address handle_address, uint16_t pc) {
+static bool kalos_find_section_walk(void* context_, kalos_script* script, kalos_section_header* header, uint16_t pc) {
     struct kalos_walk_find_section* context = (struct kalos_walk_find_section*)context_;
-    if (bcmp(&handle_address, &context->handle_address, sizeof(handle_address)) == 0) {
+    if (bcmp(&header->handle_address, &context->handle_address, sizeof(header->handle_address)) == 0) {
         context->pc = pc;
+        context->header = header;
         return false;
     }
     return true;
 }
 #pragma warning 303 3
 
-uint16_t kalos_find_section(kalos_script* script, kalos_export_address handle_address) {
+uint16_t kalos_find_section(kalos_script* script, kalos_export_address handle_address, kalos_section_header** header) {
     struct kalos_walk_find_section context = {0};
     context.handle_address = handle_address;
     kalos_walk(script, (void*)&context, kalos_find_section_walk);
-    return context.pc;
+    if (context.pc) {
+        *header = context.header;
+        return context.pc;
+    }
+    *header = 0;
+    return 0;
 }
