@@ -534,7 +534,9 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
                 LOG("%d:%d %p", export, module, state->modules[module]);
+                int pc = state->pc;
                 state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
+                state->pc = pc;
                 break;
             }
             case KALOS_OP_GETPROP: {
