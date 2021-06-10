@@ -89,11 +89,15 @@ KALOS_STRING_INLINE kalos_string __kalos_string_alloc(kalos_state state, kalos_i
 }
 
 KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state state, const char* string) {
+#ifdef KALOS_STRING_TORTURE_TEST
+    return kalos_string_allocate_fmt(state, "%s", string);
+#else
     kalos_string s;
     s.sc = string;
     s.length__ = -(int)strlen(string);
     VALIDATE_STRING(s);
     return s;
+#endif
 }
 
 KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state state, const char* fmt, ...) {
@@ -104,9 +108,11 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state state, co
     int size = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
     s = __kalos_string_alloc(state, size);
-    va_start(args, fmt);
-    vsprintf(__kalos_string_data(s), fmt, args);
-    va_end(args);
+    if (size) {
+        va_start(args, fmt);
+        vsprintf(__kalos_string_data(s), fmt, args);
+        va_end(args);
+    }
     VALIDATE_STRING(s);
     return s;
 }

@@ -67,9 +67,9 @@ void kalos_module_idl_module_trigger_begin(kalos_state state, kalos_value* a0, k
 	kalos_trigger(state, kalos_make_address(0x2, 0x1));
 }
 
-// id=0002:0005 name=end
+// id=0002:0006 name=end
 void kalos_module_idl_module_trigger_end(kalos_state state) {
-	kalos_trigger(state, kalos_make_address(0x2, 0x5));
+	kalos_trigger(state, kalos_make_address(0x2, 0x6));
 }
 
 // id=0002:0002 name=function
@@ -175,6 +175,13 @@ bool kalos_module_idl_module_object_module_obj_props(kalos_state state, kalos_ob
 	return true;
 }
 
+// id=0002:0005 name=object
+void kalos_module_idl_module_trigger_object(kalos_state state, kalos_value* a0, kalos_object* a1) {
+	kalos_load_arg_any(state, 0, a0);
+	kalos_load_arg_object(state, 1, a1);
+	kalos_trigger(state, kalos_make_address(0x2, 0x5));
+}
+
 //kalos_module_idl_module_object_object_obj_props
 bool kalos_module_idl_module_object_object_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
 	switch (function) {
@@ -235,13 +242,13 @@ bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_
 
 void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack, bool retval) {
 	switch (function) {
-	// id=2 name=name symbol=kalos_idl_module_name
-	case 2: {
+	// id=3 name=name symbol=kalos_idl_module_name
+	case 3: {
 		push_string(stack, kalos_idl_module_name(state));
 		break;
 	}
-	// id=3 name=prefix symbol=kalos_idl_module_prefix
-	case 3: {
+	// id=4 name=prefix symbol=kalos_idl_module_prefix
+	case 4: {
 		push_string(stack, kalos_idl_module_prefix(state));
 		break;
 	}
@@ -251,6 +258,16 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
 		kalos_idl_walk_exports(state, peek(stack, -1));
+		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
+		break;
+	}
+
+	// id=2 name=walk_object_properties arg_count=2 symbol=kalos_idl_walk_object_properties
+	case 2: {
+		LOG("Invoke %s", "walk_object_properties");
+		int arg_count = 2;
+		kalos_stack_fixup_no_varargs(arg_count, stack);
+		kalos_idl_walk_object_properties(state, peek(stack, -1), peek(stack, -2)->value.object);
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}

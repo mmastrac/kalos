@@ -489,24 +489,35 @@ void kalos_idl_walk_exports(kalos_state state, kalos_value* script_context) {
     kalos_clear(state, &context.script_context);
 }
 
+void kalos_module_idl_module_trigger_property(kalos_state state, kalos_value* a0, kalos_object* a1);
+bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack);
+
+void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_context, kalos_object* object) {
+    for (int i = 0; i < script_current_export->entry.object.property_count; i++) {
+        script_current_property = &script_current_export->entry.object.properties[i];
+        kalos_module_idl_module_trigger_property(state, script_context, kalos_allocate_prop_object(state, NULL, kalos_module_idl_module_object_property_obj_props));
+    }
+    script_current_property = NULL;
+}
+
 #include "kalos_idl_compiler.dispatch.inc"
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;
     script_current_export = export;
+    kalos_value v = kalos_value_clone(context->state, &context->script_context);
     switch (export->type) {
-        case KALOS_EXPORT_TYPE_FUNCTION: {
-            // kalos_value v = kalos_value_clone(context->state, &context->script_context);
-            // kalos_module_idl_module_trigger_function(context->state, &v, NULL);
+        case KALOS_EXPORT_TYPE_FUNCTION:
+            kalos_module_idl_module_trigger_function(context->state, &v, NULL);
             break;
-        }
         case KALOS_EXPORT_TYPE_PROPERTY:
-            // kalos_module_idl_trigger_property_export(context->state);
+            kalos_module_idl_module_trigger_property(context->state, &v, NULL);
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
-            // kalos_module_idl_trigger_handle_export(context->state);
+            kalos_module_idl_module_trigger_handle_(context->state, &v, NULL);
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
+            kalos_module_idl_module_trigger_object(context->state, &v, NULL);
             break;
         default:
             break;

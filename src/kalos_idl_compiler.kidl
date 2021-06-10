@@ -17,12 +17,15 @@ module kidl {
 
 module module {
     fn walk_exports(context: any) = kalos_idl_walk_exports;
+    fn walk_object_properties(context: any, object: object) = kalos_idl_walk_object_properties;
+
     prop(read) name: string = kalos_idl_module_name;
     prop(read) prefix: string = kalos_idl_module_prefix;
     handle begin(context: any, module: object);
     handle function(context: any, function: object);
     handle handle_(context: any, handle: object);
     handle property(context: any, property: object);
+    handle object(context: any, property: object);
     handle end;
 
     object module_obj {

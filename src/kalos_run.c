@@ -484,6 +484,9 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->pc = kalos_find_section(state->script, handle_address);
     if (state->pc == 0) {
+        for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
+            kalos_clear(state, &state->locals[i]);
+        }
         return;
     }
     for (;;) {
