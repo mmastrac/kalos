@@ -1,7 +1,4 @@
-import function;
 import module;
-import property;
-import handles;
 import object;
 import kidl;
 
@@ -30,15 +27,15 @@ handle module.begin(context, m) {
 }
 
 handle module.handle_(context, handle_) {
-    println("// id={handles.module_index:04x}:{handles.handle_index:04x} name={handles.name}");
+    println("// id={handle_.module_index:04x}:{handle_.handle_index:04x} name={handle_.name}");
     if (module.name == "builtin") {
-        print("void {module.prefix}trigger_{handles.name}(kalos_state state");
+        print("void {module.prefix}trigger_{handle_.name}(kalos_state state");
     } else {
-        print("void {module.prefix}{module.name}_trigger_{handles.name}(kalos_state state");
+        print("void {module.prefix}{module.name}_trigger_{handle_.name}(kalos_state state");
     }
     var index = 0;
     var arg;
-    for arg in function.args {
+    for arg in handle_.args {
         print(", ");
         if (arg == "string") {
             print("kalos_string* a{index}");
@@ -53,16 +50,16 @@ handle module.handle_(context, handle_) {
     }
     println(") {{");
     index = 0;
-    for arg in function.args {
+    for arg in handle_.args {
         println("\tkalos_load_arg_{arg}(state, {index}, a{index});");
         index += 1;
     }
-    println("\tkalos_trigger(state, kalos_make_address({handles.module_index:#x}, {handles.handle_index:#x}));");
+    println("\tkalos_trigger(state, kalos_make_address({handle_.module_index:#x}, {handle_.handle_index:#x}));");
     println("}}");
     println("");
 }
 
-handle begin_object {
+handle object.begin(context, object) {
     println("//{module.prefix}{module.name}_object_{object.name}_props");
     println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
@@ -73,7 +70,7 @@ handle object_property {
     println("//");
 }
 
-handle end_object {
+handle object.end(context, object) {
     println("\tdefault: return false;");
     println("\t}}");
     println("\treturn true;");

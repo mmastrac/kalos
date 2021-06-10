@@ -8,8 +8,6 @@ module builtin {
     handle close;
     handle open;
     handle object_property;
-    handle begin_object;
-    handle end_object;
 }
 
 module kidl {
@@ -27,12 +25,12 @@ module module {
     handle property(context: any, property: object);
     handle end;
 
-    object module {
+    object module_obj {
         prop(read) name: string = kalos_idl_obj_module_name;
         prop(read) prefix: string = kalos_idl_obj_module_prefix;
     }
 
-    object function {
+    object function_obj {
         prop(read) id: number = kalos_idl_function_id2;
         prop(read) return_type: string = kalos_idl_function_return_type2;
         prop(read) name: string = kalos_idl_export_name2;
@@ -42,7 +40,7 @@ module module {
         prop(read) varargs: string = kalos_idl_function_varargs2;
     }
 
-    object property {
+    object property_obj {
         prop(read) name: string = kalos_idl_export_name2;
         prop(read) read_id: number = kalos_idl_property_read_id2;
         prop(read) write_id: number = kalos_idl_property_write_id2;
@@ -50,28 +48,20 @@ module module {
         prop(read) read_symbol: string = kalos_idl_property_read_symbol2;
         prop(read) write_symbol: string = kalos_idl_property_write_symbol2;
     }
-}
 
-module function {
-    prop(read) args: object = kalos_idl_function_args;
-}
+    object handle_obj {
+        prop(read) name: string = kalos_idl_export_name2;
+        prop(read) module_index: number = kalos_idl_handle_module_index2;
+        prop(read) handle_index: number = kalos_idl_handle_index2;
+        prop(read) args: object = kalos_idl_function_args2;
+    }
 
-module property {
-    prop(read) name: string = kalos_idl_export_name;
-    prop(read) read_id: number = kalos_idl_property_read_id;
-    prop(read) write_id: number = kalos_idl_property_write_id;
-    prop(read) type: string = kalos_idl_property_type;
-    prop(read) read_symbol: string = kalos_idl_property_read_symbol;
-    prop(read) write_symbol: string = kalos_idl_property_write_symbol;
-}
-
-module handles {
-    prop(read) name: string = kalos_idl_export_name;
-    prop(read) module_index: number = kalos_idl_handle_module_index;
-    prop(read) handle_index: number = kalos_idl_handle_index;
-    prop(read) args: object = kalos_idl_function_args;
+    object object_obj {
+        prop(read) name: string = kalos_idl_export_name2;
+    }
 }
 
 module object {
-    prop(read) name: string = kalos_idl_export_name;
+    handle begin(context: any, object: object);
+    handle end(context: any, object: object);
 }

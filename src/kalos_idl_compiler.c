@@ -443,14 +443,6 @@ kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object* object) 
 kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
 kalos_string kalos_idl_export_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 
-kalos_int kalos_idl_function_id(kalos_state state) { return script_current_export->entry.function.invoke_id; }
-kalos_string kalos_idl_function_return_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
-kalos_string kalos_idl_function_realname(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.function.symbol_index)); }
-kalos_object* kalos_idl_function_args(kalos_state state) { return kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count); }
-kalos_int kalos_idl_function_arg_count(kalos_state state) { return script_current_export->entry.function.arg_count; }
-kalos_string kalos_idl_function_varargs(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
-kalos_string kalos_idl_function_arg_type(kalos_state state, kalos_int arg) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[arg].type)); }
-
 kalos_string kalos_idl_export_name2(kalos_state state, kalos_object* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 kalos_int kalos_idl_function_id2(kalos_state state, kalos_object* o) { return script_current_export->entry.function.invoke_id; }
 kalos_string kalos_idl_function_return_type2(kalos_state state, kalos_object* o) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
@@ -462,13 +454,6 @@ kalos_string kalos_idl_function_arg_type2(kalos_state state, kalos_object* o, ka
 
 kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 
-kalos_string kalos_idl_property_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
-kalos_int kalos_idl_property_read_id(kalos_state state) { return prop()->read_invoke_id; }
-kalos_int kalos_idl_property_write_id(kalos_state state) { return prop()->write_invoke_id; }
-kalos_string kalos_idl_property_read_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read_symbol_index)); }
-kalos_string kalos_idl_property_write_symbol(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
-kalos_string kalos_idl_property_type(kalos_state state) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
-
 kalos_string kalos_idl_property_name2(kalos_state state, kalos_object* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
 kalos_int kalos_idl_property_read_id2(kalos_state state, kalos_object* o) { return prop()->read_invoke_id; }
 kalos_int kalos_idl_property_write_id2(kalos_state state, kalos_object* o) { return prop()->write_invoke_id; }
@@ -476,8 +461,8 @@ kalos_string kalos_idl_property_read_symbol2(kalos_state state, kalos_object* o)
 kalos_string kalos_idl_property_write_symbol2(kalos_state state, kalos_object* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
 kalos_string kalos_idl_property_type2(kalos_state state, kalos_object* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 
-kalos_int kalos_idl_handle_index(kalos_state state) { return script_current_export->entry.function.invoke_id; }
-kalos_int kalos_idl_handle_module_index(kalos_state state) { return script_current_module->index; }
+kalos_int kalos_idl_handle_index2(kalos_state state, kalos_object* o) { return script_current_export->entry.function.invoke_id; }
+kalos_int kalos_idl_handle_module_index2(kalos_state state, kalos_object* o) { return script_current_module->index; }
 
 struct walk_callback_context {
     bool handles;
@@ -538,28 +523,28 @@ bool export_walk_callback2(void* context_, kalos_module_parsed parsed, uint16_t 
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
             if (!context->handles) {
-                kalos_module_idl_module_trigger_function(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_props));
+                kalos_module_idl_module_trigger_function(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
             if (!context->handles) {
-                kalos_module_idl_module_trigger_property(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_props));
+                kalos_module_idl_module_trigger_property(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
             if (context->handles) {
-                kalos_module_idl_module_trigger_handle_(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_props));
+                kalos_module_idl_module_trigger_handle_(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_handle_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
             if (context->handles) {
-                kalos_module_idl_trigger_begin_object(context->state);
+                kalos_module_idl_object_trigger_begin(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props));
                 for (int i = 0; i < export->entry.object.property_count; i++) {
                     script_current_property = &export->entry.object.properties[i];
-                    kalos_module_idl_module_trigger_property(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_props));
+                    kalos_module_idl_module_trigger_property(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props));
                 }
                 script_current_property = NULL;
-                kalos_module_idl_trigger_end_object(context->state);
+                kalos_module_idl_object_trigger_end(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props));
             }
             break;
         default:
@@ -574,7 +559,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     context->handles = true;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback2);
     kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
-    kalos_module_idl_module_trigger_begin(context->state, &ctx, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_props));
+    kalos_module_idl_module_trigger_begin(context->state, &ctx, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_obj_props));
     context->handles = false;
     kalos_module_walk_exports(context, parsed, module, export_walk_callback2);
     kalos_module_idl_module_trigger_end(context->state);
