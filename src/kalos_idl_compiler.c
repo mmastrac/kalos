@@ -563,6 +563,23 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     return true;
 }
 
+static ssize_t total_allocated;
+
+static void* internal_malloc(size_t size) {
+    total_allocated++;
+    return malloc(size);
+}
+
+static void internal_free(void* ptr) {
+    total_allocated--;
+    free(ptr);
+}
+
+static void internal_error(char* error) {
+    printf("ERROR: %s\n", error);
+    exit(1);
+}
+
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printer_fn output) {
     // TODO: Watcom takes forever to compile if these aren't static
     static const char IDL_COMPILER_SCRIPT[] = {
@@ -592,9 +609,9 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     // printf("%s", s);
     // free(s);
     kalos_fn fns = {
-        malloc,
-        free,
-        NULL
+        internal_malloc,
+        internal_free,
+        internal_error,
     };
     script_modules = parsed_module;
     kalos_state state = kalos_init(&script, kalos_module_idl_dispatch, &fns);
@@ -604,5 +621,9 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     context.state = state;
     // kalos_module_walk_modules(&context, parsed_module, module_walk_callback);
     kalos_module_idl_trigger_close(state);
+    kalos_run_free(state);
+    if (total_allocated != 0) {
+        printf("WARNING: IDL compiler leaked %d allocation(s)\n", (int)total_allocated);
+    }
     return true;
 }
