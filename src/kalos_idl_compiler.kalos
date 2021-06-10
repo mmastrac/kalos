@@ -64,6 +64,7 @@ handle object.begin(context, object) {
     println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
     in_object = true;
+    module.walk_object_properties(0, object);
 }
 
 handle object_property {
