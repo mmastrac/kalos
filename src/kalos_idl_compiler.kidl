@@ -7,8 +7,6 @@ module builtin {
     # Old handles
     handle close;
     handle open;
-    handle property_export;
-    handle handle_export;
     handle object_property;
     handle begin_object;
     handle end_object;
@@ -25,6 +23,8 @@ module module {
     prop(read) prefix: string = kalos_idl_module_prefix;
     handle begin(context: any, module: object);
     handle function(context: any, function: object);
+    handle handle_(context: any, handle: object);
+    handle property(context: any, property: object);
     handle end;
 
     object module {
@@ -41,17 +41,19 @@ module module {
         prop(read) arg_count: number = kalos_idl_function_arg_count2;
         prop(read) varargs: string = kalos_idl_function_varargs2;
     }
+
+    object property {
+        prop(read) name: string = kalos_idl_export_name2;
+        prop(read) read_id: number = kalos_idl_property_read_id2;
+        prop(read) write_id: number = kalos_idl_property_write_id2;
+        prop(read) type: string = kalos_idl_property_type2;
+        prop(read) read_symbol: string = kalos_idl_property_read_symbol2;
+        prop(read) write_symbol: string = kalos_idl_property_write_symbol2;
+    }
 }
 
 module function {
-    prop(read) id: number = kalos_idl_function_id;
-    prop(read) return_type: string = kalos_idl_function_return_type;
-    prop(read) name: string = kalos_idl_export_name;
-    prop(read) realname: string = kalos_idl_function_realname;
     prop(read) args: object = kalos_idl_function_args;
-    prop(read) arg_count: number = kalos_idl_function_arg_count;
-    prop(read) varargs: string = kalos_idl_function_varargs;
-    fn arg_type(index: number): string = kalos_idl_function_arg_type;
 }
 
 module property {

@@ -29,7 +29,7 @@ handle module.begin(context, m) {
     dispatch += "\t{m.prefix}{m.name},\n";
 }
 
-handle handle_export {
+handle module.handle_(context, handle_) {
     println("// id={handles.module_index:04x}:{handles.handle_index:04x} name={handles.name}");
     if (module.name == "builtin") {
         print("void {module.prefix}trigger_{handles.name}(kalos_state state");
@@ -148,7 +148,7 @@ handle module.function(context, function) {
     println("");
 }
 
-handle property_export {
+handle module.property(context, property) {
     var maybe_object = "";
     if (in_object) {
         maybe_object = ", object";
