@@ -52,7 +52,7 @@ typedef struct kalos_state_internal {
     kalos_dispatch_fn* modules;
     kalos_stack stack;
     kalos_value globals[KALOS_VAR_SLOT_SIZE];
-    kalos_value locals[KALOS_VAR_SLOT_SIZE];
+    kalos_value* locals;
     uint16_t pc;
 } kalos_state_internal;
 
@@ -453,40 +453,45 @@ kalos_state kalos_init_for_test(kalos_fn* fns) {
 
 void kalos_load_arg_any(kalos_state state_, kalos_int index, kalos_value* arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    kalos_value_move_to(state, arg, &state->locals[index]);
+    kalos_value_move_to(state, arg, &state->stack.stack[state->stack.stack_index + index]);
 }
 
 void kalos_load_arg_object(kalos_state state_, kalos_int index, kalos_object* arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->locals[index].type = KALOS_VALUE_OBJECT;
-    state->locals[index].value.object = arg;
+    state->stack.stack[state->stack.stack_index + index].type = KALOS_VALUE_OBJECT;
+    state->stack.stack[state->stack.stack_index + index].value.object = arg;
 }
 
 void kalos_load_arg_number(kalos_state state_, kalos_int index, kalos_int arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->locals[index].type = KALOS_VALUE_NUMBER;
-    state->locals[index].value.number = arg;
+    state->stack.stack[state->stack.stack_index + index].type = KALOS_VALUE_NUMBER;
+    state->stack.stack[state->stack.stack_index + index].value.number = arg;
 }
 
 void kalos_load_arg_string(kalos_state state_, kalos_int index, kalos_string* arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->locals[index].type = KALOS_VALUE_STRING;
-    state->locals[index].value.string = kalos_string_take(state, arg);
+    state->stack.stack[state->stack.stack_index + index].type = KALOS_VALUE_STRING;
+    state->stack.stack[state->stack.stack_index + index].value.string = kalos_string_take(state, arg);
 }
 
 void kalos_load_arg_bool(kalos_state state_, kalos_int index, bool arg) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    state->locals[index].type = KALOS_VALUE_BOOL;
-    state->locals[index].value.number = arg;
+    state->stack.stack[state->stack.stack_index + index].type = KALOS_VALUE_BOOL;
+    state->stack.stack[state->stack.stack_index + index].value.number = arg;
 }
 
 void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     kalos_section_header* header;
+    int original_stack_index = state->stack.stack_index;
+    int original_pc = state->pc;
+    kalos_value* original_locals = state->locals;
     state->pc = kalos_find_section(state->script, handle_address, &header);
     if (state->pc == 0) {
         goto done;
     }
+    state->locals = &state->stack.stack[original_stack_index];
+    state->stack.stack_index += header->locals_size;
     for (;;) {
         if (state->pc >= state->script->script_buffer_size) {
             state->fns->error("Internal error");
@@ -532,9 +537,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
                 LOG("%d:%d %p", export, module, state->modules[module]);
-                int pc = state->pc;
                 state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
-                state->pc = pc;
                 break;
             }
             case KALOS_OP_GETPROP: {
@@ -696,9 +699,12 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     }
 
     done:
-    for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
-        kalos_clear(state, &state->locals[i]);
+    for (int i = original_stack_index; i < state->stack.stack_index; i++) {
+        kalos_clear(state, &state->stack.stack[i]);
     }
+    state->stack.stack_index = original_stack_index;
+    state->pc = original_pc;
+    state->locals = original_locals;
 }
 
 void kalos_run_free(kalos_state state_) {
