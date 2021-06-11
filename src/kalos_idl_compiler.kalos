@@ -184,15 +184,7 @@ handle module.property(context, property) {
         println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
         println("\tcase {property.write_id}: {{");
         println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
-        print("\t\t{property.write_symbol}(state{maybe_object}, ");
-        if (property.type == "string") {
-            print("&peek(stack, -1)->value.string");
-        } else if (property.type == "number" || property.type == "bool") {
-            print("peek(stack, -1)->value.number");
-        } else if (property.type == "object") {
-            print("peek(stack, -1)->value.object");
-        }
-        println(");");
+        print("\t\t{property.write_symbol}(state{maybe_object}, K__arg_{property.type}(K__arg({1})));");
         println("\t\tkalos_stack_cleanup_no_varargs(1, 0, state, stack);");
         println("\t\tbreak;");
         println("\t}}");
