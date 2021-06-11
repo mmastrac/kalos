@@ -1,5 +1,4 @@
 import module;
-import object;
 import kidl;
 
 var in_object = false;
@@ -21,6 +20,7 @@ handle close {
 
 handle module.begin(context, m) {
     #module.walk_exports();
+    log("CONTEXT: {context}");
     println("void {m.prefix}{m.name}(kalos_state state, int function, kalos_stack* stack, bool retval) {{");
     println("\tswitch (function) {{");
     dispatch += "\t{m.prefix}{m.name},\n";
@@ -59,19 +59,12 @@ handle module.handle_(context, handle_) {
     println("");
 }
 
-handle object.begin(context, object) {
+handle module.object(context, object) {
     println("//{module.prefix}{module.name}_object_{object.name}_props");
     println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
     in_object = true;
     module.walk_object_properties(0, object);
-}
-
-handle object_property {
-    println("//");
-}
-
-handle object.end(context, object) {
     println("\tdefault: return false;");
     println("\t}}");
     println("\treturn true;");

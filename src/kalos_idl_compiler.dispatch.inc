@@ -17,6 +17,16 @@ void kalos_module_idl_trigger_open(kalos_state state) {
 
 void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stack, bool retval) {
 	switch (function) {
+	// id=3 name=log arg_count=1 symbol=kalos_idl_compiler_log
+	case 3: {
+		LOG("Invoke %s", "log");
+		int arg_count = 1;
+		kalos_stack_fixup_no_varargs(arg_count, stack);
+		kalos_idl_compiler_log(state, &peek(stack, -1)->value.string);
+		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
+		break;
+	}
+
 	// id=2 name=print arg_count=1 symbol=kalos_idl_compiler_print
 	case 2: {
 		LOG("Invoke %s", "print");
@@ -275,28 +285,8 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 	}
 }
 
-// id=0003:0001 name=begin
-void kalos_module_idl_object_trigger_begin(kalos_state state, kalos_value* a0, kalos_object* a1) {
-	kalos_load_arg_any(state, 0, a0);
-	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x3, 0x1));
-}
-
-// id=0003:0002 name=end
-void kalos_module_idl_object_trigger_end(kalos_state state, kalos_value* a0, kalos_object* a1) {
-	kalos_load_arg_any(state, 0, a0);
-	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x3, 0x2));
-}
-
-void kalos_module_idl_object(kalos_state state, int function, kalos_stack* stack, bool retval) {
-	switch (function) {
-	}
-}
-
 kalos_dispatch_fn kalos_module_idl_dispatch[] = {
 	kalos_module_idl_builtin,
 	kalos_module_idl_kidl,
 	kalos_module_idl_module,
-	kalos_module_idl_object,
 };

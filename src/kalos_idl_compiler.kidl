@@ -3,6 +3,7 @@ prefix "kalos_module_idl_";
 module builtin {
     fn println(s: string) = kalos_idl_compiler_println;
     fn print(s: string) = kalos_idl_compiler_print;
+    fn log(s: string) = kalos_idl_compiler_log;
 
     # Old handles
     handle close;
@@ -62,9 +63,4 @@ module module {
     object object_obj {
         prop(read) name: string = kalos_idl_export_name2;
     }
-}
-
-module object {
-    handle begin(context: any, object: object);
-    handle end(context: any, object: object);
 }

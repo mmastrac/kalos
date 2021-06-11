@@ -412,6 +412,10 @@ void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
     script_output("%s\n", kalos_string_c(state, *string));
 }
 
+void kalos_idl_compiler_log(kalos_state state, kalos_string* string) {
+    LOG("%s", kalos_string_c(state, *string));
+}
+
 char* function_type_to_string(kalos_function_type type) {
     switch (type) {
         case FUNCTION_TYPE_ANY:
@@ -531,26 +535,26 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 bool export_walk_callback2(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;
     script_current_export = export;
+    kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
             if (!context->handles) {
-                kalos_module_idl_module_trigger_function(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_obj_props));
+                kalos_module_idl_module_trigger_function(context->state, &ctx, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
             if (!context->handles) {
-                kalos_module_idl_module_trigger_property(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props));
+                kalos_module_idl_module_trigger_property(context->state, &ctx, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
             if (context->handles) {
-                kalos_module_idl_module_trigger_handle_(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_handle_obj_props));
+                kalos_module_idl_module_trigger_handle_(context->state, &ctx, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_handle_obj_props));
             }
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
             if (context->handles) {
-                kalos_module_idl_object_trigger_begin(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props));
-                kalos_module_idl_object_trigger_end(context->state, &context->script_context, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props));
+                kalos_module_idl_module_trigger_object(context->state, &ctx, kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props));
             }
             break;
         default:
