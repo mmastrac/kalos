@@ -201,6 +201,3 @@ handle module.property(context, property) {
         println("\t}}");
     }
 }
-
-handle module.end {
-}

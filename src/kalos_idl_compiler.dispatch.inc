@@ -77,11 +77,6 @@ void kalos_module_idl_module_trigger_begin(kalos_state state, kalos_value* a0, k
 	kalos_trigger(state, kalos_make_address(0x2, 0x1));
 }
 
-// id=0002:0006 name=end
-void kalos_module_idl_module_trigger_end(kalos_state state) {
-	kalos_trigger(state, kalos_make_address(0x2, 0x6));
-}
-
 // id=0002:0002 name=function
 void kalos_module_idl_module_trigger_function(kalos_state state, kalos_value* a0, kalos_object* a1) {
 	kalos_load_arg_any(state, 0, a0);

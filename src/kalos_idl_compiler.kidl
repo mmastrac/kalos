@@ -27,7 +27,6 @@ module module {
     handle handle_(context: any, handle: object);
     handle property(context: any, property: object);
     handle object(context: any, property: object);
-    handle end;
 
     object module_obj {
         prop(read) name: string = kalos_idl_obj_module_name;

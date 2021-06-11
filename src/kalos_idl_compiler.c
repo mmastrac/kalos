@@ -567,13 +567,8 @@ bool export_walk_callback2(void* context_, kalos_module_parsed parsed, uint16_t 
 bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module) {
     struct walk_callback_context* context = context_;
     script_current_module = module;
-    // context->handles = true;
-    // kalos_module_walk_exports(context, parsed, module, export_walk_callback2);
     kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
     kalos_module_idl_module_trigger_begin(context->state, &ctx, kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_obj_props));
-    // context->handles = false;
-    // kalos_module_walk_exports(context, parsed, module, export_walk_callback2);
-    kalos_module_idl_module_trigger_end(context->state);
     return true;
 }
 
