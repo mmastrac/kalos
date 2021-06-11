@@ -5,6 +5,14 @@
 #define K__bool   kalos_int
 #define K__object kalos_object*
 #define K__any    kalos_value*
+
+#define K__arg(x)        peek(stack, -(x))
+#define K__arg_string(x) &((x)->value.string)
+#define K__arg_number(x) (x)->value.number
+#define K__arg_bool(x)   (x)->value.number
+#define K__arg_object(x) (x)->value.object
+#define K__arg_any(x)    (x)
+
 // id=0000:0001 name=close
 void kalos_module_idl_trigger_close(kalos_state state) {
 	kalos_trigger(state, kalos_make_address(0x0, 0x1));
@@ -27,7 +35,7 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 		LOG("Invoke %s", "log");
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_compiler_log(state, &peek(stack, -1)->value.string);
+		kalos_idl_compiler_log(state, K__arg_string(K__arg(1)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
@@ -37,7 +45,7 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 		LOG("Invoke %s", "print");
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_compiler_print(state, &peek(stack, -1)->value.string);
+		kalos_idl_compiler_print(state, K__arg_string(K__arg(1)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
@@ -47,7 +55,7 @@ void kalos_module_idl_builtin(kalos_state state, int function, kalos_stack* stac
 		LOG("Invoke %s", "println");
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_compiler_println(state, &peek(stack, -1)->value.string);
+		kalos_idl_compiler_println(state, K__arg_string(K__arg(1)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
@@ -67,7 +75,7 @@ void kalos_module_idl_kidl(kalos_state state, int function, kalos_stack* stack, 
 		LOG("Invoke %s", "walk_modules");
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_walk_modules(state, peek(stack, -1));
+		kalos_idl_walk_modules(state, K__arg_any(K__arg(1)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
@@ -267,7 +275,7 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 		LOG("Invoke %s", "walk_exports");
 		int arg_count = 1;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_walk_exports(state, peek(stack, -1));
+		kalos_idl_walk_exports(state, K__arg_any(K__arg(1)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
@@ -277,7 +285,7 @@ void kalos_module_idl_module(kalos_state state, int function, kalos_stack* stack
 		LOG("Invoke %s", "walk_object_properties");
 		int arg_count = 2;
 		kalos_stack_fixup_no_varargs(arg_count, stack);
-		kalos_idl_walk_object_properties(state, peek(stack, -1), peek(stack, -2)->value.object);
+		kalos_idl_walk_object_properties(state, K__arg_any(K__arg(1)), K__arg_object(K__arg(2)));
 		kalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);
 		break;
 	}
