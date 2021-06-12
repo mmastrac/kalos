@@ -42,6 +42,7 @@ static const char* ERROR_INTERNAL_ERROR = "Internal error";
 static const char* ERROR_UNKNOWN_VARIABLE = "Unknown variable";
 static const char* ERROR_UNKNOWN_HANDLE = "Unknown handle";
 static const char* ERROR_UNKNOWN_PROPERTY = "Unknown property";
+static const char* ERROR_MISSING_HANDLE = "Missing handle statement";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
@@ -264,7 +265,6 @@ static void parse_fixup_offset(struct parse_state* parse_state, int offset, int 
 
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handle_address) {
     if (parse_state->last_section_header) {
-        TRY(parse_push_op(parse_state, KALOS_OP_END));
         parse_state->last_section_header->next_section = parse_state->output_script_index;
     }
 
@@ -272,8 +272,6 @@ static void write_next_handler_section(struct parse_state* parse_state, kalos_ex
     memset(parse_state->last_section_header, 0, sizeof(*parse_state->last_section_header));
     parse_state->last_section_header->handle_address = handle_address;
     parse_state->output_script_index += sizeof(*parse_state->last_section_header);
-
-    TRY_EXIT;
 }
 
 // Resolution order: builtins, locals, globals, modules
@@ -907,6 +905,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     }
     TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handle_index)));
     TRY(parse_statement_block(parse_state));
+    TRY(parse_push_op(parse_state, KALOS_OP_END));
     TRY_EXIT;
 }
 
@@ -915,18 +914,32 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;
     parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");
+    kalos_script_header* header = (kalos_script_header*)parse_state_data.output_script;
+    memset(header, 0, sizeof(*header));
+    header->signature[0] = 'K';
+    header->signature[1] = 'L';
+    header->signature[2] = 26; // ^Z
+    header->signature[3] = 0;
+    parse_state_data.output_script_index = sizeof(*header);
 
     kalos_lex_init(s, &parse_state_data.lex_state);
     
     struct parse_state* parse_state = &parse_state_data;
 
     TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLE_ADDRESS));
-
+    bool handler_phase = false;
     loop {
         int token;
         TRY(token = lex(parse_state));
         if (token == KALOS_TOKEN_EOF) {
+            if (!handler_phase) {
+                THROW(ERROR_MISSING_HANDLE);
+            }
             break;
+        }
+
+        if (handler_phase && token != KALOS_TOKEN_HANDLE) {
+            THROW(ERROR_UNEXPECTED_TOKEN);
         }
 
         if (token == KALOS_TOKEN_IMPORT) {
@@ -944,6 +957,10 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
             TRY(parse_var_statement(parse_state, &parse_state->globals));
         } else if (token == KALOS_TOKEN_HANDLE) {
+            if (!handler_phase) {
+                handler_phase = true;
+                TRY(parse_push_op(parse_state, KALOS_OP_END));
+            }
             memset(&parse_state->locals, 0, sizeof(parse_state->locals));
             TRY(parse_handler_statement(parse_state));
             parse_state->last_section_header->locals_size = parse_state->locals.var_index;
@@ -952,8 +969,8 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         }
     }
 
-    TRY(parse_push_op(parse_state, KALOS_OP_END));
-
+    header->globals_size = parse_state->globals.var_index;
+    header->length = parse_state->output_script_index;
     kalos_parse_result res = {0};
     res.success = true;
     return res;

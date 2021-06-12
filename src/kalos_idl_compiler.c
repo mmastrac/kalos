@@ -606,7 +606,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     kalos_fn fns = {
         internal_malloc,
         internal_free,
-        internal_error,
+        internal_error
     };
     script_modules = parsed_module;
     kalos_state state = kalos_init(&script, kalos_module_idl_dispatch, &fns);

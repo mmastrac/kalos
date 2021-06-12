@@ -17,9 +17,15 @@ typedef struct kalos_script {
 } kalos_script;
 
 #pragma pack(push, 1)
+typedef struct kalos_script_header {
+    uint8_t signature[4];
+    uint16_t globals_size;
+    uint16_t length;
+} kalos_script_header;
+
 typedef struct kalos_section_header {
     kalos_export_address handle_address;
-    kalos_int locals_size;
+    uint16_t locals_size;
     kalos_int next_section;
 } kalos_section_header;
 #pragma pack(pop)
