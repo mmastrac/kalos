@@ -58,14 +58,17 @@ typedef struct kalos_state_internal {
 
 void internal_error(kalos_state_internal* state) {
     ASSERT(false);
+    LOG("internal error");
 }
 
 void type_error(kalos_state_internal* state) {
     ASSERT(false);
+    LOG("type error");
 }
 
 void value_error(kalos_state_internal* state) {
     ASSERT(false);
+    LOG("value error");
 }
 
 #define COERCE(typ, NONE, NUMBER, OBJECT, STRING, BOOL) \
