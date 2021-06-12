@@ -138,7 +138,7 @@ static bool parse_assert_token(struct parse_state* parse_state, int token);
 static void parse_expression(struct parse_state* parse_state);
 static void parse_expression_paren(struct parse_state* parse_state);
 static void parse_expression_part(struct parse_state* parse_state);
-static int parse_function_call_args(struct parse_state* parse_state);
+static int parse_list_of_args(struct parse_state* parse_state, kalos_token open, kalos_token close);
 static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
 static struct pending_op parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
 static void parse_handler_statement(struct parse_state* parse_state);
@@ -387,12 +387,14 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
     TRY_EXIT;
 }
 
-static int parse_function_call_args(struct parse_state* parse_state) {
+static int parse_list_of_args(struct parse_state* parse_state, kalos_token open, kalos_token close) {
     kalos_token peek, param_count = 0;
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
+    if (open) {
+        TRY(parse_assert_token(parse_state, open));
+    }
     loop {
         TRY(peek = lex_peek(parse_state));
-        if (peek == KALOS_TOKEN_PAREN_CLOSE) {
+        if (peek == close) {
             break;
         }
         TRY(parse_expression(parse_state));
@@ -400,11 +402,11 @@ static int parse_function_call_args(struct parse_state* parse_state) {
         TRY(peek = lex_peek(parse_state));
         if (peek == KALOS_TOKEN_COMMA) {
             TRY(lex(parse_state));
-        } else if (peek != KALOS_TOKEN_PAREN_CLOSE) {
+        } else if (peek != close) {
             THROW(ERROR_INVALID_TOKEN);
         }
     }
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
+    TRY(parse_assert_token(parse_state, close));
     TRY_EXIT;
     return param_count;
 }
@@ -414,7 +416,7 @@ static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kal
         THROW(ERROR_INVALID_CONST_EXPRESSION);
     }
     int param_count = 0;
-    TRY(param_count = parse_function_call_args(parse_state));
+    TRY(param_count = parse_list_of_args(parse_state, KALOS_TOKEN_PAREN_OPEN, KALOS_TOKEN_PAREN_CLOSE));
     if (param_count != fn->param_count) {
         THROW(ERROR_UNEXPECTED_PARAMETERS);
     }
@@ -427,7 +429,7 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
         THROW(ERROR_INVALID_CONST_EXPRESSION);
     }
     int param_count = 0;
-    TRY(param_count = parse_function_call_args(parse_state));
+    TRY(param_count = parse_list_of_args(parse_state, KALOS_TOKEN_PAREN_OPEN, KALOS_TOKEN_PAREN_CLOSE));
     if (fn->entry.function.vararg_type != FUNCTION_TYPE_VOID) {
         if (param_count < fn->entry.function.arg_count) {
             THROW(ERROR_UNEXPECTED_PARAMETERS);
@@ -694,7 +696,7 @@ static void parse_for_statement(struct parse_state* parse_state) {
 }
 
 static void parse_expression_part(struct parse_state* parse_state) {
-    int token, peek;
+    kalos_token token, peek;
 
     TRY(token = lex(parse_state));
     if (token == KALOS_TOKEN_PLUS) {
@@ -754,6 +756,11 @@ static void parse_expression_part(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_PAREN_OPEN) {
         TRY(parse_expression(parse_state));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
+    } else if (token == KALOS_TOKEN_SQBRA_OPEN) {
+        int count;
+        TRY(count = parse_list_of_args(parse_state, 0, KALOS_TOKEN_SQBRA_CLOSE));
+        TRY(parse_push_number(parse_state, count));
+        TRY(parse_push_op(parse_state, KALOS_OP_MAKE_LIST));
     }
 
     TRY_EXIT;

@@ -540,6 +540,13 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
                 break;
             }
+            case KALOS_OP_MAKE_LIST: {
+                int count = kalos_stack_fixup_varargs(0, &state->stack);
+                kalos_object* list = kalos_allocate_list(state, count, peek(&state->stack, -1));
+                kalos_stack_cleanup_varargs(0, count, state, &state->stack);
+                push_object(&state->stack, list);
+                break;
+            }
             case KALOS_OP_GETPROP: {
                 int prop = pop(&state->stack)->value.number;
                 kalos_object* object = pop(&state->stack)->value.object;
@@ -713,6 +720,59 @@ void kalos_run_free(kalos_state state_) {
         kalos_clear(state, &state->globals[i]);
     }
     state->fns->free(state);
+}
+
+struct list_iter_context {
+    kalos_object* object;
+    kalos_int index;
+};
+
+kalos_value list_iternext(kalos_state state, kalos_object* object, bool* done) {
+    struct list_iter_context* context = object->context;
+    kalos_value* array = context->object->context;
+    if (context->index >= array[0].value.number) {
+        *done = true;
+        kalos_object_release(state, context->object);
+        kalos_value none = {0};
+        return none;
+    }
+    *done = false;
+    return kalos_value_clone(state, &array[1 + context->index++]);
+}
+
+kalos_object* list_iterstart(kalos_state state, kalos_object* object) {
+    kalos_object* iter = kalos_allocate_object(state, sizeof(struct list_iter_context));
+    struct list_iter_context* context = iter->context;
+    kalos_object_retain(state, object);
+    context->index = 0;
+    context->object = object;
+    iter->iternext = list_iternext;
+    return iter;
+}
+
+void list_free(kalos_state state_, kalos_object* object) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_value* array = object->context;
+    for (int i = 0; i < array[0].value.number; i++) {
+        kalos_clear(state, &array[i + 1]);
+    }
+    state->fns->free(array);
+}
+
+kalos_object* kalos_allocate_list(kalos_state state_, kalos_int size, kalos_value* values) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_object* object = kalos_allocate_object(state, 0);
+    object->context = state->fns->alloc(sizeof(kalos_value) * (size + 1)); // allocate size of size
+    kalos_value* array = object->context;
+    array[0].type = KALOS_VALUE_NUMBER;
+    array[0].value.number = size;
+    memcpy(array + 1, values, sizeof(kalos_value) * size);
+    for (int i = 0; i < size; i++) {
+        values[i].type = KALOS_VALUE_NONE;
+    }
+    object->iterstart = list_iterstart;
+    object->object_free = list_free;
+    return object;
 }
 
 kalos_object* kalos_allocate_object(kalos_state state_, size_t context_size) {
