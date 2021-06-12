@@ -21,8 +21,8 @@ typedef enum kalos_string_format_sign {
 #pragma pack(push, 1)
 typedef struct kalos_string_format {
     uint8_t fill; // Zero = space fill
-    kalos_string_format_align align;
-    kalos_string_format_sign sign;
+    uint8_t /*kalos_string_format_align*/ align;
+    uint8_t /*kalos_string_format_sign*/ sign;
     uint8_t alt_fmt;
     uint8_t min_width;
     uint8_t precision;
