@@ -766,7 +766,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
 
 static void parse_expression(struct parse_state* parse_state) {
     kalos_token peek;
-    uint8_t op_stack[16] = {0};
+    kalos_token op_stack[16] = {0};
     uint8_t op_stack_idx = 0;
 
     // Start with the first element
@@ -780,11 +780,10 @@ static void parse_expression(struct parse_state* parse_state) {
             goto exit;
         }
 
-        TRY(lex(parse_state));
+        TRY(parse_assert_token(parse_state, peek));
         while (op_stack_idx > 0 && precedence >= get_operator_precedence(op_stack[op_stack_idx - 1])) {
             TRY(parse_push_op(parse_state, get_operator_from_token(op_stack[--op_stack_idx])))
         }
-
         op_stack[op_stack_idx++] = peek;
         TRY(parse_expression_part(parse_state));
     }

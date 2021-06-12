@@ -47,7 +47,7 @@ static bool kalos_dump_section(void* context, kalos_script* script, kalos_sectio
                         strcpy(s, "\\\"");
                         s += 2;
                     } else if (str[i] < 32 || str[i] >= 127) {
-                        s += sprintf(s, "\\x%02x", str[i]);
+                        s += sprintf(s, "\\x%02x", (uint8_t)str[i]);
                     } else {
                         *s++ = str[i];
                     }

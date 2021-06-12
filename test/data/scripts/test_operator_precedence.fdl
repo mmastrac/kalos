@@ -1,0 +1,10 @@
+handle init {
+    var key = 283;
+    if (key & 255 == 27) {
+        print("correct!\n");
+    }
+    var x = 1 + 5 / 4;
+    if (x == 2) {
+        print("correct!\n");
+    }
+}
