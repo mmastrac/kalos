@@ -65,6 +65,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         eol  = "\n";
         word = [a-zA-Z_][a-zA-Z0-9_]*;
         int  = "0" | ([1-9][0-9]*);
+        hex  = "0" [xX] [0-9a-fA-F]+;
         ws   = (" " | "\t" | "\r")+;
 
         <init> eol { if (state->string_interp_state != STRING_STATE_NORMAL) return KALOS_TOKEN_ERROR; (*line)++; continue; }
@@ -193,7 +194,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "false" { return KALOS_TOKEN_FALSE; }
 
         <init> @word_start word @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_WORD; }
-        <init> @word_start int @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }
+        <init> @word_start (int|hex) @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }
     */
     }
 }

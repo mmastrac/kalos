@@ -2,9 +2,9 @@ handle init {
     # This is just a smoketest for formatting in code - the extensive test tests more formats
     print("|{123}|\n");
     print("|{123:.<10d}|\n");
-    print("{1234:x}");
+    print("{0x4d2:x}");
     print("{1234}");
     print("{{1}}");
     print("\n");
-    print("{123:04x}");
+    print("{0x007b:04x}");
 }

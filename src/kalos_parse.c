@@ -221,7 +221,12 @@ static void parse_push_string(struct parse_state* parse_state, const char* s) {
 
 static void parse_push_token(struct parse_state* parse_state) {
     if (parse_state->last_token == KALOS_TOKEN_INTEGER) {
-        TRY(parse_push_number(parse_state, atoi(parse_state->token)));
+        // This is legal because it'll be a NUL byte for a base-10 zero
+        if (parse_state->token[1] == 'x' || parse_state->token[1] == 'X') {
+            TRY(parse_push_number(parse_state, strtol(parse_state->token + 2, NULL, 16)));
+        } else {
+            TRY(parse_push_number(parse_state, atoi(parse_state->token)));
+        }
     } else if (parse_state->last_token == KALOS_TOKEN_TRUE) {
         parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_TRUE;
     } else if (parse_state->last_token == KALOS_TOKEN_FALSE) {
