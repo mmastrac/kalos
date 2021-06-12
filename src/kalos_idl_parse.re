@@ -52,7 +52,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         const = int | hex | string;
         ws = (" " | "\t" | "\r" | "\n")+;
         mode = "read" | "write";
-        type = "number" | "string" | "void" | "any" | "object";
+        type = "number" | "string" | "bool" | "void" | "any" | "object";
 
         <init,module,object,function,fcomma,fret,handle,hcomma> * { callbacks->error(context, start, s - start); return false; }
         <init,module,object,function,fcomma,fret,handle,hcomma> ws { continue; }
