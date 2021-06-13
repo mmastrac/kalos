@@ -14,7 +14,6 @@ typedef enum kalos_function_type {
     FUNCTION_TYPE_OBJECT,
     FUNCTION_TYPE_STRING,
     FUNCTION_TYPE_ANY,
-    FUNCTION_TYPE_VARARGS,
 } kalos_function_type;
 
 typedef enum kalos_export_type {

@@ -113,9 +113,6 @@ static kalos_function_type strtotype(const char* s) {
     if (strcmp(s, "any") == 0) {
         return FUNCTION_TYPE_ANY;
     }
-    if (strcmp(s, "varargs") == 0) {
-        return FUNCTION_TYPE_VARARGS;
-    }
 
     return FUNCTION_TYPE_VOID;
 }
@@ -428,8 +425,6 @@ char* function_type_to_string(kalos_function_type type) {
             return "object";
         case FUNCTION_TYPE_STRING:
             return "string";
-        case FUNCTION_TYPE_VARARGS:
-            return "varargs";
         case FUNCTION_TYPE_VOID:
             return "void";
     }
