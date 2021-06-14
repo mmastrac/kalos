@@ -664,7 +664,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     }
 
     done:
-    for (int i = original_stack_index + 1; i < state->stack.stack_index; i++) {
+    for (int i = original_stack_index; i < state->stack.stack_index; i++) {
         kalos_clear(state, &state->stack.stack[i]);
     }
     state->stack.stack_index = original_stack_index;
