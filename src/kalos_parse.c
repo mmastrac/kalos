@@ -671,8 +671,13 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
             }
             continue;
         } else if (peek == KALOS_TOKEN_SQBRA_OPEN) {
-            // TODO: Implement indexing
-            THROW(ERROR_UNEXPECTED_TOKEN);
+            if (pending.load.op) {
+                TRY(parse_flush_pending_op(parse_state, &pending, false, true));
+            }
+            TRY(parse_assert_token(parse_state, peek));
+            TRY(parse_expression(parse_state));
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_SQBRA_CLOSE));
+            pending.load.op = KALOS_OP_GETINDEX;
         } else {
             break;
         }

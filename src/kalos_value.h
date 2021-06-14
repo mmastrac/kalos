@@ -8,7 +8,7 @@ typedef struct kalos_object kalos_object;
 typedef kalos_object* kalos_object_ref;
 typedef struct kalos_value kalos_value;
 typedef struct kalos_stack kalos_stack;
-typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object_ref* object, char* property);
+typedef kalos_value (*kalos_getindex)(kalos_state state, kalos_object_ref* object, kalos_int index);
 typedef kalos_object_ref (*kalos_iterstart)(kalos_state state, kalos_object_ref* object);
 typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object_ref* object, bool* done);
 typedef void (*kalos_object_free)(kalos_state state, kalos_object_ref* object);
@@ -26,7 +26,7 @@ struct kalos_object {
     void* context;
     uint16_t count;
     kalos_object_free object_free;
-    kalos_propget propget;
+    kalos_getindex getindex;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
     kalos_object_dispatch dispatch;

@@ -544,7 +544,19 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 *push_raw(&state->stack) = *value;
                 if (!object->dispatch || !object->dispatch(state, &object, prop, &state->stack)) {
                     value_error(state);
+                    break;
                 }
+                kalos_object_release(state, &object);
+                break;
+            }
+            case KALOS_OP_GETINDEX: {
+                int index = pop(&state->stack)->value.number;
+                kalos_object_ref object = pop(&state->stack)->value.object;
+                if (!object->getindex) {
+                    value_error(state);
+                    break;
+                }
+                *push_raw(&state->stack) = object->getindex(state, &object, index);
                 kalos_object_release(state, &object);
                 break;
             }
@@ -717,6 +729,12 @@ void list_free(kalos_state state_, kalos_object_ref* object) {
     state->fns->free(array);
 }
 
+kalos_value list_getindex(kalos_state state_, kalos_object_ref* object, kalos_int index) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    kalos_value* array = (*object)->context;
+    return kalos_value_clone(state, &array[index + 1]);
+}
+
 kalos_object_ref kalos_allocate_list(kalos_state state_, kalos_int size, kalos_value* values) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     kalos_object_ref object = kalos_allocate_object(state, 0);
@@ -728,6 +746,7 @@ kalos_object_ref kalos_allocate_list(kalos_state state_, kalos_int size, kalos_v
     for (int i = 0; i < size; i++) {
         values[i].type = KALOS_VALUE_NONE;
     }
+    object->getindex = list_getindex;
     object->iterstart = list_iterstart;
     object->object_free = list_free;
     return object;

@@ -1,0 +1,4 @@
+handle init {
+    var a = ["a", "b", "c"];
+    print("{a[0]} {a[1]} {a[2]}");
+}
