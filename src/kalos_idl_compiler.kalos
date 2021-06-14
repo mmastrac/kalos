@@ -10,11 +10,11 @@ const HANDLE = "handle";
 const DISPATCH = "dispatch";
 const OBJECT = "object";
 const TYPES = [
-    ["string",  "STRING",   "kalos_string", "*"],
-    ["number",  "NUMBER",   "kalos_int", ""],
-    ["bool",    "BOOL",     "kalos_int", ""],
-    ["object",  "OBJECT",   "kalos_object_ref", "*"],
-    ["any",     "ANY",      "kalos_value", "*"],
+    ["string",  "STRING",   "kalos_string", "*",      "kalos_string_release(state, x);"],
+    ["number",  "NUMBER",   "kalos_int", "",          ";"],
+    ["bool",    "BOOL",     "kalos_int", "",          ";"],
+    ["object",  "OBJECT",   "kalos_object_ref", "*",  "kalos_object_release(state, &x);"],
+    ["any",     "ANY",      "kalos_value", "*",       "kalos_clear(state, x);"],
 ];
 
 handle open {
@@ -30,6 +30,9 @@ handle open {
         println("#define K__t_{type[0]:<6} KALOS_VALUE_{type[1]}");
     }
     println("");
+    for type in TYPES {
+        println("#define K__clean_{type[0]:<6}(stack, x) {type[4]}");
+    }
     println("#define K__arg(n, x)     peek(stack, (n)-(x))");
     println("#define K__arg_string(x) &((x)->value.string)");
     println("#define K__arg_number(x) (x)->value.number");
@@ -153,16 +156,8 @@ handle module.function(context, function) {
     if (function.return_type != "void") {
         println("\t\tif (retval) {{");
         println("\t\t\tpush_{function.return_type}(stack, x);");
-        if (function.return_type == "string") {
-            println("\t\t}} else {{");
-            println("\t\t\tkalos_string_release(state, x);");
-        } else if (function.return_type == "object") {
-            println("\t\t}} else {{");
-            println("\t\t\tkalos_object_release(state, &x);");
-        } else if (function.return_type == "any") {
-            println("\t\t}} else {{");
-            println("\t\t\tkalos_clear(state, x);");
-        }
+        println("\t\t}} else {{");
+        println("\t\t\tK__clean_{function.return_type}(stack, x);");
         println("\t\t}}");
     }
     println("\t\tbreak;");
@@ -188,9 +183,7 @@ handle module.property(context, property) {
     if (property.write_id != 0) {
         println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
         println("\tcase {property.write_id}: {{");
-        #println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
         println("\t\t{property.write_symbol}(state{maybe_object}, K__arg_{property.type}(K__arg(1, {1})));");
-        #println("\t\tkalos_stack_cleanup_no_varargs(1, 0, state, stack);");
         println("\t\tkalos_stack_cleanup(1, state, stack);");
         println("\t\tbreak;");
         println("\t}}");
