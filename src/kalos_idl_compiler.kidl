@@ -38,6 +38,7 @@ module module {
         prop(read) return_type: string = kalos_idl_function_return_type2;
         prop(read) name: string = kalos_idl_export_name2;
         prop(read) realname: string = kalos_idl_function_realname2;
+        prop(read) c: string = kalos_idl_function_c;
         prop(read) args: object = kalos_idl_function_args2;
         prop(read) arg_count: number = kalos_idl_function_arg_count2;
         prop(read) varargs: string = kalos_idl_function_varargs2;

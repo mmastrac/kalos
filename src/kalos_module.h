@@ -37,6 +37,7 @@ typedef struct kalos_function {
     kalos_function_type vararg_type;
     kalos_function_type return_type;
     kalos_int symbol_index;
+    kalos_int c_index;
     kalos_int invoke_id;
 } kalos_function;
 

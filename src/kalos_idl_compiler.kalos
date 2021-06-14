@@ -143,15 +143,19 @@ handle module.function(context, function) {
         print("K__{function.return_type} x = ");
     }
     var index = 0;
-    print("{function.realname}(state");
-    for arg in function.args {
-        print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
-        index += 1;
+    if (function.c) {
+        println("// {function.c}");
+    } else {
+        print("{function.realname}(state");
+        for arg in function.args {
+            print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
+            index += 1;
+        }
+        if (function.varargs != "void") {
+            print(", vararg_count, kalos_stack_vararg_start(stack, vararg_count)");
+        }
+        println(");");
     }
-    if (function.varargs != "void") {
-        print(", vararg_count, kalos_stack_vararg_start(stack, vararg_count)");
-    }
-    println(");");
     println("\t\tkalos_stack_cleanup(arg_count, state, stack);");
     if (function.return_type != "void") {
         println("\t\tif (retval) {{");

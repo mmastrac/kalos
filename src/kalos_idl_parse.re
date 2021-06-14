@@ -120,6 +120,15 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             callbacks->end_function(context, buffers[0], buffers[1], copy_string(buffers[2], c, d));
             continue;
         }
+        <fret> ( ":" ws? @a type @b )? ws? "=" ws? "C" ws? @c string @d ws? ";" => module {
+            if (a && b) {
+                copy_string(buffers[1], a, b);
+            } else {
+                strcpy(buffers[1], "void");
+            }
+            callbacks->end_function_c(context, buffers[0], buffers[1], copy_string(buffers[2], c, d));
+            continue;
+        }
         <module> "handle" ws @a word @b ws? "(" ws? => handle {
             copy_string(buffers[0], a, b);
             callbacks->begin_handle(context, buffers[0]);

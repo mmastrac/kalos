@@ -212,6 +212,13 @@ static void end_function(void* context, const char* name, const char* type, cons
     LOG("fn %s %s %s", name, type, symbol);
 }
 
+static void end_function_c(void* context, const char* name, const char* type, const char* c) {
+    struct kalos_module_builder* builder = context;
+    current_export(builder)->entry.function.return_type = strtotype(type);
+    current_export(builder)->entry.function.c_index = strpack(builder, c);
+    LOG("fn %s %s %s", name, type, c);
+}
+
 static void begin_handle(void* context, const char* name) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
@@ -327,6 +334,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
         begin_function,
         function_arg,
         end_function,
+        end_function_c,
         begin_handle,
         handle_arg,
         end_handle,
@@ -336,7 +344,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     };
 
     struct kalos_module_builder context = {0};
-    context.prefix_index = -1;
+    context.prefix_index = 0;
+    strpack(&context, ""); // zero string
 
     if (!kalos_idl_parse_callback(s, &context, &callbacks)) {
         kalos_module_parsed parsed = {0};
@@ -445,6 +454,7 @@ static kalos_string kalos_idl_export_name2(kalos_state state, kalos_object_ref* 
 static kalos_int kalos_idl_function_id2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.function.invoke_id; }
 static kalos_string kalos_idl_function_return_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
 static kalos_string kalos_idl_function_realname2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.function.symbol_index)); }
+static kalos_string kalos_idl_function_c(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.function.c_index)); }
 static kalos_object_ref kalos_idl_function_args2(kalos_state state, kalos_object_ref* o) { return kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count); }
 static kalos_int kalos_idl_function_arg_count2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.function.arg_count; }
 static kalos_string kalos_idl_function_varargs2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
