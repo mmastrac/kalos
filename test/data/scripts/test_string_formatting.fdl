@@ -6,5 +6,13 @@ handle init {
     print("{1234}");
     print("{{1}}");
     print("\n");
-    print("{0x007b:04x}");
+    print("{0x007b:04x}\n");
+    var a = "abc";
+    print("{a:10}\n");
+    print("{a:<10}\n");
+    print("{a:>10}\n");
+    print("{a:<1}\n");
+    print("{a:>1}\n");
+    print("{a:<3.1}\n");
+    print("{a:>3.1}\n");
 }

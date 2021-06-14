@@ -385,10 +385,16 @@ static kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_va
     if (v->type == KALOS_VALUE_NUMBER) {
         return kalos_string_format_int(state, v->value.number, format);
     } else if (v->type == KALOS_VALUE_STRING) {
-        int size = snprintf(NULL, 0, "%*.*s", format->min_width, format->precision ? format->precision : 0xffff, kalos_string_c(state, v->value.string));
+        int size = snprintf(NULL, 0, "%*.*s",
+            format->align == KALOS_STRING_FORMAT_ALIGN_LEFT ? -format->min_width : format->min_width,
+            format->precision ? format->precision : 0xffff,
+            kalos_string_c(state, v->value.string));
         kalos_writable_string str = kalos_string_allocate_writable_size(state, size);
         char* s = kalos_string_writable_c(state, str);
-        sprintf(s, "%*s", format->min_width, kalos_string_c(state, v->value.string));
+        sprintf(s, "%*.*s",
+            format->align == KALOS_STRING_FORMAT_ALIGN_LEFT ? -format->min_width : format->min_width,
+            format->precision ? format->precision : 0xffff,
+            kalos_string_c(state, v->value.string));
         return kalos_string_commit(state, str);
     }
     return kalos_string_allocate(state, "");
