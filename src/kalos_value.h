@@ -107,7 +107,7 @@ inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vara
 
 inline static bool kalos_stack_setup_0(kalos_stack* stack) { return true; }
 inline static bool kalos_stack_setup_1(kalos_stack* stack, kalos_value_type type0) { KALOS_CHECK__(1); }
-inline static bool kalos_stack_setup_2(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1) { KALOS_CHECK__(1); }
+inline static bool kalos_stack_setup_2(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1) { KALOS_CHECK__(2); }
 bool kalos_stack_setup_3(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2);
 bool kalos_stack_setup_4(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3);
 bool kalos_stack_setup_5(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4);
