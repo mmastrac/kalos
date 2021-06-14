@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kalos.h"
-#include "kalos_stack.h"
+#include "kalos_value.h"
 
 #define MAX_KALOS_EXPORT_NAME_LENGTH 64
 #define MAX_KALOS_ARGS 8

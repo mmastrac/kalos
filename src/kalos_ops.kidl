@@ -1,0 +1,85 @@
+module __internal {
+    op DROP(@stack: any): void = op_drop;
+    op DUP(@stack: any): any, any = op_dup;
+    op PUSH_STRING(@inline: string): string = op_push_string;
+    op PUSH_INTEGER(@inline: number): number = op_push_integer;
+    op PUSH_TRUE(): bool = op_push_bool;
+    op PUSH_FALSE(): bool = op_push_bool;
+    op GOTO(@stack: number): void = op_goto;
+    op GOTO_IF(@stack: bool, @stack: number): void = op_goto_if;
+    op LOAD_LOCAL(@inline: number): any = op_load;
+    op LOAD_GLOBAL(@inline: number): any = op_load;
+    op STORE_LOCAL(@inline: number, @stack: any): void = op_store;
+    op STORE_GLOBAL(@inline: number, @stack: any): void = op_store;
+    op GETPROP(@inline: number, @stack: object): any = op_getprop;
+    op SETPROP(@inline: number, @stack: object, @stack: object): any = op_setprop;
+    op ITERATOR(@stack: object): object = op_iterator;
+    op FORMAT(@inline: format, @stack: any): string = op_format;
+    op MAKE_LIST = op_make_list;
+    op CALL = op_make_list;
+    op CALL_NORET = op_make_list;
+
+    operator(EQEQ) "=="
+        (x: number, y: number): bool = C "x==y",
+        (x: string, y: string): bool = op_compare_string,
+        (x: any, y: any): bool = op_compare_type;
+    operator(NOTEQ) "!="
+        (x: number, y: number): bool = C "x!=y",
+        (x: string, y: string): bool = op_compare_string,
+        (x: any, y: any): bool = op_compare_type;
+    operator(LT) "<"
+        (x: number, y: number): bool = C "x<y",
+        (x: string, y: string): bool = op_compare_string;
+    operator(GT) ">"
+        (x: number, y: number): bool = C "x>y",
+        (x: string, y: string): bool = op_compare_string;
+    operator(GTE) ">="
+        (x: number, y: number): bool = C "x>=y",
+        (x: string, y: string): bool = op_compare_string;
+    operator(LTE) "<="
+        (x: number, y: number): bool = C "x<=y",
+        (x: string, y: string): bool = op_compare_string;
+
+    operator(LOGICAL_NOT) "!"
+        (x: bool): bool = C "!x",
+        (x: any): bool = op_to_bool;
+    operator(BITWISE_NOT) "~"
+        (x: number): number = C "~x";
+
+    assignable operator(PLUS) "+"
+        (x: number): number = C "x",
+        (x: number, y: number): number = C "x+y",
+        symmetric (x: string, y: any): string = op_string_add;
+    assignable operator(MINUS) "-"
+        (x: number): number = C "-x",
+        (x: number, y: number): number = C "x-y";
+    assignable operator(STAR) "*"
+        (x: number, y: number): number = C "x*y",
+        symmetric (x: string, y: number): string = op_string_multiply;
+    assignable operator(SLASH) "/" (x: number, y: number): number = C "x/y",
+    assignable operator(PERCENT) "%" (x: number, y: number): number = C "x%y",
+    assignable operator(LOGOR) "||"
+        (x: bool, y: bool): bool = C "x||y",
+        (x: any, y: any): any = op_logical_op;
+    assignable operator(LOGAND) "&&"
+        (x: bool, y: bool): bool = C "x&&y",
+        (x: any, y: any): any = op_logical_op;
+    assignable operator(BITOR) "|" (x: number, y: number): number = C "x|y",
+    assignable operator(BITAND) "&" (x: number, y: number): number = C "x&y",
+    assignable operator(BITXOR) "^" (x: number, y: number): number = C "x^y",
+    assignable operator(LEFT_SHIFT) "<<" (x: number, y: number): number = C "x<<y",
+    assignable operator(RIGHT_SHIFT) ">>" (x: number, y: number): number = C "x>>y",
+
+    builtin(ABS) abs(x: number): number = C "abs(x)";
+    builtin(TO_BOOL) bool(x: any): bool = op_to_bool;
+    builtin(TO_CHAR) chr(x: number): string = op_to_hex_or_char;
+    builtin(TO_HEX) chr(x: number): string  = op_to_hex_or_char;
+    builtin(TO_INT) chr(x: number): number = op_to_int;
+    builtin(LENGTH) len(x: string): number = op_string_number;
+    builtin(ORD) ord(x: string): number = op_string_number;
+    builtin(MAXIMUM) max(x: number, y: number): number = C "max(x,y)";
+    builtin(MINIMUM) min(x: number, y: number): number = C "min(x,y)";
+    builtin(RANGE) range(x: number, y: number): object = op_range;
+    builtin(SPLIT) split(x: string, y: string): object = op_split;
+    builtin(TO_STRING) str(x: any): string = op_to_string;
+}

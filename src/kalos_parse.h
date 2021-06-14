@@ -3,7 +3,7 @@
 #include "kalos.h"
 #include "kalos_module.h"
 
-#define KALOS_OP(x, in, out) KALOS_OP_##x,
+#define KALOS_OP(x, in, out, args) KALOS_OP_##x,
 typedef enum kalos_op {
 #include "kalos_constants.inc"
     KALOS_OP_MAX,

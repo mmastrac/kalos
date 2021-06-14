@@ -9,7 +9,7 @@
 
 #define KALOS_MAX_IMPORTS 16
 
-#define KALOS_OP(x, in, out) #x ,
+#define KALOS_OP(x, in, out, args) #x ,
 const char* kalos_op_strings[] = {
     #include "kalos_constants.inc"
     "<invalid>",
@@ -127,8 +127,8 @@ struct parse_state {
 };
 
 static void parse_push_format(struct parse_state* parse_state, kalos_op op, kalos_string_format* string_format);
-static void parse_push_number(struct parse_state* parse_state, int number);
 static void parse_push_op(struct parse_state* parse_state, kalos_op op);
+static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_int number);
 static void parse_push_string(struct parse_state* parse_state, const char* s);
 static void parse_push_token(struct parse_state* parse_state);
 static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op);
@@ -199,14 +199,6 @@ static bool is_assignment_token(kalos_token token) {
     }
 }
 
-static void parse_push_number(struct parse_state* parse_state, int number) {
-    parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_INTEGER;
-    parse_state->output_script[parse_state->output_script_index++] = number & 0xff;
-    parse_state->output_script[parse_state->output_script_index++] = (number >> 8) & 0xff;
-    
-    LOG("NUMBER: %d", number);
-}
-
 static void parse_push_format(struct parse_state* parse_state, kalos_op op, kalos_string_format* string_format) {
     parse_state->output_script[parse_state->output_script_index++] = op;
     memcpy((void*)&parse_state->output_script[parse_state->output_script_index], (void*)string_format, sizeof(kalos_string_format));
@@ -223,9 +215,9 @@ static void parse_push_token(struct parse_state* parse_state) {
     if (parse_state->last_token == KALOS_TOKEN_INTEGER) {
         // This is legal because it'll be a NUL byte for a base-10 zero
         if (parse_state->token[1] == 'x' || parse_state->token[1] == 'X') {
-            TRY(parse_push_number(parse_state, strtol(parse_state->token + 2, NULL, 16)));
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, strtol(parse_state->token + 2, NULL, 16)));
         } else {
-            TRY(parse_push_number(parse_state, atoi(parse_state->token)));
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, atoi(parse_state->token)));
         }
     } else if (parse_state->last_token == KALOS_TOKEN_TRUE) {
         parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_TRUE;
@@ -254,8 +246,15 @@ static void parse_push_op(struct parse_state* parse_state, kalos_op op) {
     LOG("OP: %s", kalos_op_strings[op]);
 }
 
+static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_int data) {
+    parse_state->output_script[parse_state->output_script_index++] = op;
+    LOG("OP: %s %d", kalos_op_strings[op], data);
+    parse_state->output_script[parse_state->output_script_index++] = data & 0xff;
+    parse_state->output_script[parse_state->output_script_index++] = (data >> 8) & 0xff;
+}
+
 static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op) {
-    TRY(parse_push_number(parse_state, 0));
+    TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, 0));
     int offset = parse_state->output_script_index - 2;
     TRY(parse_push_op(parse_state, op));
     TRY_EXIT;
@@ -383,7 +382,7 @@ static void parse_var_statement(struct parse_state* parse_state, struct vars_sta
         }
         TRY(parse_expression(parse_state));
         parse_state->const_mode = false;
-        TRY(parse_push_number(parse_state, slot));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, slot));
         TRY(parse_push_op(parse_state, var_state == &parse_state->globals ? KALOS_OP_STORE_GLOBAL : KALOS_OP_STORE_LOCAL));
     }
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
@@ -437,7 +436,7 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
         if (param_count < fn->entry.function.arg_count) {
             THROW(ERROR_UNEXPECTED_PARAMETERS);
         }
-        TRY(parse_push_number(parse_state, param_count - fn->entry.function.arg_count));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, param_count - fn->entry.function.arg_count));
     } else {
         if (param_count != fn->entry.function.arg_count) {
             THROW(ERROR_UNEXPECTED_PARAMETERS);
@@ -545,13 +544,13 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     parse_state->loop_continue = parse_state->output_script_index;
     if (iterator) {
         TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR_NEXT));
-        TRY(parse_push_number(parse_state, iterator_slot));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, iterator_slot));
         TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
-        TRY(parse_push_number(parse_state, parse_state->loop_break));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_break));
         TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
     }
     TRY(parse_statement_block(parse_state));
-    TRY(parse_push_number(parse_state, parse_state->loop_continue));
+    TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_continue));
     TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
     TRY(parse_fixup_offset(parse_state, break_fixup, parse_state->output_script_index));
 
@@ -568,19 +567,19 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
     }
     if (pending->op == KALOS_OP_LOAD_GLOBAL || pending->op == KALOS_OP_STORE_GLOBAL ||
         pending->op == KALOS_OP_LOAD_LOCAL || pending->op == KALOS_OP_STORE_LOCAL) {
-        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
         TRY(parse_push_op(parse_state, pending->op));
     } else if (pending->op == KALOS_OP_CALL || pending->op == KALOS_OP_CALL_NORET) {
-        TRY(parse_push_number(parse_state, pending->data[0]));
-        TRY(parse_push_number(parse_state, pending->data[1]));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[1]));
         TRY(parse_push_op(parse_state, pending->op));
     } else if (pending->op == KALOS_OP_GETPROP || pending->op == KALOS_OP_SETPROP) {
-        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
         TRY(parse_push_op(parse_state, pending->op));
     } else if (pending->op == KALOS_OP_PUSH_STRING) {
         TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, pending->data[0])));
     } else if (pending->op == KALOS_OP_PUSH_INTEGER) {
-        TRY(parse_push_number(parse_state, pending->data[0]));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
     } else if (pending->op != 0) {
         // No associated data
         TRY(parse_push_op(parse_state, pending->op));
@@ -762,7 +761,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_SQBRA_OPEN) {
         int count;
         TRY(count = parse_list_of_args(parse_state, 0, KALOS_TOKEN_SQBRA_CLOSE));
-        TRY(parse_push_number(parse_state, count));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, count));
         TRY(parse_push_op(parse_state, KALOS_OP_MAKE_LIST));
     }
 
@@ -833,14 +832,14 @@ static bool parse_statement(struct parse_state* parse_state) {
         if (parse_state->loop_break == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
         }
-        TRY(parse_push_number(parse_state, parse_state->loop_break));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_break));
         TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_CONTINUE) {
         if (parse_state->loop_continue == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
         }
-        TRY(parse_push_number(parse_state, parse_state->loop_continue));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_continue));
         TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_DEBUGGER) {
