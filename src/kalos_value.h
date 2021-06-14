@@ -74,21 +74,24 @@ static void kalos_object_release(kalos_state state, kalos_object* object) {
     }
 }
 
-inline static int kalos_stack_setup_varargs(kalos_stack* stack) {
-    int ofs = stack->stack[stack->stack_index - 1].value.number;
-    stack->stack_index -= ofs + 1;
-    return ofs;
+inline static int kalos_stack_vararg_count(kalos_stack* stack) {
+    return stack->stack[stack->stack_index - 1].value.number;
 }
 
-#define KALOS_CHECK_1__                  (stack->stack[stack->stack_index+0].type == type0)
-#define KALOS_CHECK_2__ KALOS_CHECK_1__ && (stack->stack[stack->stack_index+1].type == type1)
-#define KALOS_CHECK_3__ KALOS_CHECK_2__ && (stack->stack[stack->stack_index+2].type == type2)
-#define KALOS_CHECK_4__ KALOS_CHECK_3__ && (stack->stack[stack->stack_index+3].type == type3)
-#define KALOS_CHECK_5__ KALOS_CHECK_4__ && (stack->stack[stack->stack_index+4].type == type4)
-#define KALOS_CHECK_6__ KALOS_CHECK_5__ && (stack->stack[stack->stack_index+5].type == type5)
-#define KALOS_CHECK_7__ KALOS_CHECK_6__ && (stack->stack[stack->stack_index+6].type == type6)
-#define KALOS_CHECK_8__ KALOS_CHECK_7__ && (stack->stack[stack->stack_index+7].type == type7)
-#define KALOS_CHECK__(N) stack->stack_index -= N; return KALOS_CHECK_##N##__
+inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vararg_count) {
+    return &stack->stack[stack->stack_index - vararg_count - 1];
+}
+
+#define KALOS_VALUE_ANY (999)
+#define KALOS_CHECK_1__                    (type0 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+0].type == type0)
+#define KALOS_CHECK_2__ KALOS_CHECK_1__ && (type1 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+1].type == type1)
+#define KALOS_CHECK_3__ KALOS_CHECK_2__ && (type2 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+2].type == type2)
+#define KALOS_CHECK_4__ KALOS_CHECK_3__ && (type3 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+3].type == type3)
+#define KALOS_CHECK_5__ KALOS_CHECK_4__ && (type4 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+4].type == type4)
+#define KALOS_CHECK_6__ KALOS_CHECK_5__ && (type5 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+5].type == type5)
+#define KALOS_CHECK_7__ KALOS_CHECK_6__ && (type6 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+6].type == type6)
+#define KALOS_CHECK_8__ KALOS_CHECK_7__ && (type7 == KALOS_VALUE_ANY || stack->stack[stack->stack_index+7].type == type7)
+#define KALOS_CHECK__(N) return KALOS_CHECK_##N##__
 
 inline static bool kalos_stack_setup_0(kalos_stack* stack) { return true; }
 inline static bool kalos_stack_setup_1(kalos_stack* stack, kalos_value_type type0) { KALOS_CHECK__(1); }
@@ -100,25 +103,9 @@ bool kalos_stack_setup_6(kalos_stack* stack, kalos_value_type type0, kalos_value
 bool kalos_stack_setup_7(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6);
 bool kalos_stack_setup_8(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6, kalos_value_type type7);
 
-static inline int kalos_stack_fixup_no_varargs(int arg_count, kalos_stack* stack) {
-    stack->stack_index -= arg_count; 
-    return 0;
-}
-
-static inline int kalos_stack_fixup_varargs(int arg_count, kalos_stack* stack) {
-    int ofs = stack->stack[stack->stack_index - 1].value.number;
-    stack->stack_index -= arg_count + ofs + 1;
-    return ofs;
-}
-
-static inline void kalos_stack_cleanup_no_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
-    for (int i = 0; i < arg_count; i++) {
-        kalos_clear(state, &stack->stack[stack->stack_index + i]);
-    }
-}
-
-static inline void kalos_stack_cleanup_varargs(int arg_count, int ofs, kalos_state state, kalos_stack* stack) {
-    for (int i = 0; i < arg_count + ofs; i++) {
+static inline void kalos_stack_cleanup(int count, kalos_state state, kalos_stack* stack) {
+    stack->stack_index -= count;
+    for (int i = 0; i < count; i++) {
         kalos_clear(state, &stack->stack[stack->stack_index + i]);
     }
 }

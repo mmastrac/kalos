@@ -19,7 +19,13 @@ handle open {
     println("#define K__object kalos_object*");
     println("#define K__any    kalos_value*");
     println("");
-    println("#define K__arg(x)        peek(stack, -(x))");
+    println("#define K__t_string KALOS_VALUE_STRING");
+    println("#define K__t_number KALOS_VALUE_NUMBER");
+    println("#define K__t_bool   KALOS_VALUE_BOOL");
+    println("#define K__t_object KALOS_VALUE_OBJECT");
+    println("#define K__t_any    KALOS_VALUE_ANY");
+    println("");
+    println("#define K__arg(n, x)     peek(stack, (n)-(x))");
     println("#define K__arg_string(x) &((x)->value.string)");
     println("#define K__arg_number(x) (x)->value.number");
     println("#define K__arg_bool(x)   (x)->value.number");
@@ -109,16 +115,21 @@ handle module.function(context, function) {
     if (context != DISPATCH) {
         return;
     }
+    var arg;
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
     println("\tcase {function.id}: {{");
     println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
-    println("\t\tint arg_count = {function.arg_count};");
-    var arg_offset = 1;
     if (function.varargs == "void") {
-        println("\t\tkalos_stack_fixup_no_varargs(arg_count, stack);");
+        println("\t\tconst int arg_count = {function.arg_count};");
     } else {
-        println("\t\tint ofs = kalos_stack_fixup_varargs(arg_count, stack);");
+        println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
+        println("\t\tconst int arg_count = {function.arg_count + 1} + vararg_count;");
     }
+    print("\t\tkalos_stack_setup_{function.arg_count}(stack");
+    for arg in function.args {
+        print(", K__t_{arg}");
+    }
+    println(");");
     print("\t\t");
     if (function.return_type == "string") {
         print("kalos_string x = ");
@@ -129,22 +140,17 @@ handle module.function(context, function) {
     } else if (function.return_type == "any") {
         print("kalos_value x = ");
     }
-    var arg;
     var index = 0;
     print("{function.realname}(state");
     for arg in function.args {
-        print(", K__arg_{arg}(K__arg({index+arg_offset}))");
+        print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
         index += 1;
     }
     if (function.varargs != "void") {
-        print(", peek(stack, -arg_count-ofs-1)->value.number, peek(stack, -arg_count-1)");
+        print(", vararg_count, kalos_stack_vararg_start(stack, vararg_count)");
     }
     println(");");
-    if (function.varargs == "void") {
-        println("\t\tkalos_stack_cleanup_no_varargs(arg_count, 0, state, stack);");
-    } else {
-        println("\t\tkalos_stack_cleanup_varargs(arg_count, ofs, state, stack);");
-    }
+    println("\t\tkalos_stack_cleanup(arg_count, state, stack);");
     if (function.return_type != "void") {
         println("\t\tif (retval) {{");
         println("\t\t\tpush_{function.return_type}(stack, x);");
@@ -183,9 +189,10 @@ handle module.property(context, property) {
     if (property.write_id != 0) {
         println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
         println("\tcase {property.write_id}: {{");
-        println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
-        print("\t\t{property.write_symbol}(state{maybe_object}, K__arg_{property.type}(K__arg({1})));");
-        println("\t\tkalos_stack_cleanup_no_varargs(1, 0, state, stack);");
+        #println("\t\tkalos_stack_fixup_no_varargs(1, stack);");
+        println("\t\t{property.write_symbol}(state{maybe_object}, K__arg_{property.type}(K__arg(1, {1})));");
+        #println("\t\tkalos_stack_cleanup_no_varargs(1, 0, state, stack);");
+        println("\t\tkalos_stack_cleanup(1, state, stack);");
         println("\t\tbreak;");
         println("\t}}");
     }

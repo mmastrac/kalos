@@ -441,6 +441,7 @@ void kalos_load_arg_object(kalos_state state_, kalos_int index, kalos_object* ar
     kalos_state_internal* state = (kalos_state_internal*)state_;
     state->stack.stack[state->stack.stack_index + index].type = KALOS_VALUE_OBJECT;
     state->stack.stack[state->stack.stack_index + index].value.object = arg;
+    kalos_object_retain(state, arg); // TODO fix
 }
 
 void kalos_load_arg_number(kalos_state state_, kalos_int index, kalos_int arg) {
@@ -522,9 +523,9 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 break;
             }
             case KALOS_OP_MAKE_LIST: {
-                int count = kalos_stack_fixup_varargs(0, &state->stack);
-                kalos_object* list = kalos_allocate_list(state, count, peek(&state->stack, -1));
-                kalos_stack_cleanup_varargs(0, count, state, &state->stack);
+                int count = kalos_stack_vararg_count(&state->stack);
+                kalos_object* list = kalos_allocate_list(state, count, kalos_stack_vararg_start(&state->stack, count));
+                kalos_stack_cleanup(count + 1, state, &state->stack);
                 push_object(&state->stack, list);
                 break;
             }
@@ -664,7 +665,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     }
 
     done:
-    for (int i = original_stack_index; i < state->stack.stack_index; i++) {
+    for (int i = original_stack_index + 1; i < state->stack.stack_index; i++) {
         kalos_clear(state, &state->stack.stack[i]);
     }
     state->stack.stack_index = original_stack_index;
