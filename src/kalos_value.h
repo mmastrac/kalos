@@ -5,13 +5,14 @@
 #include "kalos_string_system.h"
 
 typedef struct kalos_object kalos_object;
+typedef kalos_object* kalos_object_ref;
 typedef struct kalos_value kalos_value;
 typedef struct kalos_stack kalos_stack;
-typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object* object, char* property);
-typedef kalos_object* (*kalos_iterstart)(kalos_state state, kalos_object* object);
-typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object* object, bool* done);
-typedef void (*kalos_object_free)(kalos_state state, kalos_object* object);
-typedef bool (*kalos_object_dispatch)(kalos_state state, kalos_object* object, int function, kalos_stack* stack);
+typedef kalos_value (*kalos_propget)(kalos_state state, kalos_object_ref* object, char* property);
+typedef kalos_object_ref (*kalos_iterstart)(kalos_state state, kalos_object_ref* object);
+typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object_ref* object, bool* done);
+typedef void (*kalos_object_free)(kalos_state state, kalos_object_ref* object);
+typedef bool (*kalos_object_dispatch)(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack);
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -34,7 +35,7 @@ struct kalos_object {
 typedef union kalos_value_union {
     kalos_int number;
     kalos_string string;
-    kalos_object* object;
+    kalos_object_ref object;
 } kalos_value_union;
 
 struct kalos_value {
@@ -56,14 +57,24 @@ typedef struct kalos_stack {
 
 static inline void kalos_clear(kalos_state state, kalos_value* value);
 
-static void kalos_object_retain(kalos_state state, kalos_object* object) {
+static kalos_object_ref kalos_object_take(kalos_state state, kalos_object_ref* object) {
+    kalos_object_ref obj = *object;
+    *object = NULL;
+    return obj;
+}
+
+static void kalos_object_retain(kalos_state state, kalos_object_ref object) {
     object->count++;
 }
 
-static void kalos_object_release(kalos_state state, kalos_object* object) {
+static void kalos_object_release(kalos_state state, kalos_object_ref* ref) {
+    if (!*ref) {
+        return;
+    }
+    kalos_object_ref object = *ref;
     if (object->count == 0) {
         if (object->object_free) {
-            object->object_free(state, object);
+            object->object_free(state, &object);
             object->object_free = NULL;
         }
         object->count = KALOS_OBJECT_POISONED;
@@ -72,6 +83,7 @@ static void kalos_object_release(kalos_state state, kalos_object* object) {
         ASSERT(object->count != KALOS_OBJECT_POISONED);
         object->count--;
     }
+    *ref = NULL;
 }
 
 inline static int kalos_stack_vararg_count(kalos_stack* stack) {
@@ -115,7 +127,7 @@ static inline void kalos_release__(kalos_state state, kalos_value* value) {
     if (value->type == KALOS_VALUE_STRING) {
         kalos_string_release(state, value->value.string);
     } else if (value->type == KALOS_VALUE_OBJECT) {
-        kalos_object_release(state, value->value.object);
+        kalos_object_release(state, &value->value.object);
     }
 }
 
@@ -180,7 +192,7 @@ static inline void push_bool(kalos_stack* stack, kalos_int value) {
     stack->stack_index++;
 }
 
-static inline void push_object(kalos_stack* stack, kalos_object* object) {
+static inline void push_object(kalos_stack* stack, kalos_object_ref object) {
     stack->stack[stack->stack_index].type = KALOS_VALUE_OBJECT;
     stack->stack[stack->stack_index].value.object = object;
     stack->stack_index++;

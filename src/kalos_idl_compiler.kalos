@@ -16,7 +16,7 @@ handle open {
     println("#define K__string kalos_string*");
     println("#define K__number kalos_int");
     println("#define K__bool   kalos_int");
-    println("#define K__object kalos_object*");
+    println("#define K__object kalos_object_ref*");
     println("#define K__any    kalos_value*");
     println("");
     println("#define K__t_string KALOS_VALUE_STRING");
@@ -29,7 +29,7 @@ handle open {
     println("#define K__arg_string(x) &((x)->value.string)");
     println("#define K__arg_number(x) (x)->value.number");
     println("#define K__arg_bool(x)   (x)->value.number");
-    println("#define K__arg_object(x) (x)->value.object");
+    println("#define K__arg_object(x) &((x)->value.object)");
     println("#define K__arg_any(x)    (x)");
     println("");
     kidl.walk_modules(FORWARD);
@@ -99,7 +99,7 @@ handle module.object(context, object) {
         return;
     }
     println("//{module.prefix}{module.name}_object_{object.name}_props");
-    println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {{");
+    println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {{");
     println("\tswitch (function) {{");
     in_object = true;
     module.walk_object_properties(OBJECT, object);
@@ -136,7 +136,7 @@ handle module.function(context, function) {
     } else if (function.return_type == "number" || function.return_type == "bool") {
         print("kalos_int x = ");
     } else if (function.return_type == "object") {
-        print("kalos_object* x = ");
+        print("kalos_object_ref x = ");
     } else if (function.return_type == "any") {
         print("kalos_value x = ");
     }
@@ -159,7 +159,7 @@ handle module.function(context, function) {
             println("\t\t\tkalos_string_release(state, x);");
         } else if (function.return_type == "object") {
             println("\t\t}} else {{");
-            println("\t\t\tkalos_object_release(state, x);");
+            println("\t\t\tkalos_object_release(state, &x);");
         } else if (function.return_type == "any") {
             println("\t\t}} else {{");
             println("\t\t\tkalos_clear(state, x);");

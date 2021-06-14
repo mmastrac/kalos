@@ -3,7 +3,7 @@
 #define K__string kalos_string*
 #define K__number kalos_int
 #define K__bool   kalos_int
-#define K__object kalos_object*
+#define K__object kalos_object_ref*
 #define K__any    kalos_value*
 
 #define K__t_string KALOS_VALUE_STRING
@@ -16,7 +16,7 @@
 #define K__arg_string(x) &((x)->value.string)
 #define K__arg_number(x) (x)->value.number
 #define K__arg_bool(x)   (x)->value.number
-#define K__arg_object(x) (x)->value.object
+#define K__arg_object(x) &((x)->value.object)
 #define K__arg_any(x)    (x)
 
 // id=0000:0001 name=close
@@ -104,7 +104,7 @@ void kalos_module_idl_module_trigger_function(kalos_state state, K__any a0, K__o
 }
 
 //kalos_module_idl_module_object_function_obj_props
-bool kalos_module_idl_module_object_function_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_function_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=8 name=function_obj symbol=kalos_idl_function_id2
 	case 8: {
@@ -154,7 +154,7 @@ void kalos_module_idl_module_trigger_handle_(kalos_state state, K__any a0, K__ob
 }
 
 //kalos_module_idl_module_object_handle_obj_props
-bool kalos_module_idl_module_object_handle_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_handle_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=12 name=handle_obj symbol=kalos_idl_export_name2
 	case 12: {
@@ -182,7 +182,7 @@ bool kalos_module_idl_module_object_handle_obj_props(kalos_state state, kalos_ob
 }
 
 //kalos_module_idl_module_object_module_obj_props
-bool kalos_module_idl_module_object_module_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_module_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=12 name=module_obj symbol=kalos_idl_obj_module_name
 	case 12: {
@@ -207,7 +207,7 @@ void kalos_module_idl_module_trigger_object(kalos_state state, K__any a0, K__obj
 }
 
 //kalos_module_idl_module_object_object_obj_props
-bool kalos_module_idl_module_object_object_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_object_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=12 name=object_obj symbol=kalos_idl_export_name2
 	case 12: {
@@ -227,7 +227,7 @@ void kalos_module_idl_module_trigger_property(kalos_state state, K__any a0, K__o
 }
 
 //kalos_module_idl_module_object_property_obj_props
-bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object* object, int function, kalos_stack* stack) {
+bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack) {
 	switch (function) {
 	// id=12 name=property_obj symbol=kalos_idl_export_name2
 	case 12: {
