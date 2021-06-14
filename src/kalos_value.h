@@ -57,7 +57,7 @@ typedef struct kalos_stack {
 
 static inline void kalos_clear(kalos_state state, kalos_value* value);
 
-static kalos_object_ref kalos_object_take(kalos_state state, kalos_object_ref* object) {
+static inline kalos_object_ref kalos_object_take(kalos_state state, kalos_object_ref* object) {
     kalos_object_ref obj = *object;
     *object = NULL;
     return obj;
