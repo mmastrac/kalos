@@ -581,6 +581,17 @@ static void internal_free(void* memory) {
     free(allocated);
 }
 
+static void* internal_realloc(void* ptr, size_t size) {
+    uint8_t* allocated = ptr;
+    struct allocation_record info;
+    allocated -= sizeof(info);
+    memcpy(&info, allocated, sizeof(info));
+    void* ptr2 = internal_malloc(size);
+    memcpy(ptr, ptr2, info.size);
+    internal_free(ptr);
+    return ptr2;
+}
+
 static void internal_error(char* error) {
     printf("ERROR: %s\n", error);
     exit(1);
@@ -616,6 +627,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     // free(s);
     kalos_fn fns = {
         internal_malloc,
+        internal_realloc,
         internal_free,
         internal_error
     };

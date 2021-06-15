@@ -1,0 +1,7 @@
+handle init {
+    print(replace("a,b,c,d,e,f", ",", ".") + "\n");
+    print(replace("a,b,c,d,e,f", ",", "") + "\n");
+    print(replace("a,b,c,d,e,f", ".", "") + "\n");
+    print(replace("a,b,c,d,e,f", ",", "!!!!!") + "\n");
+    print(replace("ab," * 32, ",", "!!!!!") + "\n");
+}

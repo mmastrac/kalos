@@ -24,6 +24,7 @@ static const int8_t kalos_op_output_size[] = {
 
 typedef struct kalos_state_internal {
     kalos_mem_alloc_fn alloc; // part of public interface
+    kalos_mem_realloc_fn realloc; // part of public interface
     kalos_mem_free_fn free; // part of public interface
     kalos_script* script;
     kalos_fn* fns;
@@ -293,6 +294,10 @@ static kalos_object_ref op_range(kalos_state_internal* state, kalos_op op, kalos
     return range;
 }
 
+static kalos_string op_replace(kalos_state_internal* state, kalos_op op, kalos_string* s, kalos_string* a, kalos_string* b) {
+    return kalos_string_take_replace(state, s, a, b);
+}
+
 struct kalos_split {
     kalos_string splitee;
     kalos_string splitter;
@@ -417,6 +422,7 @@ kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_f
     }
     memset(state, 0, sizeof(kalos_state_internal));
     state->alloc = fns->alloc;
+    state->realloc = fns->realloc;
     state->free = fns->free;
     state->modules = modules;
     state->script = script;
@@ -651,6 +657,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
             OP((ITERATOR),    (op_iterator, OBJECT, OBJECT));
             OP((SPLIT),       (op_split, OBJECT, STRING, STRING));
             OP((RANGE),       (op_range, OBJECT, NUMBER, NUMBER));
+            OP((REPLACE),     (op_replace, STRING, STRING, STRING, STRING));
             // Compare ops with numeric and string equivalents
             OP((EQUAL, NOT_EQUAL),
                               (op_number_op, BOOL, NUMBER, NUMBER), (op_compare_string, BOOL, STRING, STRING), (op_compare_type, BOOL, ANY, ANY));
@@ -773,9 +780,4 @@ kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, ka
     object->context = context;
     object->dispatch = dispatch;
     return object;
-}
-
-void* kaloc_mem_alloc(kalos_state state_, size_t size) {
-    kalos_state_internal* state = (kalos_state_internal*)state_;
-    return state->fns->alloc(size);
 }

@@ -9,6 +9,7 @@ typedef void (*kalos_error_fn)(char* error);
 
 typedef struct kalos_fn {
     kalos_mem_alloc_fn alloc;
+    kalos_mem_realloc_fn realloc;
     kalos_mem_free_fn free;
     kalos_error_fn error;
 } kalos_fn;

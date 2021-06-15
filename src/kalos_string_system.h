@@ -73,6 +73,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state state, kal
 KALOS_STRING_INLINE kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a, kalos_int b);
 
 kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* string_format);
+kalos_string kalos_string_take_replace(kalos_state state, kalos_string* s, kalos_string* a, kalos_string* b);
 
 #if defined(KALOS_STRING_SYSTEM_C) || KALOS_STRING_AGGRESSIVE_INLINE
 
@@ -137,6 +138,15 @@ KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state state, kalos
 KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state state, kalos_writable_string string) {
     kalos_string s;
     s.length__ = strlen(kalos_string_writable_c(state, string));
+    s.sa = string.s;
+    s.sa->count = 0;
+    VALIDATE_STRING(s);
+    return s;
+}
+
+KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state state, kalos_writable_string string, int length) {
+    kalos_string s;
+    s.length__ = length;
     s.sa = string.s;
     s.sa->count = 0;
     VALIDATE_STRING(s);
