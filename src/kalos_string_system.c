@@ -97,7 +97,9 @@ static kalos_string repl_str(kalos_state state, kalos_string s, const char *from
 	 * multiply the increment by this factor. */
 	const size_t cache_sz_inc_factor = 3;
 	/* But never increment capacity by more than this number. */
-	const size_t cache_sz_inc_max = 1048576;
+    #pragma warning 124 9
+	const size_t cache_sz_inc_max = min(SIZE_MAX, 1048576);
+    #pragma warning 124 3
 
 	char *pret, *ret = NULL;
     kalos_writable_string w;

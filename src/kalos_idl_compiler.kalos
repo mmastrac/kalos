@@ -149,7 +149,7 @@ handle module.function(context, function) {
             c = replace(c, "@" + index, "(K__arg_{arg}(K__arg(arg_count, {index+1})))");
             index += 1;
         }
-        println("{c}");
+        println("{c};");
     } else {
         print("{function.realname}(state");
         for arg in function.args {

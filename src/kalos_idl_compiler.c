@@ -33,8 +33,14 @@ int export_compare(const void* v1, const void* v2) {
     if (cmp != 0) {
         return cmp;
     }
-
-    return (int)e1->type - (int)e2->type;
+    if (e1->type != e2->type) {
+        return (int)e1->type - (int)e2->type;
+    }
+    if (e1->type == KALOS_EXPORT_TYPE_FUNCTION) {
+        // Group functions together by arg count
+        return (int)e1->entry.function.arg_count - (int)e2->entry.function.arg_count;
+    }
+    return 0; // shrug
 }
 
 static void new_export(struct kalos_module_builder* builder) {
