@@ -215,7 +215,7 @@ static void end_function(void* context, const char* name, const char* type, cons
 static void end_function_c(void* context, const char* name, const char* type, const char* c) {
     struct kalos_module_builder* builder = context;
     current_export(builder)->entry.function.return_type = strtotype(type);
-    current_export(builder)->entry.function.c_index = strpack(builder, c);
+    current_export(builder)->entry.function.c_index = strpack(builder, unstring((char*)c));
     LOG("fn %s %s %s", name, type, c);
 }
 
@@ -582,6 +582,9 @@ static void internal_free(void* memory) {
 }
 
 static void* internal_realloc(void* ptr, size_t size) {
+    if (ptr == NULL) {
+        return internal_malloc(size);
+    }
     uint8_t* allocated = ptr;
     struct allocation_record info;
     allocated -= sizeof(info);
