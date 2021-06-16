@@ -520,6 +520,10 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 state->stack.stack_index++; // push the iterator back on the stack
                 kalos_value* iterator = peek(&state->stack, 0);
                 bool done;
+                if (iterator->type != KALOS_VALUE_OBJECT) {
+                    value_error(state);
+                    return;
+                }
                 kalos_value next = iterator->value.object->iternext(state_, &iterator->value.object, &done);
                 push_bool(&state->stack, done);
                 kalos_value_move_to(state, &next, push_raw(&state->stack));
@@ -542,6 +546,10 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
             }
             case KALOS_OP_GETPROP: {
                 int prop = pop(&state->stack)->value.number;
+                if (peek(&state->stack, 0)->type != KALOS_VALUE_OBJECT) {
+                    value_error(state);
+                    return;
+                }
                 kalos_object_ref object = pop(&state->stack)->value.object;
                 if (!object->dispatch || !object->dispatch(state, &object, prop, &state->stack)) {
                     value_error(state);

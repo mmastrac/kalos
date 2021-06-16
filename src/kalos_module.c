@@ -1,63 +1,76 @@
 #include "kalos_module.h"
+#include "kalos_util.h"
+
+void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset) {
+    ASSERT(offset > 0);
+    if (offset == 0) {
+        int x = 1;
+    }
+    return PTR_BYTE_OFFSET(parsed.data, offset);
+}
 
 kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* name) {
     kalos_module_header* header = (kalos_module_header*)parsed.data;
-    kalos_module* m = (kalos_module*)((uint8_t *)parsed.data + header->module_offset);
-    for (uint16_t i = 0; i < header->module_count; i++) {
-        if (strcmp(kalos_module_get_string(parsed, m->name_index), name) == 0) {
-            return m;
+    kalos_int module_offset = header->module_list.head;
+    while (module_offset) {
+        kalos_module* module = kalos_module_get_list_item(parsed, module_offset);
+        if (strcmp(kalos_module_get_string(parsed, module->name_index), name) == 0) {
+            return module;
         }
-        m = (kalos_module*)((uint8_t *)m + sizeof(kalos_module) + m->export_count * sizeof(kalos_export));
+        module_offset = module->module_list.next;
     }
     return NULL;
 }
 
-static kalos_module_parsed* export_compare_context;
-static int export_compare(const void* v1, const void* v2) {
-    const char* name = v1;
-    const kalos_export* e = v2;
-    return strcmp(name, kalos_module_get_string(*export_compare_context, e->name_index));
-}
-
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name) {
-    kalos_export* e = (kalos_export*)((uint8_t *)module + sizeof(kalos_module));
-    export_compare_context = &parsed;
-    // TODO: Re-entrancy/threading
-    kalos_export* result = bsearch(name, e, module->export_count, sizeof(kalos_export), export_compare);
-    export_compare_context = NULL;
-    return result;
+    kalos_int export_offset = module->export_list.head;
+    uint16_t i = 0;
+    while (export_offset) {
+        kalos_export* e = kalos_module_get_list_item(parsed, export_offset);
+        if (strcmp(kalos_module_get_string(parsed, e->name_index), name) == 0) {
+            return e;
+        }
+        export_offset = e->export_list.next;
+    }
+    return NULL;
 }
 
 void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback) {
     kalos_module_header* header = (kalos_module_header*)parsed.data;
-    kalos_module* m = (kalos_module*)((uint8_t *)parsed.data + header->module_offset);
-    for (uint16_t i = 0; i < header->module_count; i++) {
-        if (!callback(context, parsed, i, m)) {
+    kalos_int module_offset = header->module_list.head;
+    uint16_t i = 0;
+    while (module_offset) {
+        kalos_module* module = kalos_module_get_list_item(parsed, module_offset);
+        if (!callback(context, parsed, i++, module)) {
             return;
         }
-        m = (kalos_module*)((uint8_t *)m + sizeof(kalos_module) + m->export_count * sizeof(kalos_export));
+        module_offset = module->module_list.next;
     }
 }
 
 void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_module* module, kalos_export_callback callback) {
-    kalos_export* e = (kalos_export*)((uint8_t *)module + sizeof(kalos_module));
-    for (uint16_t i = 0; i < module->export_count; i++) {
-        if (!callback(context, parsed, i, module, e)) {
+    kalos_int export_offset = module->export_list.head;
+    uint16_t i = 0;
+    while (export_offset) {
+        kalos_export* e = kalos_module_get_list_item(parsed, export_offset);
+        if (!callback(context, parsed, i++, module, e)) {
             return;
         }
-        e = (kalos_export*)((uint8_t *)e + sizeof(kalos_export));
+        export_offset = e->export_list.next;
     }
 }
 
 kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name) {
     kalos_module_header* header = (kalos_module_header*)parsed.data;
-    kalos_property_address* prop_addr = (kalos_property_address*)((uint8_t *)parsed.data + header->props_offset);
-    for (int i = 0; i < header->props_count; i++) {
-        if (strcmp(kalos_module_get_string(parsed, prop_addr[i].name_index), name) == 0) {
-            return 2 + (write ? (i * 2 + 1) : (i * 2));
-        } 
+    kalos_int prop_offset = header->prop_list.head;
+    while (prop_offset) {
+        kalos_property_address* prop_addr = kalos_module_get_list_item(parsed, prop_offset);
+        if (strcmp(kalos_module_get_string(parsed, prop_addr->name_index), name) == 0) {
+            kalos_int base_id = prop_addr->invoke_id * 2;
+            return write ? base_id + 1 : base_id;
+        }
+        prop_offset = prop_addr->prop_list.next;
     }
-
     return 0;
 }
 

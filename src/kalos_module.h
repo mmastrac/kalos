@@ -25,21 +25,43 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_OBJECT,
 } kalos_export_type;
 
+typedef struct kalos_module_parsed {
+    void* data;
+    size_t size;
+} kalos_module_parsed;
+
 #pragma pack(push, 1)
+typedef struct kalos_module_item_list {
+    kalos_int prev, next;
+} kalos_module_item_list;
+
+typedef struct kalos_module_item_list_header {
+    kalos_int head, tail, count;
+} kalos_module_item_list_header;
+
 typedef struct kalos_arg {
+    kalos_module_item_list arg_list;
     kalos_int name_index;
     kalos_function_type type;
 } kalos_arg;
 
 typedef struct kalos_function {
-    kalos_arg args[MAX_KALOS_ARGS];
-    uint8_t arg_count;
+    kalos_module_item_list fn_overload_list;
+    kalos_module_item_list_header arg_list;
     kalos_function_type vararg_type;
     kalos_function_type return_type;
     kalos_int symbol_index;
     kalos_int c_index;
     kalos_int invoke_id;
 } kalos_function;
+
+typedef struct kalos_handler {
+    kalos_module_item_list_header arg_list;
+    uint8_t arg_count;
+    kalos_function_type vararg_type;
+    kalos_function_type return_type;
+    kalos_int invoke_id;
+} kalos_handler;
 
 typedef struct kalos_property {
     kalos_function_type type;
@@ -50,24 +72,27 @@ typedef struct kalos_property {
 } kalos_property;
 
 typedef struct kalos_object_property {
+    kalos_module_item_list prop_list;
     kalos_property property;
     kalos_int name_index;
 } kalos_object_property;
 
 typedef struct kalos_object_def {
-    uint8_t property_count;
-    kalos_object_property properties[MAX_KALOS_OBJ_PROPS];
+    kalos_module_item_list_header prop_list;
 } kalos_object_def;
 
 typedef union kalos_export_entry {
+    kalos_module_item_list export_list;
     kalos_int const_number;
     kalos_int const_string_index;
-    kalos_function function;
+    kalos_module_item_list_header function_overload_list;
+    kalos_handler handler;
     kalos_property property;
     kalos_object_def object;
 } kalos_export_entry;
 
 typedef struct kalos_export {
+    kalos_module_item_list export_list;
     kalos_int name_index;
     kalos_export_type type;
     kalos_export_entry entry;
@@ -76,26 +101,20 @@ typedef struct kalos_export {
 typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack, bool retval);
 
 typedef struct kalos_module {
+    kalos_module_item_list module_list;
     kalos_int index;
     kalos_int name_index;
-    kalos_int prefix_index;
     kalos_int export_count;
+    kalos_module_item_list_header export_list;
 } kalos_module;
-
-typedef struct kalos_module_parsed {
-    void* data;
-    size_t size;
-} kalos_module_parsed;
 
 typedef struct kalos_module_header {
     kalos_int version;
-    kalos_int module_count;
-    kalos_int module_offset;
-    kalos_int module_size;
-    kalos_int props_offset;
-    kalos_int props_count;
+    kalos_module_item_list_header module_list;
+    kalos_module_item_list_header prop_list;
     kalos_int string_offset;
     kalos_int string_size;
+    kalos_int prefix_index;
 } kalos_module_header;
 
 typedef struct kalos_export_address {
@@ -104,7 +123,9 @@ typedef struct kalos_export_address {
 } kalos_export_address;
 
 typedef struct kalos_property_address {
+    kalos_module_item_list prop_list;
     kalos_function_type type;
+    kalos_int invoke_id;
     kalos_int name_index;
 } kalos_property_address;
 #pragma pack(pop)
@@ -125,3 +146,4 @@ void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_
 void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_module* module, kalos_export_callback callback);
 kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name);
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index);
+void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset);

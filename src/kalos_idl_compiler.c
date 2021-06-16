@@ -6,23 +6,93 @@
 #include "kalos_run.h"
 #include "kalos_idl_compiler.h"
 #include "kalos_idl_parse.h"
+#include "kalos_util.h"
 
 struct kalos_module_builder {
     void* kalos_module_buffer;
-    size_t module_buffer_size;
-    size_t module_count;
-    kalos_int module_name_index;
-    kalos_int prefix_index;
+    size_t module_buffer_size, module_buffer_index;
     char* string_buffer;
     size_t string_buffer_size;
     size_t string_buffer_index;
-    kalos_export* exports;
-    size_t object_props_count;
-    size_t export_count;
-    size_t function_index;
-    size_t handle_index;
     bool in_object;
+    kalos_int handle_index;
+    kalos_int function_index;
 };
+
+static void* allocate_item(struct kalos_module_builder* builder, kalos_module_item_list_header** list, size_t struct_size) {
+    if (builder->module_buffer_index + struct_size > builder->module_buffer_size) {
+        ptrdiff_t list_offset = PTR_BYTE_SUBTRACT(*list, builder->kalos_module_buffer);
+        builder->module_buffer_size *= 2;
+        builder->kalos_module_buffer = realloc(builder->kalos_module_buffer, builder->module_buffer_size);
+        (*list) = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list_offset);
+    }
+    void* ptr = PTR_BYTE_OFFSET(builder->kalos_module_buffer, builder->module_buffer_index);
+    memset(ptr, 0, struct_size);
+    return ptr;
+}
+ 
+static void* append_list_item(struct kalos_module_builder* builder, kalos_module_item_list_header* list, size_t struct_size) {
+    void* ptr = allocate_item(builder, &list, struct_size);
+    if (list->count == 0) {
+        list->head = list->tail = builder->module_buffer_index;
+        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list->tail);
+        item->next = item->prev = 0;
+    } else {
+        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list->tail);
+        item->next = builder->module_buffer_index;
+        item = ptr;
+        item->prev = list->tail;
+        item->next = 0;
+        list->tail = builder->module_buffer_index;
+    }
+    list->count++;
+    builder->module_buffer_index += struct_size;
+    return ptr;
+}
+
+typedef int (*list_find_fn)(void* context, void* a, void* b);
+
+static void* insert_list_item(struct kalos_module_builder* builder, kalos_module_item_list_header* list, size_t struct_size, void* context, void* a, list_find_fn fn) {
+    if (list->count > 0) {
+        void* ptr = allocate_item(builder, &list, struct_size);
+        kalos_int item_offset = list->head;
+        while (item_offset) {
+            kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, item_offset);
+            int compare = fn(context, a, item);
+            if (compare == 0) {
+                return item; // Exact match
+            } else if (compare == -1) {
+                // Insert before here
+                list->count++;
+                kalos_module_item_list* new_item = ptr;
+                new_item->prev = item->prev;
+                new_item->next = item_offset;
+                kalos_int prev_item_offset = item->prev;
+                item->prev = builder->module_buffer_index;
+                if (prev_item_offset == 0) {
+                    list->head = builder->module_buffer_index;
+                } else {
+                    item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, prev_item_offset);
+                    item->next = builder->module_buffer_index;
+                }
+                builder->module_buffer_index += struct_size;
+                return ptr;
+            }
+            item_offset = item->next;
+        }
+    }
+    return append_list_item(builder, list, struct_size);
+}
+
+// Finds either the insertion point for a new item, or the existing item that matches
+static void* find_list_item(struct kalos_module_builder* builder, kalos_module_item_list_header* list, void* context, void* a, list_find_fn fn) {
+    return NULL;
+}
+
+static void* get_list_item(struct kalos_module_builder* builder, kalos_int offset) {
+    ASSERT(offset > 0);
+    return PTR_BYTE_OFFSET(builder->kalos_module_buffer, offset);
+}
 
 static void* export_compare_context;
 int export_compare(const void* v1, const void* v2) {
@@ -33,23 +103,21 @@ int export_compare(const void* v1, const void* v2) {
     if (cmp != 0) {
         return cmp;
     }
-    if (e1->type != e2->type) {
-        return (int)e1->type - (int)e2->type;
-    }
-    if (e1->type == KALOS_EXPORT_TYPE_FUNCTION) {
-        // Group functions together by arg count
-        return (int)e1->entry.function.arg_count - (int)e2->entry.function.arg_count;
-    }
-    return 0; // shrug
+    return (int)e1->type - (int)e2->type;
+}
+
+struct kalos_module_header* root(struct kalos_module_builder* builder) {
+    return builder->kalos_module_buffer;
 }
 
 static void new_export(struct kalos_module_builder* builder) {
-    builder->exports = realloc(builder->exports, (++builder->export_count) * sizeof(kalos_export));
-    memset((void*)&builder->exports[builder->export_count - 1], 0, sizeof(kalos_export));
+    kalos_module* module = get_list_item(builder, root(builder)->module_list.tail);
+    append_list_item(builder, &module->export_list, sizeof(kalos_export));
 }
 
 static kalos_export* current_export(struct kalos_module_builder* builder) {
-    return &builder->exports[builder->export_count - 1];
+    kalos_module* module = get_list_item(builder, root(builder)->module_list.tail);
+    return get_list_item(builder, module->export_list.tail);
 }
 
 static kalos_int strpack(struct kalos_module_builder* builder, const char* s) {
@@ -142,38 +210,30 @@ static bool prefix(void* context, const char* prefix) {
     if (!prefix) {
         return false;
     }
-    builder->prefix_index = strpack(builder, prefix);
+    LOG("prefix %s", prefix);
+    root(builder)->prefix_index = strpack(builder, prefix);
     return true;
+}
+
+static int insert_module_fn(void* context, void* a, void* b) {
+    struct kalos_module_builder* builder = context;
+    kalos_module* module = b;
+    return strcmp((const char*)a, builder->string_buffer + module->name_index);
 }
 
 static void begin_module(void* context, const char* module) {
     struct kalos_module_builder* builder = context;
-    builder->export_count = 0;
-    builder->module_count++;
-    builder->module_name_index = strpack(builder, module);
-    builder->function_index = 1;
-    builder->handle_index = 1;
+    kalos_module* m = insert_list_item(builder, &root(builder)->module_list, sizeof(kalos_module), builder, (void*)module, insert_module_fn);
+    // kalos_module* m = append_list_item(builder, &root(builder)->module_list, sizeof(kalos_module));
+    m->name_index = strpack(builder, module);
+    m->index = root(builder)->module_list.count - 1;
+    builder->function_index = 0;
+    builder->handle_index = 0;
     LOG("module %s", module);
 }
 
 static void end_module(void* context) {
-    struct kalos_module_builder* builder = context;
-    export_compare_context = context;
-    qsort(builder->exports, builder->export_count, sizeof(kalos_export), export_compare);
-    export_compare_context = NULL;
-    size_t this_module_size = sizeof(kalos_module) + sizeof(kalos_export) * builder->export_count;
-    builder->module_buffer_size += this_module_size;
-    builder->kalos_module_buffer = realloc(builder->kalos_module_buffer, builder->module_buffer_size);
-
-    kalos_module* module = (kalos_module*)((uint8_t*)builder->kalos_module_buffer + builder->module_buffer_size - this_module_size);
-    module->index = builder->module_count - 1;
-    module->name_index = builder->module_name_index;
-    module->prefix_index = builder->prefix_index;
-    module->export_count = builder->export_count;
-    memcpy((uint8_t*)module + sizeof(kalos_module), builder->exports, builder->export_count * sizeof(kalos_export));
-    free(builder->exports);
-    builder->exports = 0;
-    LOG("end");
+    LOG("/module");
 }
 
 static void begin_object(void* context, const char* name) {
@@ -182,11 +242,13 @@ static void begin_object(void* context, const char* name) {
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_OBJECT;
     builder->in_object = true;
+    LOG("object %s", name);
 }
 
 static void end_object(void* context) {
     struct kalos_module_builder* builder = context;
     builder->in_object = false;
+    LOG("/object");
 }
 
 static void begin_function(void* context, const char* name) {
@@ -194,35 +256,39 @@ static void begin_function(void* context, const char* name) {
     new_export(builder);
     current_export(builder)->type = KALOS_EXPORT_TYPE_FUNCTION;
     current_export(builder)->name_index = strpack(builder, name);
-    current_export(builder)->entry.function.invoke_id = builder->function_index++;
-    current_export(builder)->entry.function.vararg_type = FUNCTION_TYPE_VOID;
-    LOG("fn %s", name);
+    kalos_function* fn = append_list_item(builder, &current_export(builder)->entry.function_overload_list, sizeof(kalos_function));
+    fn->invoke_id = ++builder->function_index;
+    fn->vararg_type = FUNCTION_TYPE_VOID;
+    LOG("fn %s (invoke=%d)", name, fn->invoke_id);
 }
 
 static void function_arg(void* context, const char* name, const char* type, bool is_varargs) {
     struct kalos_module_builder* builder = context;
+    kalos_function* fn = get_list_item(builder, current_export(builder)->entry.function_overload_list.tail);
     if (is_varargs) {
-        current_export(builder)->entry.function.vararg_type = strtotype(type);
+        fn->vararg_type = strtotype(type);
     } else {
-        int arg = current_export(builder)->entry.function.arg_count++;
-        current_export(builder)->entry.function.args[arg].name_index = strpack(builder, name);
-        current_export(builder)->entry.function.args[arg].type = strtotype(type);
+        kalos_arg* arg = append_list_item(builder, &fn->arg_list, sizeof(kalos_arg));
+        arg->name_index = strpack(builder, name);
+        arg->type = strtotype(type);
     }
     LOG("arg %s %s", name, type);
 }
 
 static void end_function(void* context, const char* name, const char* type, const char* symbol) {
     struct kalos_module_builder* builder = context;
-    current_export(builder)->entry.function.return_type = strtotype(type);
-    current_export(builder)->entry.function.symbol_index = strpack(builder, symbol);
-    LOG("fn %s %s %s", name, type, symbol);
+    kalos_function* fn = get_list_item(builder, current_export(builder)->entry.function_overload_list.tail);
+    fn->return_type = strtotype(type);
+    fn->symbol_index = strpack(builder, symbol);
+    LOG("/fn %s %s %s", name, type, symbol);
 }
 
 static void end_function_c(void* context, const char* name, const char* type, const char* c) {
     struct kalos_module_builder* builder = context;
-    current_export(builder)->entry.function.return_type = strtotype(type);
-    current_export(builder)->entry.function.c_index = strpack(builder, unstring((char*)c));
-    LOG("fn %s %s %s", name, type, c);
+    kalos_function* fn = get_list_item(builder, current_export(builder)->entry.function_overload_list.tail);
+    fn->return_type = strtotype(type);
+    fn->c_index = strpack(builder, unstring((char*)c));
+    LOG("/fn %s %s %s", name, type, c);
 }
 
 static void begin_handle(void* context, const char* name) {
@@ -230,20 +296,20 @@ static void begin_handle(void* context, const char* name) {
     new_export(builder);
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_HANDLE;
-    current_export(builder)->entry.function.invoke_id = builder->handle_index++;
+    current_export(builder)->entry.handler.invoke_id = ++builder->handle_index;
     LOG("handle %s", name);
 }
 
 static void handle_arg(void* context, const char* name, const char* type, bool is_varargs) {
     struct kalos_module_builder* builder = context;
-    int arg = current_export(builder)->entry.function.arg_count++;
-    current_export(builder)->entry.function.args[arg].name_index = strpack(builder, name);
-    current_export(builder)->entry.function.args[arg].type = strtotype(type);
+    kalos_arg* arg = append_list_item(builder, &current_export(builder)->entry.handler.arg_list, sizeof(kalos_arg));
+    arg->name_index = strpack(builder, name);
+    arg->type = strtotype(type);
     LOG("arg %s %s", name, type);
 }
 
 static void end_handle(void* context) {
-    LOG("handle");
+    LOG("/handle");
 }
 
 static bool constant_string(void* context, const char* name, const char* type, const char* s) {
@@ -269,14 +335,23 @@ static void constant_number(void* context, const char* name, const char* type, k
     LOG("const %s %s %d", name, type, number);
 }
 
+static int insert_prop_addr_fn(void* context, void* a, void* b) {
+    struct kalos_module_builder* builder = context;
+    kalos_property_address* prop_addr = b;
+    return strcmp((const char*)a, builder->string_buffer + prop_addr->name_index);
+}
+
 static void property(void* context, const char* name, const char* type, const char* mode, const char* symbol, const char* symbol2) {
     struct kalos_module_builder* builder = context;
     kalos_property* property;
     if (builder->in_object) {
-        int prop = current_export(builder)->entry.object.property_count++;
-        property = &current_export(builder)->entry.object.properties[prop].property;
-        current_export(builder)->entry.object.properties[prop].name_index = strpack(builder, name);
-        builder->object_props_count++;
+        kalos_int name_index = strpack(builder, name);
+        kalos_property_address* obj_prop_addr = insert_list_item(builder, &root(builder)->prop_list, sizeof(kalos_property_address), builder, (void*)name, insert_prop_addr_fn);
+        obj_prop_addr->name_index = name_index;
+        obj_prop_addr->type = strtotype(type);
+        kalos_object_property* obj_prop = append_list_item(builder, &current_export(builder)->entry.object.prop_list, sizeof(kalos_object_property));
+        obj_prop->name_index = name_index;
+        property = &obj_prop->property;
     } else {
         new_export(builder);
         current_export(builder)->name_index = strpack(builder, name);
@@ -285,48 +360,18 @@ static void property(void* context, const char* name, const char* type, const ch
     }
     property->type = strtotype(type);
     if (strcmp(mode, "read") == 0) {
-        property->read_invoke_id = builder->in_object ? 1 : builder->function_index++;
+        property->read_invoke_id = builder->in_object ? 1 : ++builder->function_index;
         property->read_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "write") == 0) {
-        property->write_invoke_id = builder->in_object ? 1 : builder->function_index++;
+        property->write_invoke_id = builder->in_object ? 1 : ++builder->function_index;
         property->write_symbol_index = strpack(builder, symbol);
     } else if (strcmp(mode, "read,write") == 0) {
-        property->read_invoke_id = builder->in_object ? 1 : builder->function_index++;
-        property->write_invoke_id = builder->in_object ? 1 : builder->function_index++;
+        property->read_invoke_id = builder->in_object ? 1 : ++builder->function_index;
+        property->write_invoke_id = builder->in_object ? 1 : ++builder->function_index;
         property->read_symbol_index = strpack(builder, symbol);
         property->write_symbol_index = strpack(builder, symbol2);
     }
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
-}
-
-static void* property_compare_context;
-int property_compare(const void* v1, const void* v2) {
-    kalos_module_parsed* parsed = property_compare_context;
-    kalos_object_property** e1 = (kalos_object_property**)v1;
-    kalos_object_property** e2 = (kalos_object_property**)v2;
-
-    int res = strcmp(kalos_module_get_string(*parsed, (*e1)->name_index), kalos_module_get_string(*parsed, (*e2)->name_index));
-    if (res != 0) {
-        return res;
-    }
-
-    return (int)(*e1)->property.type - (int)(*e2)->property.type;
-}
-
-bool object_prop_export_callback(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
-    kalos_object_property*** object_props = context;
-    if (export->type == KALOS_EXPORT_TYPE_OBJECT) {
-        for (int i = 0; i < export->entry.object.property_count; i++) {
-            **object_props = &export->entry.object.properties[i];
-            (*object_props)++;
-        }
-    }
-    return true;
-}
-
-bool object_prop_module_callback(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module) {
-    kalos_module_walk_exports(context, parsed, module, object_prop_export_callback);
-    return true;
 }
 
 kalos_module_parsed kalos_idl_parse_module(const char* s) {
@@ -350,70 +395,47 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     };
 
     struct kalos_module_builder context = {0};
-    context.prefix_index = 0;
-    strpack(&context, ""); // zero string
+    context.module_buffer_size = 1024;
+    context.kalos_module_buffer = malloc(context.module_buffer_size);
+    context.module_buffer_index = sizeof(kalos_module_header);
+    memset(root(&context), 0, sizeof(kalos_module_header));
+    strpack(&context, ""); // zero string = empty
 
     if (!kalos_idl_parse_callback(s, &context, &callbacks)) {
         kalos_module_parsed parsed = {0};
         return parsed;
     }
 
-    context.kalos_module_buffer = realloc(context.kalos_module_buffer, sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index);
-    memmove((uint8_t*)context.kalos_module_buffer + sizeof(kalos_module_header), (uint8_t*)context.kalos_module_buffer, context.module_buffer_size);
-    kalos_module_header* header = (kalos_module_header*)context.kalos_module_buffer;
+    kalos_int prop_addr_offset = root(&context)->prop_list.head;
+    int index = 0;
+    while (prop_addr_offset) {
+        kalos_property_address* prop_addr = get_list_item(&context, prop_addr_offset);
+        prop_addr->invoke_id = ++index;
+        prop_addr_offset = prop_addr->prop_list.next;
+        LOG("PROP %s=%d", context.string_buffer + prop_addr->name_index, prop_addr->invoke_id);
+    }
+
+    context.kalos_module_buffer = realloc(context.kalos_module_buffer, context.module_buffer_index + context.string_buffer_index);
+    kalos_module_header* header = root(&context);
     header->version = 1;
-    header->module_count = context.module_count;
-    header->module_size = context.module_buffer_size;
-    header->module_offset = sizeof(kalos_module_header);
-    header->string_offset = header->module_size + header->module_offset;
+    header->string_offset = context.module_buffer_index;
     header->string_size = context.string_buffer_index;
-    memcpy((uint8_t*)context.kalos_module_buffer + header->string_offset, context.string_buffer, context.string_buffer_index);
+    memcpy(PTR_BYTE_OFFSET(context.kalos_module_buffer, header->string_offset), context.string_buffer, context.string_buffer_index);
     free(context.string_buffer);
 
     kalos_module_parsed parsed;
-    parsed.data=context.kalos_module_buffer;
-    parsed.size=sizeof(kalos_module_header) + context.module_buffer_size + context.string_buffer_index;
-
-    // Post-process object properties
-    kalos_object_property** object_props = malloc(sizeof(kalos_object_property*) * context.object_props_count);
-    kalos_object_property** object_props_ptr = object_props;
-    kalos_module_walk_modules(&object_props_ptr, parsed, object_prop_module_callback);
-    property_compare_context = &parsed;
-    qsort(object_props, context.object_props_count, sizeof(object_props[0]), property_compare);
-    property_compare_context = NULL;
-    kalos_int module_prop_index = 0;
-    const char* current_name = "";
-    kalos_function_type current_type;
-    kalos_property_address* prop_addrs = NULL;
-    int prop_addr_count = 0;
-    for (int i = 0; i < context.object_props_count; i++) {
-        kalos_object_property* p = object_props[i];
-        // TODO: Typing will require us to split props by type
-        if (strcmp(kalos_module_get_string(parsed, p->name_index), current_name) != 0/* || current_type != p->property.type*/) {
-            module_prop_index++;
-            current_name = kalos_module_get_string(parsed, p->name_index);
-            current_type = p->property.type;
-            prop_addr_count++;
-            prop_addrs = realloc(prop_addrs, prop_addr_count * sizeof(prop_addrs[0]));
-            prop_addrs[prop_addr_count - 1].name_index = p->name_index;
-            prop_addrs[prop_addr_count - 1].type = p->property.type;
-        }
-        p->property.read_invoke_id = p->property.read_invoke_id ? module_prop_index * 2 : 0;
-        p->property.write_invoke_id = p->property.write_invoke_id ? module_prop_index * 2 + 1 : 0;
-    }
-    header->props_offset = parsed.size;
-    header->props_count = prop_addr_count;
-    parsed.data = realloc(parsed.data, parsed.size + prop_addr_count * sizeof(prop_addrs[0]));
-    memcpy((uint8_t*)parsed.data + parsed.size, prop_addrs, prop_addr_count * sizeof(prop_addrs[0]));
-    parsed.size += prop_addr_count * sizeof(prop_addrs[0]);
+    parsed.data = context.kalos_module_buffer;
+    parsed.size = context.module_buffer_index + context.string_buffer_index;
 
     return parsed;
 }
 
 static kalos_printer_fn script_output;
 static kalos_module_parsed script_modules;
+static kalos_module_header* script_current_header;
 static kalos_module* script_current_module;
 static kalos_export* script_current_export;
+static kalos_function* script_current_function;
 static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
@@ -447,23 +469,31 @@ char* function_type_to_string(kalos_function_type type) {
 }
 
 static void iter_function_arg(kalos_state state, void* context, uint16_t index, kalos_value* value) {
+    kalos_int* record = context;
+    kalos_arg* arg = kalos_module_get_list_item(script_modules, *record);
+    *record = arg->arg_list.next;
     value->type = KALOS_VALUE_STRING;
-    value->value.string = kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.args[index].type));
+    value->value.string = kalos_string_allocate(state, function_type_to_string(arg->type));
 }
 
 static kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-static kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_module->prefix_index != -1 ? kalos_module_get_string(script_modules, script_current_module->prefix_index) : "kalos_idl_"); }
+static kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
 static kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-static kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->prefix_index)); }
+static kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_header->prefix_index)); }
 
 static kalos_string kalos_idl_export_name2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
-static kalos_int kalos_idl_function_id2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.function.invoke_id; }
-static kalos_string kalos_idl_function_return_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.return_type)); }
-static kalos_string kalos_idl_function_realname2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.function.symbol_index)); }
-static kalos_string kalos_idl_function_c(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->entry.function.c_index)); }
-static kalos_object_ref kalos_idl_function_args2(kalos_state state, kalos_object_ref* o) { return kalos_allocate_sized_iterable(state, iter_function_arg, 0, NULL, script_current_export->entry.function.arg_count); }
-static kalos_int kalos_idl_function_arg_count2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.function.arg_count; }
-static kalos_string kalos_idl_function_varargs2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.function.vararg_type)); }
+static kalos_int kalos_idl_function_id2(kalos_state state, kalos_object_ref* o) { return script_current_function->invoke_id; }
+static kalos_string kalos_idl_function_return_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
+static kalos_string kalos_idl_function_realname2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->symbol_index)); }
+static kalos_string kalos_idl_function_c(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->c_index)); }
+static kalos_object_ref kalos_idl_function_args2(kalos_state state, kalos_object_ref* o) {
+    kalos_int* index;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_function->arg_list.count);
+    *index = script_current_function->arg_list.head;
+    return obj;
+}
+static kalos_int kalos_idl_function_arg_count2(kalos_state state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
+static kalos_string kalos_idl_function_varargs2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
 
 static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 
@@ -473,7 +503,13 @@ static kalos_string kalos_idl_property_read_symbol2(kalos_state state, kalos_obj
 static kalos_string kalos_idl_property_write_symbol2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
 static kalos_string kalos_idl_property_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 
-static kalos_int kalos_idl_handle_index2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.function.invoke_id; }
+static kalos_object_ref kalos_idl_handle_args(kalos_state state, kalos_object_ref* o) {
+    kalos_int* index;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_export->entry.handler.arg_list.count);
+    *index = script_current_export->entry.handler.arg_list.head;
+    return obj;
+}
+static kalos_int kalos_idl_handle_index2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
 static kalos_int kalos_idl_handle_module_index2(kalos_state state, kalos_object_ref* o) { return script_current_module->index; }
 
 struct walk_callback_context {
@@ -509,11 +545,18 @@ bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_
 
 void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_context, kalos_object_ref* object) {
     kalos_value v = kalos_value_clone(state, script_context);
-    for (int i = 0; i < script_current_export->entry.object.property_count; i++) {
+    kalos_int prop_index = script_current_export->entry.object.prop_list.head;
+    while (prop_index) {
         kalos_value ctx = kalos_value_clone(state, &v);
-        script_current_property = &script_current_export->entry.object.properties[i];
+        script_current_property = kalos_module_get_list_item(script_modules, prop_index);
+        // TODO: This is a bit of a hack
+        if (script_current_property->property.read_invoke_id)
+            script_current_property->property.read_invoke_id = kalos_module_lookup_property(script_modules, false, kalos_module_get_string(script_modules, script_current_property->name_index));
+        if (script_current_property->property.write_invoke_id)
+            script_current_property->property.write_invoke_id = kalos_module_lookup_property(script_modules, true, kalos_module_get_string(script_modules, script_current_property->name_index));
         kalos_object_ref obj = kalos_allocate_prop_object(state, NULL, kalos_module_idl_module_object_property_obj_props);
         kalos_module_idl_module_trigger_property(state, &ctx, &obj);
+        prop_index = script_current_property->prop_list.next;
     }
     kalos_clear(state, &v);
     script_current_property = NULL;
@@ -529,7 +572,9 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
             obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_obj_props);
+            script_current_function = kalos_module_get_list_item(parsed, export->entry.function_overload_list.head);
             kalos_module_idl_module_trigger_function(context->state, &ctx, &obj);
+            script_current_function = NULL;
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
             obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props);
@@ -641,11 +686,9 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         internal_error
     };
     script_modules = parsed_module;
+    script_current_header = (kalos_module_header*)parsed_module.data;
     kalos_state state = kalos_init(&script, kalos_module_idl_dispatch, &fns);
     kalos_module_idl_trigger_open(state);
-    struct walk_callback_context context;
-    context.modules = parsed_module;
-    context.state = state;
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
     if (total_allocated != 0) {

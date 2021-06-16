@@ -57,7 +57,7 @@ module module {
         prop(read) name: string = kalos_idl_export_name2;
         prop(read) module_index: number = kalos_idl_handle_module_index2;
         prop(read) handle_index: number = kalos_idl_handle_index2;
-        prop(read) args: object = kalos_idl_function_args2;
+        prop(read) args: object = kalos_idl_handle_args;
     }
 
     object object_obj {

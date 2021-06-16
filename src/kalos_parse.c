@@ -432,20 +432,22 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
     }
     int param_count = 0;
     TRY(param_count = parse_list_of_args(parse_state, KALOS_TOKEN_PAREN_OPEN, KALOS_TOKEN_PAREN_CLOSE));
-    if (fn->entry.function.vararg_type != FUNCTION_TYPE_VOID) {
-        if (param_count < fn->entry.function.arg_count) {
+    // TODO: Assuming one and only one overload!
+    kalos_function* overload = kalos_module_get_list_item(parse_state->all_modules, fn->entry.function_overload_list.head);
+    if (overload->vararg_type != FUNCTION_TYPE_VOID) {
+        if (param_count < overload->arg_list.count) {
             THROW(ERROR_UNEXPECTED_PARAMETERS);
         }
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, param_count - fn->entry.function.arg_count));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, param_count - overload->arg_list.count));
     } else {
-        if (param_count != fn->entry.function.arg_count) {
+        if (param_count != overload->arg_list.count) {
             THROW(ERROR_UNEXPECTED_PARAMETERS);
         }
     }
     struct pending_op op = {0};
     op.op = KALOS_OP_CALL;
     op.data[0] = module_index;
-    op.data[1] = fn->entry.function.invoke_id;
+    op.data[1] = overload->invoke_id;
     TRY_EXIT;
     return op;
 }
@@ -661,6 +663,9 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                 TRY(pending.store.data[0] = kalos_module_lookup_property(parse_state->all_modules, true, parse_state->token));
                 if (pending.store.data[0]) {
                     pending.store.op = KALOS_OP_SETPROP;
+                }
+                if (!pending.load.op && !pending.store.op) {
+                    THROW(ERROR_UNKNOWN_PROPERTY);
                 }
             }
         } else if (peek == KALOS_TOKEN_PAREN_OPEN) {
@@ -883,7 +888,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         }
         if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
             module_index = res.export_module_index;
-            handle_index = res.export->entry.function.invoke_id;
+            handle_index = res.export->entry.handler.invoke_id;
             handle = res.export;
             break;
         }
