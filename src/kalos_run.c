@@ -537,6 +537,9 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
                 break;
             }
+            case KALOS_OP_CALL_BYNAME:
+            case KALOS_OP_CALL_BYNAME_NORET:
+                break;
             case KALOS_OP_MAKE_LIST: {
                 int count = kalos_stack_vararg_count(&state->stack);
                 kalos_object_ref list = kalos_allocate_list(state, count, kalos_stack_vararg_start(&state->stack, count));

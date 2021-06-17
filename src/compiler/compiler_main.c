@@ -73,7 +73,8 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
     script.script_ops = malloc(10*1024);
     script.script_buffer_size = 10*1024;
     kalos_module_parsed modules = kalos_idl_parse_module(idl_data);
-    kalos_parse_result res = kalos_parse(input_data, modules, &script);
+    kalos_parse_options options = {0};
+    kalos_parse_result res = kalos_parse(input_data, modules, options, &script);
     if (!res.success) {
         printf("ERROR on line %d: %s\n", res.line, res.error);
         exit(1);

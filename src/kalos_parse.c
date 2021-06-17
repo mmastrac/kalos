@@ -922,7 +922,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_script* script) {
+kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script) {
     struct parse_state parse_state_data = {0};
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;

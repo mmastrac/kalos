@@ -4,8 +4,9 @@ import kidl;
 var in_object = false;
 var in_module = false;
 var dispatch = "";
-const FORWARD = "forward";
-const IMPL = "impl";
+const FORWARD = "forward";  # Forward declaration phase
+const IMPL = "impl";        # Implementation phase
+const DYNAMIC = "dynamic";  # Dynamic dispatch phase
 const HANDLE = "handle";
 const DISPATCH = "dispatch";
 const OBJECT = "object";

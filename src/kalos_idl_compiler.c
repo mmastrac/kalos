@@ -669,7 +669,8 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         printf("ERROR: %s\n", "failed to parse compiler IDL");
         return false;
     }
-    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, &script);
+    kalos_parse_options options = {0};
+    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
         return false;
