@@ -12,7 +12,8 @@ typedef kalos_value (*kalos_getindex)(kalos_state state, kalos_object_ref* objec
 typedef kalos_object_ref (*kalos_iterstart)(kalos_state state, kalos_object_ref* object);
 typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object_ref* object, bool* done);
 typedef void (*kalos_object_free)(kalos_state state, kalos_object_ref* object);
-typedef bool (*kalos_object_dispatch)(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack);
+typedef bool (*kalos_object_dispatch)(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
+typedef bool (*kalos_object_dispatch_name)(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack);
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -30,6 +31,7 @@ struct kalos_object {
     kalos_iterstart iterstart;
     kalos_iternext iternext;
     kalos_object_dispatch dispatch;
+    kalos_object_dispatch_name dispatch_name;
 };
 
 typedef union kalos_value_union {

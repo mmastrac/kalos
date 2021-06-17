@@ -22,6 +22,19 @@ kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* n
     return NULL;
 }
 
+kalos_module* kalos_module_get_module(kalos_module_parsed parsed, kalos_int module_id) {
+    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_int module_offset = header->module_list.head;
+    while (module_offset) {
+        kalos_module* module = kalos_module_get_list_item(parsed, module_offset);
+        if (module->index == module_id) {
+            return module;
+        }
+        module_offset = module->module_list.next;
+    }
+    return NULL;
+}
+
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name) {
     kalos_int export_offset = module->export_list.head;
     uint16_t i = 0;

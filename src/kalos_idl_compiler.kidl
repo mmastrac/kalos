@@ -7,7 +7,8 @@ module builtin {
 
     # Old handles
     handle close;
-    handle open;
+    handle open(dynamic: bool);
+    handle open2;
     handle object_property;
 }
 
@@ -45,7 +46,7 @@ module module {
     }
 
     object property_obj {
-        prop(read) name: string = kalos_idl_export_name2;
+        prop(read) name: string = kalos_idl_property_name;
         prop(read) read_id: number = kalos_idl_property_read_id2;
         prop(read) write_id: number = kalos_idl_property_write_id2;
         prop(read) type: string = kalos_idl_property_type2;

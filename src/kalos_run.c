@@ -28,7 +28,7 @@ typedef struct kalos_state_internal {
     kalos_mem_free_fn free; // part of public interface
     kalos_script* script;
     kalos_fn* fns;
-    kalos_dispatch_fn* modules;
+    kalos_dispatch* dispatch;
     kalos_stack stack;
     kalos_value globals[KALOS_VAR_SLOT_SIZE];
     kalos_value* locals;
@@ -373,11 +373,15 @@ static kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
     return string;
 }
 
-static kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
+static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
     memcpy(&int_value, &state->script->script_ops[state->pc], sizeof(kalos_int));
     state->pc += sizeof(kalos_int);
     return int_value;
+}
+
+static kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
+    return read_inline_integer(state);
 }
 
 static kalos_int op_push_bool(kalos_state_internal* state, kalos_op op) {
@@ -415,7 +419,7 @@ static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int s
     return kalos_value_clone(state, &storage[slot]);
 }
 
-kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_fn* fns) {
+kalos_state kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_fn* fns) {
     kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
     if (!state) {
         fns->error("malloc");
@@ -424,7 +428,7 @@ kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_f
     state->alloc = fns->alloc;
     state->realloc = fns->realloc;
     state->free = fns->free;
-    state->modules = modules;
+    state->dispatch = dispatch;
     state->script = script;
     state->fns = fns;
     LOG("%s", "Triggering global");
@@ -533,13 +537,18 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
             case KALOS_OP_CALL: {
                 int export = pop(&state->stack)->value.number;
                 int module = pop(&state->stack)->value.number;
-                LOG("%d:%d %p", export, module, state->modules[module]);
-                state->modules[module](state_, export, &state->stack, op == KALOS_OP_CALL);
+                int count = read_inline_integer(state_);
+                state->dispatch->modules[module](state_, export, count, &state->stack, op == KALOS_OP_CALL);
                 break;
             }
             case KALOS_OP_CALL_BYNAME:
-            case KALOS_OP_CALL_BYNAME_NORET:
+            case KALOS_OP_CALL_BYNAME_NORET: {
+                kalos_string export = pop(&state->stack)->value.string;
+                kalos_string module = pop(&state->stack)->value.string;
+                int count = read_inline_integer(state_);
+                (*state->dispatch->dispatch_name)(state_, kalos_string_c(state_, module), kalos_string_c(state_, export), count, &state->stack, op == KALOS_OP_CALL);
                 break;
+            }
             case KALOS_OP_MAKE_LIST: {
                 int count = kalos_stack_vararg_count(&state->stack);
                 kalos_object_ref list = kalos_allocate_list(state, count, kalos_stack_vararg_start(&state->stack, count));
@@ -554,7 +563,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                     return;
                 }
                 kalos_object_ref object = pop(&state->stack)->value.object;
-                if (!object->dispatch || !object->dispatch(state, &object, prop, &state->stack)) {
+                if (!object->dispatch || !object->dispatch(state, &object, prop, 0, &state->stack)) {
                     value_error(state);
                 }
                 kalos_object_release(state, &object);
@@ -565,7 +574,32 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 kalos_value* value = pop(&state->stack);
                 kalos_object_ref object = pop(&state->stack)->value.object;
                 *push_raw(&state->stack) = *value;
-                if (!object->dispatch || !object->dispatch(state, &object, prop, &state->stack)) {
+                if (!object->dispatch || !object->dispatch(state, &object, prop, 1, &state->stack)) {
+                    value_error(state);
+                    break;
+                }
+                kalos_object_release(state, &object);
+                break;
+            }
+            case KALOS_OP_GETPROP_BYNAME: {
+                kalos_string prop = pop(&state->stack)->value.string;
+                if (peek(&state->stack, 0)->type != KALOS_VALUE_OBJECT) {
+                    value_error(state);
+                    return;
+                }
+                kalos_object_ref object = pop(&state->stack)->value.object;
+                if (!object->dispatch_name || !object->dispatch_name(state, &object, kalos_string_c(state, prop), 0, &state->stack)) {
+                    value_error(state);
+                }
+                kalos_object_release(state, &object);
+                break;
+            }
+            case KALOS_OP_SETPROP_BYNAME: {
+                kalos_string prop = pop(&state->stack)->value.string;
+                kalos_value* value = pop(&state->stack);
+                kalos_object_ref object = pop(&state->stack)->value.object;
+                *push_raw(&state->stack) = *value;
+                if (!object->dispatch_name || !object->dispatch_name(state, &object, kalos_string_c(state, prop), 1, &state->stack)) {
                     value_error(state);
                     break;
                 }
@@ -790,5 +824,12 @@ kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, ka
     kalos_object_ref object = kalos_allocate_object(state, 0);
     object->context = context;
     object->dispatch = dispatch;
+    return object;
+}
+
+kalos_object_ref kalos_allocate_prop_object_name(kalos_state state, void* context, kalos_object_dispatch_name dispatch_name) {
+    kalos_object_ref object = kalos_allocate_object(state, 0);
+    object->context = context;
+    object->dispatch_name = dispatch_name;
     return object;
 }

@@ -17,7 +17,7 @@ typedef struct kalos_fn {
 typedef struct kalos_script kalos_script;
 typedef struct kalos_module kalos_module;
 kalos_state kalos_init_for_test(kalos_fn* fns);
-kalos_state kalos_init(kalos_script* script, kalos_dispatch_fn* modules, kalos_fn* fns);
+kalos_state kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_fn* fns);
 void kalos_load_arg_any(kalos_state state_, kalos_int index, kalos_value* arg);
 void kalos_load_arg_object(kalos_state state, kalos_int index, kalos_object_ref* arg);
 void kalos_load_arg_number(kalos_state state, kalos_int index, kalos_int arg);
@@ -31,3 +31,4 @@ kalos_object_ref kalos_allocate_list(kalos_state state, kalos_int size, kalos_va
 typedef void (*kalos_iterable_fn)(kalos_state state, void* context, uint16_t index, kalos_value* output);
 kalos_object_ref kalos_allocate_sized_iterable(kalos_state state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
 kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch dispatch);
+kalos_object_ref kalos_allocate_prop_object_name(kalos_state state, void* context, kalos_object_dispatch_name dispatch_name);

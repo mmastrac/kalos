@@ -98,11 +98,11 @@ typedef struct kalos_export {
     kalos_export_entry entry;
 } kalos_export;
 
-typedef void (*kalos_dispatch_name_fn)(kalos_state state, const char* module, const char* name, kalos_stack* stack, bool retval);
-typedef void (*kalos_dispatch_fn)(kalos_state state, int function, kalos_stack* stack, bool retval);
+typedef bool (*kalos_dispatch_name_fn)(kalos_state state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval);
+typedef void (*kalos_dispatch_fn)(kalos_state state, int function, int param_count, kalos_stack* stack, bool retval);
 
 typedef struct kalos_dispatch {
-    kalos_dispatch_name_fn* dispatch_name;
+    kalos_dispatch_name_fn dispatch_name;
     kalos_dispatch_fn* modules;
 } kalos_dispatch;
 
@@ -146,6 +146,7 @@ static inline kalos_export_address kalos_make_address(kalos_int module_index, ka
 typedef bool (*kalos_module_callback)(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module);
 typedef bool (*kalos_export_callback)(void* context, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export);
 
+kalos_module* kalos_module_get_module(kalos_module_parsed parsed, kalos_int module_id);
 kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* name);
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name);
 void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback);

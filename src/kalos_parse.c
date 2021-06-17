@@ -97,7 +97,8 @@ typedef struct name_resolution_result {
 
 struct pending_op {
     kalos_op op;
-    kalos_int data[2];
+    kalos_int data[3];
+    const char* sdata[2];
 };
 
 struct pending_ops {
@@ -108,7 +109,7 @@ struct pending_ops {
 
 struct parse_state {
     kalos_lex_state lex_state;
-    
+    kalos_parse_options options;
     uint8_t* output_script;
     uint16_t* script_offset;
     int output_script_index;
@@ -448,6 +449,11 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
     op.op = KALOS_OP_CALL;
     op.data[0] = module_index;
     op.data[1] = overload->invoke_id;
+    op.data[2] = param_count;
+    if (parse_state->options.robust_dispatch) {
+        op.sdata[0] = kalos_module_get_string(parse_state->all_modules, kalos_module_get_module(parse_state->all_modules, module_index)->name_index);
+        op.sdata[1] = kalos_module_get_string(parse_state->all_modules, fn->name_index);
+    }
     TRY_EXIT;
     return op;
 }
@@ -572,12 +578,23 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
         TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
         TRY(parse_push_op(parse_state, pending->op));
     } else if (pending->op == KALOS_OP_CALL || pending->op == KALOS_OP_CALL_NORET) {
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[1]));
-        TRY(parse_push_op(parse_state, pending->op));
+        if (parse_state->options.robust_dispatch) {
+            TRY(parse_push_string(parse_state, pending->sdata[0]));
+            TRY(parse_push_string(parse_state, pending->sdata[1]));
+            TRY(parse_push_op_1(parse_state, pending->op == KALOS_OP_CALL ? KALOS_OP_CALL_BYNAME : KALOS_OP_CALL_BYNAME_NORET, pending->data[2]));
+        } else {
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[1]));
+            TRY(parse_push_op_1(parse_state, pending->op, pending->data[2]));
+        }
     } else if (pending->op == KALOS_OP_GETPROP || pending->op == KALOS_OP_SETPROP) {
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
-        TRY(parse_push_op(parse_state, pending->op));
+        if (parse_state->options.robust_dispatch) {
+            TRY(parse_push_string(parse_state, pending->sdata[0]));
+            TRY(parse_push_op(parse_state, pending->op == KALOS_OP_GETPROP ? KALOS_OP_GETPROP_BYNAME : KALOS_OP_SETPROP_BYNAME));
+        } else {
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
+            TRY(parse_push_op(parse_state, pending->op));
+        }
     } else if (pending->op == KALOS_OP_PUSH_STRING) {
         TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, pending->data[0])));
     } else if (pending->op == KALOS_OP_PUSH_INTEGER) {
@@ -635,8 +652,15 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                     if (res.export->type == KALOS_EXPORT_TYPE_PROPERTY) {
                         pending.load.op = pending.store.op = KALOS_OP_CALL;
                         pending.load.data[0] = pending.store.data[0] = res.export_module_index;
+                        if (parse_state->options.robust_dispatch) {
+                            pending.load.sdata[0] = pending.store.sdata[0] = kalos_module_get_string(parse_state->all_modules, kalos_module_get_module(parse_state->all_modules, res.export_module_index)->name_index);
+                            pending.load.sdata[1] = kalos_module_get_string(parse_state->all_modules, res.export->name_index);
+                            pending.store.sdata[1] = kalos_module_get_string(parse_state->all_modules, res.export->name_index);
+                        }
                         pending.load.data[1] = res.export->entry.property.read_invoke_id;
+                        pending.load.data[2] = 0;
                         pending.store.data[1] = res.export->entry.property.write_invoke_id;
+                        pending.store.data[2] = 1;
                     } else if (res.export->type == KALOS_EXPORT_TYPE_CONST_NUMBER) {
                         pending.is_const = true;
                         pending.load.op = KALOS_OP_PUSH_INTEGER;
@@ -658,10 +682,12 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                 pending.req_dup = true;
                 TRY(pending.load.data[0] = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token));
                 if (pending.load.data[0]) {
+                    pending.load.sdata[0] = parse_state->token;
                     pending.load.op = KALOS_OP_GETPROP;
                 }
                 TRY(pending.store.data[0] = kalos_module_lookup_property(parse_state->all_modules, true, parse_state->token));
                 if (pending.store.data[0]) {
+                    pending.store.sdata[0] = parse_state->token;
                     pending.store.op = KALOS_OP_SETPROP;
                 }
                 if (!pending.load.op && !pending.store.op) {
@@ -924,6 +950,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
 
 kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script) {
     struct parse_state parse_state_data = {0};
+    parse_state_data.options = options;
     parse_state_data.output_script = script->script_ops;
     parse_state_data.all_modules = modules;
     parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");

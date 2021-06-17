@@ -497,6 +497,7 @@ static kalos_string kalos_idl_function_varargs2(kalos_state state, kalos_object_
 
 static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 
+static kalos_string kalos_idl_property_name(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
 static kalos_int kalos_idl_property_read_id2(kalos_state state, kalos_object_ref* o) { return prop()->read_invoke_id; }
 static kalos_int kalos_idl_property_write_id2(kalos_state state, kalos_object_ref* o) { return prop()->write_invoke_id; }
 static kalos_string kalos_idl_property_read_symbol2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read_symbol_index)); }
@@ -541,7 +542,7 @@ void kalos_idl_walk_exports(kalos_state state, kalos_value* script_context) {
 }
 
 void kalos_module_idl_module_trigger_property(kalos_state state, kalos_value* a0, kalos_object_ref* a1);
-bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object_ref* object, int function, kalos_stack* stack);
+bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object_ref* object, const char*, int param_count, kalos_stack* stack);
 
 void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_context, kalos_object_ref* object) {
     kalos_value v = kalos_value_clone(state, script_context);
@@ -554,7 +555,7 @@ void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_con
             script_current_property->property.read_invoke_id = kalos_module_lookup_property(script_modules, false, kalos_module_get_string(script_modules, script_current_property->name_index));
         if (script_current_property->property.write_invoke_id)
             script_current_property->property.write_invoke_id = kalos_module_lookup_property(script_modules, true, kalos_module_get_string(script_modules, script_current_property->name_index));
-        kalos_object_ref obj = kalos_allocate_prop_object(state, NULL, kalos_module_idl_module_object_property_obj_props);
+        kalos_object_ref obj = kalos_allocate_prop_object_name(state, NULL, kalos_module_idl_module_object_property_obj_props);
         kalos_module_idl_module_trigger_property(state, &ctx, &obj);
         prop_index = script_current_property->prop_list.next;
     }
@@ -571,21 +572,21 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     kalos_object_ref obj = NULL;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_function_obj_props);
+            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_function_obj_props);
             script_current_function = kalos_module_get_list_item(parsed, export->entry.function_overload_list.head);
             kalos_module_idl_module_trigger_function(context->state, &ctx, &obj);
             script_current_function = NULL;
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_property_obj_props);
+            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_property_obj_props);
             kalos_module_idl_module_trigger_property(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
-            obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_handle_obj_props);
+            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_handle_obj_props);
             kalos_module_idl_module_trigger_handle_(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
-            obj = kalos_allocate_prop_object(context->state, NULL, kalos_module_idl_module_object_object_obj_props);
+            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_object_obj_props);
             kalos_module_idl_module_trigger_object(context->state, &ctx, &obj);
             break;
         default:
@@ -598,7 +599,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     struct walk_callback_context* context = context_;
     script_current_module = module;
     kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
-    kalos_object_ref obj = kalos_allocate_prop_object(context->state, module, kalos_module_idl_module_object_module_obj_props);
+    kalos_object_ref obj = kalos_allocate_prop_object_name(context->state, module, kalos_module_idl_module_object_module_obj_props);
     kalos_module_idl_module_trigger_begin(context->state, &ctx, &obj);
     return true;
 }
@@ -670,16 +671,17 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         return false;
     }
     kalos_parse_options options = {0};
+    options.robust_dispatch = true;
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
         return false;
     }
-    // char* s = malloc(30 * 1024);
-    // s[0] = 0;
-    // kalos_dump(&script, s);
-    // printf("%s", s);
-    // free(s);
+    char* s = malloc(60 * 1024);
+    s[0] = 0;
+    kalos_dump(&script, s);
+    printf("%s", s);
+    free(s);
     kalos_fn fns = {
         internal_malloc,
         internal_realloc,
@@ -688,8 +690,11 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     };
     script_modules = parsed_module;
     script_current_header = (kalos_module_header*)parsed_module.data;
-    kalos_state state = kalos_init(&script, kalos_module_idl_dispatch, &fns);
-    kalos_module_idl_trigger_open(state);
+    kalos_dispatch dispatch = {0};
+    // dispatch.modules = &kalos_module_idl_dispatch[0];
+    dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
+    kalos_state state = kalos_init(&script, &dispatch, &fns);
+    kalos_module_idl_trigger_open(state, false);
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
     if (total_allocated != 0) {
