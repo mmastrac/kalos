@@ -11,11 +11,14 @@ TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
 TEST_LIB_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(TEST_OBJDIR)/lib/%.o,$(SOURCES))
 TEST_OBJECTS=$(TEST_LIB_OBJECTS) $(patsubst $(TESTDIR)/%.c,$(TEST_OBJDIR)/test/%.o,$(TEST_SOURCES))
 
+is_term_set := $(shell echo $$TERM)
+ifdef is_term_set
 TPUT_SGR0=$(shell tput sgr0 || echo '')
 TPUT_BOLD=$(shell tput bold || echo '')
 TPUT_DIM=$(shell tput dim || echo '')
 TPUT_BG_BLACK=$(shell tput setab 0 || echo '')
 TPUT_FG_GREEN=$(shell tput setaf 2 || echo '')
+endif
 
 define color_sh
 	printf "$(TPUT_SGR0)$(TPUT_FG_GREEN)[ %-5s ]$(TPUT_SGR0)$(TPUT_FG_GREEN)$(TPUT_BOLD) %-30s$(TPUT_SGR0) $(TPUT_DIM)(%s)$(TPUT_SGR0)\n" "$1" "$3" "$2"
