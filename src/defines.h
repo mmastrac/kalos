@@ -11,18 +11,6 @@
 #ifndef __far
 #define __far
 #endif
-#undef MK_FP
-#define MK_FP(x, y) (x)
-#define O_BINARY 0
-#define _fstrchr strchr
-#define _fstrrchr strrchr
-#define _fstrncmp strncmp
-#define _fstrncpy strncpy
-#define _fstrnicmp strncasecmp
-#define _fstrlen strlen
-#define _fmemset memset
-#define _fmemcpy memcpy
-#define _psp (0)
 // These macros suck, but watcom provides them
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

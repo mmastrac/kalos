@@ -69,24 +69,7 @@ static void kalos_object_retain(kalos_state state, kalos_object_ref object) {
     object->count++;
 }
 
-static void kalos_object_release(kalos_state state, kalos_object_ref* ref) {
-    if (!*ref) {
-        return;
-    }
-    kalos_object_ref object = *ref;
-    if (object->count == 0) {
-        if (object->object_free) {
-            object->object_free(state, &object);
-            object->object_free = NULL;
-        }
-        object->count = KALOS_OBJECT_POISONED;
-        kalos_mem_free(state, object);
-    } else {
-        ASSERT(object->count != KALOS_OBJECT_POISONED);
-        object->count--;
-    }
-    *ref = NULL;
-}
+void kalos_object_release(kalos_state state, kalos_object_ref* ref);
 
 inline static int kalos_stack_vararg_count(kalos_stack* stack) {
     return stack->stack[stack->stack_index - 1].value.number;

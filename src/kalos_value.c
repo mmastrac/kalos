@@ -1,4 +1,24 @@
+#include "defines.h"
 #include "kalos_value.h"
+
+void kalos_object_release(kalos_state state, kalos_object_ref* ref) {
+    if (!*ref) {
+        return;
+    }
+    kalos_object_ref object = *ref;
+    if (object->count == 0) {
+        if (object->object_free) {
+            object->object_free(state, &object);
+            object->object_free = NULL;
+        }
+        object->count = KALOS_OBJECT_POISONED;
+        kalos_mem_free(state, object);
+    } else {
+        ASSERT(object->count != KALOS_OBJECT_POISONED);
+        object->count--;
+    }
+    *ref = NULL;
+}
 
 bool kalos_stack_setup_3(kalos_stack* stack, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2) {
     KALOS_CHECK__(3);

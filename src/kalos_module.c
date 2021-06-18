@@ -1,3 +1,4 @@
+#include "defines.h"
 #include "kalos_module.h"
 #include "kalos_util.h"
 

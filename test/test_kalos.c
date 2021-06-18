@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#include <defines.h>
 #include <kalos.h>
 #include <kalos_dump.h>
 #include <kalos_idl_compiler.h>

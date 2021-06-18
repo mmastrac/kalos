@@ -1,5 +1,5 @@
 #include <stdbool.h>
-
+#include "defines.h"
 #include "kalos_dump.h"
 #include "kalos_module.h"
 #include "kalos_parse.h"
