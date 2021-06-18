@@ -1,5 +1,4 @@
-#ifndef _DEFINES_H_
-#define _DEFINES_H_
+#pragma once
 
 #ifdef __WATCOMC__
 #pragma off (unreferenced)
@@ -44,8 +43,6 @@ void log_printf(const char* msg, ...);
 #else
 #define ASSERT(x) if (sizeof(x)) {}
 #define LOG(...)
-#endif
-
 #endif
 
 #endif

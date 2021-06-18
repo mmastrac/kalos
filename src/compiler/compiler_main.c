@@ -3,9 +3,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "../scripting/kalos_dump.h"
-#include "../scripting/kalos_idl_compiler.h"
-#include "../scripting/kalos_parse.h"
+#include "../kalos_dump.h"
+#include "../kalos_idl_compiler.h"
+#include "../kalos_parse.h"
 
 #define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
 

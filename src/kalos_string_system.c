@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "../defines.h"
+#include "defines.h"
 #define KALOS_STRING_SYSTEM_C
 #include "kalos_string_system.h"
 

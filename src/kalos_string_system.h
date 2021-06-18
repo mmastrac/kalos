@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../defines.h"
+#include "defines.h"
 #include "kalos.h"
 #include "kalos_string_format.h"
 

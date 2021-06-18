@@ -5,7 +5,7 @@
 #include "kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_string_format.h"
-#include "../defines.h"
+#include "defines.h"
 
 #define KALOS_MAX_IMPORTS 16
 
