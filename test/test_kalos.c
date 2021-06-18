@@ -19,7 +19,6 @@
 TEST_SUITE(kalos)
 
 #define SCRIPT_DIR "test/data/scripts"
-#define MAX_TOKENS 500
 
 static int32_t total_allocated = 0;
 static uint16_t allocation_id;
