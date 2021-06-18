@@ -5,6 +5,7 @@ OBJDIR=$(OUTDIR)/obj
 DOS_OBJDIR=$(OBJDIR)/dos
 TEST_OBJDIR=$(OBJDIR)/test
 HOST_OBJDIR=$(OBJDIR)/host
+CC := $(shell which clang || which gcc)
 
 SOURCES=$(wildcard $(SRCDIR)/*.c)
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 #include "kalos_dump.h"
 #include "kalos_parse.h"

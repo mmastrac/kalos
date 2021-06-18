@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include <kalos.h>
 #include <kalos_dump.h>
@@ -115,7 +116,7 @@ void lex_test(const char* file) {
                 TEST_FAIL_MESSAGE("Expected an error"); // Expected failure
             } else if (token == KALOS_TOKEN_ERROR) {
                 TEST_ASSERT_EQUAL_MESSAGE(expected_fail_line, state.line, "Failure happened on the wrong line");
-                return;
+                goto success;
             }
         }
     } else {
@@ -131,8 +132,10 @@ void lex_test(const char* file) {
             TEST_ASSERT_NOT_EQUAL_MESSAGE(KALOS_TOKEN_ERROR, token, test_format_string("Got an error token on line %d! Remainder was '%.10s...'", state.line, state.s));
         }
         TEST_FAIL_MESSAGE("Parsed too many tokens");
-        success: {}
     }
+
+success:
+    free(buffer);
 }
 
 void parse_test(const char* file) {
@@ -158,8 +161,12 @@ void parse_test(const char* file) {
         script.script_buffer_size = sizeof(script_buffer);
 
         kalos_parse_options options = {0};
-        kalos_parse_result res = kalos_parse(buffer, parse_modules_for_test(), options, &script);
+        kalos_module_parsed parsed_modules = parse_modules_for_test();
+        kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
+        kalos_idl_free_module(parsed_modules);
+
         TEST_ASSERT_FALSE_MESSAGE(res.success, "Expected an error");
+        free(buffer);
         return;
     }
 
@@ -168,7 +175,9 @@ void parse_test(const char* file) {
     script.script_buffer_size = sizeof(script_buffer);
 
     kalos_parse_options options = {0};
-    kalos_parse_result res = kalos_parse(buffer, parse_modules_for_test(), options, &script);
+    kalos_module_parsed parsed_modules = parse_modules_for_test();
+    kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
+    kalos_idl_free_module(parsed_modules);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 
     memset(buffer, 0, BUFFER_SIZE);
@@ -310,7 +319,9 @@ void run_test(const char* file) {
     script.script_buffer_size = sizeof(script_buffer);
 
     kalos_parse_options options = {0};
-    kalos_parse_result res = kalos_parse(buffer, parse_modules_for_test(), options, &script);
+    kalos_module_parsed parsed_modules = parse_modules_for_test();
+    kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
+    kalos_idl_free_module(parsed_modules);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 
     total_allocated = 0;
@@ -338,6 +349,8 @@ void run_test(const char* file) {
         // write_buffer(full_file, output_buffer);
         TEST_FAIL();
     }
+    free(buffer);
+    free(buffer2);
     total_allocated = 0;
 }
 

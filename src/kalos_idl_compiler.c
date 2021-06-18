@@ -708,3 +708,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     }
     return true;
 }
+
+void kalos_idl_free_module(kalos_module_parsed parsed_modules) {
+    free(parsed_modules.data);
+}
