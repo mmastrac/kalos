@@ -11,11 +11,6 @@ typedef enum kalos_op {
 
 extern const char* kalos_op_strings[KALOS_OP_MAX + 1];
 
-typedef struct kalos_script {
-    uint8_t* script_ops;
-    uint16_t script_buffer_size;
-} kalos_script;
-
 #pragma pack(push, 1)
 typedef struct kalos_script_header {
     uint8_t signature[4];

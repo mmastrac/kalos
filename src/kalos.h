@@ -24,6 +24,11 @@ typedef struct {
 } kalos_string;
 typedef struct { kalos_string_allocated* s; } kalos_writable_string;
 
+typedef struct kalos_script {
+    uint8_t* script_ops;
+    uint16_t script_buffer_size;
+} kalos_script;
+
 typedef void* (*kalos_mem_alloc_fn)(size_t);
 typedef void* (*kalos_mem_realloc_fn)(void*, size_t);
 typedef void (*kalos_mem_free_fn)(void*);
