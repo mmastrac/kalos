@@ -59,6 +59,7 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         <init> end { return true; }
         <init,module,object> "#" [^\n\x00]* "\n" { /* comment */ continue; }
         <init> "prefix" ws? @a string @b ws? ";" { if (!callbacks->prefix(context, copy_string(buffers[0], a, b))) return false; continue; }
+        <init> "dispatch" ws? "name" ws? ";" { callbacks->dispatch_name(context); }
         <init> "module" ws @a word @b ws? "{" => module { callbacks->begin_module(context, copy_string(buffers[0], a, b)); continue; }
         <module> "object" ws? @a word @b ws? "{" => object { callbacks->begin_object(context, copy_string(buffers[0], a, b)); continue; } 
         <object> "}" => module { callbacks->end_object(context); continue; }

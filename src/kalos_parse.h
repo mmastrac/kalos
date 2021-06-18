@@ -37,7 +37,7 @@ typedef struct kalos_parse_result {
 } kalos_parse_result;
 
 typedef struct kalos_parse_options {
-    bool robust_dispatch;
+    kalos_int flags;
 } kalos_parse_options;
 
 kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script);

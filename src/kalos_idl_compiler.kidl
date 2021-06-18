@@ -1,4 +1,5 @@
 prefix "kalos_module_idl_";
+dispatch name;
 
 module builtin {
     fn println(s: string) = kalos_idl_compiler_println;

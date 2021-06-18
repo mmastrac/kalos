@@ -91,3 +91,7 @@ const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index)
     kalos_module_header* header = (kalos_module_header*)parsed.data;
     return (const char *)parsed.data + header->string_offset + index;
 }
+
+kalos_module_header* kalos_module_get_header(kalos_module_parsed parsed) {
+    return (kalos_module_header*)parsed.data;
+}

@@ -215,6 +215,12 @@ static bool prefix(void* context, const char* prefix) {
     return true;
 }
 
+static void dispatch_name(void* context) {
+    struct kalos_module_builder* builder = context;
+    root(builder)->flags |= KALOS_MODULE_FLAG_DISPATCH_NAME;
+    LOG("dispatch name");
+}
+
 static int insert_module_fn(void* context, void* a, void* b) {
     struct kalos_module_builder* builder = context;
     kalos_module* module = b;
@@ -378,6 +384,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     kalos_idl_callbacks callbacks = {
         error,
         prefix,
+        dispatch_name,
         begin_module,
         end_module,
         begin_object,
@@ -671,7 +678,6 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         return false;
     }
     kalos_parse_options options = {0};
-    options.robust_dispatch = true;
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
@@ -694,7 +700,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     // dispatch.modules = &kalos_module_idl_dispatch[0];
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
     kalos_state state = kalos_init(&script, &dispatch, &fns);
-    kalos_module_idl_trigger_open(state, false);
+    kalos_module_idl_trigger_open(state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
     if (total_allocated != 0) {

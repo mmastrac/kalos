@@ -114,6 +114,8 @@ typedef struct kalos_module {
     kalos_module_item_list_header export_list;
 } kalos_module;
 
+#define KALOS_MODULE_FLAG_DISPATCH_NAME 1
+
 typedef struct kalos_module_header {
     kalos_int version;
     kalos_module_item_list_header module_list;
@@ -121,6 +123,7 @@ typedef struct kalos_module_header {
     kalos_int string_offset;
     kalos_int string_size;
     kalos_int prefix_index;
+    kalos_int flags;
 } kalos_module_header;
 
 typedef struct kalos_export_address {
@@ -154,3 +157,4 @@ void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_
 kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name);
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index);
 void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset);
+kalos_module_header* kalos_module_get_header(kalos_module_parsed parsed);

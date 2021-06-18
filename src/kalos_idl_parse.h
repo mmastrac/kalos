@@ -4,7 +4,7 @@
 typedef struct kalos_idl_callbacks {
     void (*error)(void* context, const char* start, uint16_t error_offset);
     bool (*prefix)(void* context, const char* prefix);
-
+    void (*dispatch_name)(void* context);
     void (*begin_module)(void* context, const char* module);
     void (*end_module)(void* context);
 
