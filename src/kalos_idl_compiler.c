@@ -425,17 +425,15 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environmen
         LOG("PROP %s=%d", context.string_buffer + prop_addr->name_index, prop_addr->invoke_id);
     }
 
-    context.kalos_module_buffer = env->realloc(context.kalos_module_buffer, context.module_buffer_index + context.string_buffer_index);
-    kalos_module_header* header = root(&context);
+    kalos_module_parsed parsed = kalos_buffer_alloc(env, context.module_buffer_index + context.string_buffer_index);
+    memcpy(parsed.buffer, context.kalos_module_buffer, context.module_buffer_index);
+    env->free(context.kalos_module_buffer);
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     header->version = 1;
     header->string_offset = context.module_buffer_index;
     header->string_size = context.string_buffer_index;
-    memcpy(PTR_BYTE_OFFSET(context.kalos_module_buffer, header->string_offset), context.string_buffer, context.string_buffer_index);
+    memcpy(PTR_BYTE_OFFSET(parsed.buffer, header->string_offset), context.string_buffer, context.string_buffer_index);
     env->free(context.string_buffer);
-
-    kalos_module_parsed parsed;
-    parsed.data = context.kalos_module_buffer;
-    parsed.size = context.module_buffer_index + context.string_buffer_index;
 
     return parsed;
 }
@@ -627,7 +625,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
     };
     script_environment = env;
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, env);
-    if (!modules.data) {
+    if (!modules.buffer) {
         printf("ERROR: %s\n", "failed to parse compiler IDL");
         return false;
     }
@@ -639,7 +637,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
         return false;
     }
     script_modules = parsed_module;
-    script_current_header = (kalos_module_header*)parsed_module.data;
+    script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
     kalos_state state = kalos_init(&script, &dispatch, env);
@@ -647,8 +645,4 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
     return true;
-}
-
-void kalos_idl_free_module(kalos_module_parsed parsed_modules, kalos_basic_environment* env) {
-    env->free(parsed_modules.data);
 }

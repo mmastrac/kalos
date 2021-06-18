@@ -25,11 +25,6 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_OBJECT,
 } kalos_export_type;
 
-typedef struct kalos_module_parsed {
-    void* data;
-    size_t size;
-} kalos_module_parsed;
-
 #pragma pack(push, 1)
 typedef struct kalos_module_item_list {
     kalos_int prev, next;

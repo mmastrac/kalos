@@ -70,8 +70,8 @@ typedef struct kalos_buffer {
 } kalos_buffer;
 
 typedef kalos_buffer kalos_script;
-typedef kalos_buffer kalos_modules_parsed;
+typedef kalos_buffer kalos_module_parsed;
 
-kalos_buffer kalos_buffer_alloc(kalos_state state, size_t size);
+kalos_buffer kalos_buffer_alloc(kalos_basic_environment* env, size_t size);
 size_t kalos_buffer_size(kalos_buffer buffer);
 void kalos_buffer_free(kalos_buffer buffer);

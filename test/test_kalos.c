@@ -120,7 +120,7 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, kalos_buffer byte
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_parse_result res = kalos_parse((const char*)script_text.buffer, parsed_modules, options, &script);
-    kalos_idl_free_module(parsed_modules, &test_env);
+    kalos_buffer_free(parsed_modules);
     if (res.error) {
         // Don't check bytecode if we failed to parse
         kalos_buffer_free(script);
@@ -278,7 +278,7 @@ void run_test(const char* name) {
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_script script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
     kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, &script);
-    kalos_idl_free_module(parsed_modules, &test_env);
+    kalos_buffer_free(parsed_modules);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 
     kalos_dispatch dispatch = {0};

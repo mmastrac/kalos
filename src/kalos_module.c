@@ -7,11 +7,11 @@ void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset) {
     if (offset == 0) {
         int x = 1;
     }
-    return PTR_BYTE_OFFSET(parsed.data, offset);
+    return PTR_BYTE_OFFSET(parsed.buffer, offset);
 }
 
 kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* name) {
-    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     kalos_int module_offset = header->module_list.head;
     while (module_offset) {
         kalos_module* module = kalos_module_get_list_item(parsed, module_offset);
@@ -24,7 +24,7 @@ kalos_module* kalos_module_find_module(kalos_module_parsed parsed, const char* n
 }
 
 kalos_module* kalos_module_get_module(kalos_module_parsed parsed, kalos_int module_id) {
-    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     kalos_int module_offset = header->module_list.head;
     while (module_offset) {
         kalos_module* module = kalos_module_get_list_item(parsed, module_offset);
@@ -50,7 +50,7 @@ kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module*
 }
 
 void kalos_module_walk_modules(void* context, kalos_module_parsed parsed, kalos_module_callback callback) {
-    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     kalos_int module_offset = header->module_list.head;
     uint16_t i = 0;
     while (module_offset) {
@@ -75,7 +75,7 @@ void kalos_module_walk_exports(void* context, kalos_module_parsed parsed, kalos_
 }
 
 kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, const char* name) {
-    kalos_module_header* header = (kalos_module_header*)parsed.data;
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     kalos_int prop_offset = header->prop_list.head;
     while (prop_offset) {
         kalos_property_address* prop_addr = kalos_module_get_list_item(parsed, prop_offset);
@@ -89,10 +89,10 @@ kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, c
 }
 
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index) {
-    kalos_module_header* header = (kalos_module_header*)parsed.data;
-    return (const char *)parsed.data + header->string_offset + index;
+    kalos_module_header* header = (kalos_module_header*)parsed.buffer;
+    return (const char *)parsed.buffer + header->string_offset + index;
 }
 
 kalos_module_header* kalos_module_get_header(kalos_module_parsed parsed) {
-    return (kalos_module_header*)parsed.data;
+    return (kalos_module_header*)parsed.buffer;
 }

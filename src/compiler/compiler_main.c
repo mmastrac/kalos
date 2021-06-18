@@ -159,7 +159,7 @@ int dump_script(int verbose, const char* input) {
 int compile_idl(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
-    write_file(output, modules.data, modules.size);
+    write_file(output, modules.buffer, kalos_buffer_size(modules));
     if (total_allocated != 0) {
         printf("WARNING: IDL compiler leaked %d bytes(s)\n", (int)total_allocated);
     }
@@ -169,7 +169,7 @@ int compile_idl(int verbose, const char* input, const char* output) {
 int compile_dispatch(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
-    if (!modules.data) {
+    if (!modules.buffer) {
         printf("ERROR: failed to compile KIDL\n");
         exit(1);
     }
