@@ -30,5 +30,4 @@ kalos_object_ref kalos_allocate_object(kalos_state state, size_t context_size);
 kalos_object_ref kalos_allocate_list(kalos_state state, kalos_int size, kalos_value* values);
 typedef void (*kalos_iterable_fn)(kalos_state state, void* context, uint16_t index, kalos_value* output);
 kalos_object_ref kalos_allocate_sized_iterable(kalos_state state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
-kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch dispatch);
-kalos_object_ref kalos_allocate_prop_object_name(kalos_state state, void* context, kalos_object_dispatch_name dispatch_name);
+kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch* dispatch);

@@ -1,6 +1,7 @@
 SRCDIR=src
 TESTDIR=test
 OUTDIR=target
+GENDIR=$(OUTDIR)/gen
 OBJDIR=$(OUTDIR)/obj
 DOS_OBJDIR=$(OBJDIR)/dos
 TEST_OBJDIR=$(OBJDIR)/test
@@ -92,3 +93,23 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 	$(call color,"LINK","host",$@)
 	@mkdir -p $(dir $@)
 	@$(CC) $(TEST_CFLAGS) $(TEST_OBJECTS) -o $@
+
+########################################################
+# Self-hosting bits
+########################################################
+
+gen-test: $(OUTDIR)/compiler
+	$(OUTDIR)/compiler dispatch test/test_kalos.kidl test/test_kalos.dispatch.inc
+
+gen-compiler: $(OUTDIR)/compiler
+	rm -rf $(GENDIR)/compiler || true
+	mkdir -p $(GENDIR)/compiler
+	cp -R $(SRCDIR)/* $(GENDIR)/compiler
+	xxd -i < src/kalos_idl_compiler.kidl > $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc
+	echo , 0 >> $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc
+	xxd -i < src/kalos_idl_compiler.kalos > $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc
+	echo , 0 >> $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc
+	$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
+	$(OUTDIR)/bootstrap-compiler dispatch src/kalos_idl_compiler.kidl src/kalos_idl_compiler.dispatch.inc
+	cp $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc $(SRCDIR)
+	cp $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc $(SRCDIR)

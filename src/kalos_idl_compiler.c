@@ -549,7 +549,8 @@ void kalos_idl_walk_exports(kalos_state state, kalos_value* script_context) {
 }
 
 void kalos_module_idl_module_trigger_property(kalos_state state, kalos_value* a0, kalos_object_ref* a1);
-bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object_ref* object, const char*, int param_count, kalos_stack* stack);
+
+kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
 
 void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_context, kalos_object_ref* object) {
     kalos_value v = kalos_value_clone(state, script_context);
@@ -562,7 +563,7 @@ void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_con
             script_current_property->property.read_invoke_id = kalos_module_lookup_property(script_modules, false, kalos_module_get_string(script_modules, script_current_property->name_index));
         if (script_current_property->property.write_invoke_id)
             script_current_property->property.write_invoke_id = kalos_module_lookup_property(script_modules, true, kalos_module_get_string(script_modules, script_current_property->name_index));
-        kalos_object_ref obj = kalos_allocate_prop_object_name(state, NULL, kalos_module_idl_module_object_property_obj_props);
+        kalos_object_ref obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_property_obj_props);
         kalos_module_idl_module_trigger_property(state, &ctx, &obj);
         prop_index = script_current_property->prop_list.next;
     }
@@ -579,21 +580,21 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     kalos_object_ref obj = NULL;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_function_obj_props);
+            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_function_obj_props);
             script_current_function = kalos_module_get_list_item(parsed, export->entry.function_overload_list.head);
             kalos_module_idl_module_trigger_function(context->state, &ctx, &obj);
             script_current_function = NULL;
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_property_obj_props);
+            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_property_obj_props);
             kalos_module_idl_module_trigger_property(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
-            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_handle_obj_props);
+            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_handle_obj_props);
             kalos_module_idl_module_trigger_handle_(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
-            obj = kalos_allocate_prop_object_name(context->state, NULL, kalos_module_idl_module_object_object_obj_props);
+            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_object_obj_props);
             kalos_module_idl_module_trigger_object(context->state, &ctx, &obj);
             break;
         default:
@@ -606,7 +607,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     struct walk_callback_context* context = context_;
     script_current_module = module;
     kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
-    kalos_object_ref obj = kalos_allocate_prop_object_name(context->state, module, kalos_module_idl_module_object_module_obj_props);
+    kalos_object_ref obj = kalos_allocate_prop_object(context->state, module, &kalos_module_idl_module_object_module_obj_props);
     kalos_module_idl_module_trigger_begin(context->state, &ctx, &obj);
     return true;
 }

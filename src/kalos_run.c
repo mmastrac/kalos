@@ -563,7 +563,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                     return;
                 }
                 kalos_object_ref object = pop(&state->stack)->value.object;
-                if (!object->dispatch || !object->dispatch(state, &object, prop, 0, &state->stack)) {
+                if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state, &object, prop, 0, &state->stack)) {
                     value_error(state);
                 }
                 kalos_object_release(state, &object);
@@ -574,7 +574,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 kalos_value* value = pop(&state->stack);
                 kalos_object_ref object = pop(&state->stack)->value.object;
                 *push_raw(&state->stack) = *value;
-                if (!object->dispatch || !object->dispatch(state, &object, prop, 1, &state->stack)) {
+                if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state, &object, prop, 1, &state->stack)) {
                     value_error(state);
                     break;
                 }
@@ -588,7 +588,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                     return;
                 }
                 kalos_object_ref object = pop(&state->stack)->value.object;
-                if (!object->dispatch_name || !object->dispatch_name(state, &object, kalos_string_c(state, prop), 0, &state->stack)) {
+                if (!object->dispatch || !object->dispatch->dispatch_name || !object->dispatch->dispatch_name(state, &object, kalos_string_c(state, prop), 0, &state->stack)) {
                     value_error(state);
                 }
                 kalos_object_release(state, &object);
@@ -599,7 +599,7 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
                 kalos_value* value = pop(&state->stack);
                 kalos_object_ref object = pop(&state->stack)->value.object;
                 *push_raw(&state->stack) = *value;
-                if (!object->dispatch_name || !object->dispatch_name(state, &object, kalos_string_c(state, prop), 1, &state->stack)) {
+                if (!object->dispatch || !object->dispatch->dispatch_name || !object->dispatch->dispatch_name(state, &object, kalos_string_c(state, prop), 1, &state->stack)) {
                     value_error(state);
                     break;
                 }
@@ -820,16 +820,9 @@ kalos_object_ref kalos_allocate_object(kalos_state state_, size_t context_size) 
     return object;
 }
 
-kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch dispatch) {
+kalos_object_ref kalos_allocate_prop_object(kalos_state state, void* context, kalos_object_dispatch* dispatch) {
     kalos_object_ref object = kalos_allocate_object(state, 0);
     object->context = context;
     object->dispatch = dispatch;
-    return object;
-}
-
-kalos_object_ref kalos_allocate_prop_object_name(kalos_state state, void* context, kalos_object_dispatch_name dispatch_name) {
-    kalos_object_ref object = kalos_allocate_object(state, 0);
-    object->context = context;
-    object->dispatch_name = dispatch_name;
     return object;
 }

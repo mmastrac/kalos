@@ -240,15 +240,15 @@ void test_write_c(kalos_state state, kalos_object_ref* object, kalos_int value) 
     c = value;
 }
 
-bool kalos_module_dispatch_test_test_object_a_props(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
-bool kalos_module_dispatch_test_test_object_b_props(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
+kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props;
+kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props;
 
 kalos_object_ref test_make_a(kalos_state state) {
-    return kalos_allocate_prop_object(state, "a", kalos_module_dispatch_test_test_object_a_props);
+    return kalos_allocate_prop_object(state, "a", &kalos_module_dispatch_test_test_object_a_props);
 }
 
 kalos_object_ref test_make_b(kalos_state state) {
-    return kalos_allocate_prop_object(state, "b", kalos_module_dispatch_test_test_object_b_props);
+    return kalos_allocate_prop_object(state, "b", &kalos_module_dispatch_test_test_object_b_props);
 }
 
 #include "test_kalos.dispatch.inc"

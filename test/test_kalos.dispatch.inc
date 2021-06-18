@@ -64,7 +64,7 @@ void kalos_module_dispatch_test_test_trigger_self_trigger(kalos_state state, K__
 }
 
 //kalos_module_dispatch_test_test_object_a_props
-bool kalos_module_dispatch_test_test_object_a_props(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
+bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
 	switch (function) {
 	// id=2 name=a symbol=test_read_a
 	case 2: {
@@ -87,8 +87,12 @@ bool kalos_module_dispatch_test_test_object_a_props(kalos_state state, kalos_obj
 	return true;
 }
 
+kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props = {
+	.dispatch_id = kalos_module_dispatch_test_test_object_a_props_fn
+};
+
 //kalos_module_dispatch_test_test_object_b_props
-bool kalos_module_dispatch_test_test_object_b_props(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
+bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
 	switch (function) {
 	// id=2 name=a symbol=test_read_a
 	case 2: {
@@ -109,6 +113,10 @@ bool kalos_module_dispatch_test_test_object_b_props(kalos_state state, kalos_obj
 	}
 	return true;
 }
+
+kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
+	.dispatch_id = kalos_module_dispatch_test_test_object_b_props_fn
+};
 
 void kalos_module_dispatch_test_test(kalos_state state, int function, int param_count, kalos_stack* stack, bool retval) {
 	switch (function) {

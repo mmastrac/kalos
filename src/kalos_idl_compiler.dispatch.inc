@@ -139,7 +139,7 @@ void kalos_module_idl_module_trigger_object(kalos_state state, K__pany a0, K__po
 }
 
 //kalos_module_idl_module_object_module_obj_props
-bool kalos_module_idl_module_object_module_obj_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+bool kalos_module_idl_module_object_module_obj_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=14 name=name symbol=kalos_idl_obj_module_name
 	if (param_count == 0 && strcmp(name, "name") == 0) {
 		push_string(stack, kalos_idl_obj_module_name(state, object));
@@ -153,8 +153,12 @@ bool kalos_module_idl_module_object_module_obj_props(kalos_state state, kalos_ob
 	return false;
 }
 
+kalos_object_dispatch kalos_module_idl_module_object_module_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_module_obj_props_fn
+};
+
 //kalos_module_idl_module_object_function_obj_props
-bool kalos_module_idl_module_object_function_obj_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+bool kalos_module_idl_module_object_function_obj_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=10 name=id symbol=kalos_idl_function_id2
 	if (param_count == 0 && strcmp(name, "id") == 0) {
 		push_number(stack, kalos_idl_function_id2(state, object));
@@ -198,8 +202,12 @@ bool kalos_module_idl_module_object_function_obj_props(kalos_state state, kalos_
 	return false;
 }
 
+kalos_object_dispatch kalos_module_idl_module_object_function_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_function_obj_props_fn
+};
+
 //kalos_module_idl_module_object_property_obj_props
-bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+bool kalos_module_idl_module_object_property_obj_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=14 name=name symbol=kalos_idl_property_name
 	if (param_count == 0 && strcmp(name, "name") == 0) {
 		push_string(stack, kalos_idl_property_name(state, object));
@@ -233,8 +241,12 @@ bool kalos_module_idl_module_object_property_obj_props(kalos_state state, kalos_
 	return false;
 }
 
+kalos_object_dispatch kalos_module_idl_module_object_property_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_property_obj_props_fn
+};
+
 //kalos_module_idl_module_object_handle_obj_props
-bool kalos_module_idl_module_object_handle_obj_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+bool kalos_module_idl_module_object_handle_obj_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=14 name=name symbol=kalos_idl_export_name2
 	if (param_count == 0 && strcmp(name, "name") == 0) {
 		push_string(stack, kalos_idl_export_name2(state, object));
@@ -258,8 +270,12 @@ bool kalos_module_idl_module_object_handle_obj_props(kalos_state state, kalos_ob
 	return false;
 }
 
+kalos_object_dispatch kalos_module_idl_module_object_handle_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_handle_obj_props_fn
+};
+
 //kalos_module_idl_module_object_object_obj_props
-bool kalos_module_idl_module_object_object_obj_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+bool kalos_module_idl_module_object_object_obj_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=14 name=name symbol=kalos_idl_export_name2
 	if (param_count == 0 && strcmp(name, "name") == 0) {
 		push_string(stack, kalos_idl_export_name2(state, object));
@@ -267,6 +283,10 @@ bool kalos_module_idl_module_object_object_obj_props(kalos_state state, kalos_ob
 	}
 	return false;
 }
+
+kalos_object_dispatch kalos_module_idl_module_object_object_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_object_obj_props_fn
+};
 
 bool kalos_module_idl_module_dynamic_dispatch(kalos_state state, const char* name, int param_count, kalos_stack* stack, bool retval) {
 	// id=1 name=walk_exports arg_count=1 symbol=kalos_idl_walk_exports

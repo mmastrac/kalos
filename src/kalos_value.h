@@ -12,8 +12,21 @@ typedef kalos_value (*kalos_getindex)(kalos_state state, kalos_object_ref* objec
 typedef kalos_object_ref (*kalos_iterstart)(kalos_state state, kalos_object_ref* object);
 typedef kalos_value (*kalos_iternext)(kalos_state state, kalos_object_ref* object, bool* done);
 typedef void (*kalos_object_free)(kalos_state state, kalos_object_ref* object);
-typedef bool (*kalos_object_dispatch)(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
-typedef bool (*kalos_object_dispatch_name)(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack);
+
+typedef bool (*kalos_dispatch_name_fn)(kalos_state state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval);
+typedef void (*kalos_dispatch_fn)(kalos_state state, int function, int param_count, kalos_stack* stack, bool retval);
+typedef bool (*kalos_object_dispatch_name_fn)(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack);
+typedef bool (*kalos_object_dispatch_fn)(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
+
+typedef struct kalos_dispatch {
+    kalos_dispatch_name_fn dispatch_name;
+    kalos_dispatch_fn* modules;
+} kalos_dispatch;
+
+typedef struct kalos_object_dispatch {
+    kalos_object_dispatch_name_fn dispatch_name;
+    kalos_object_dispatch_fn dispatch_id;
+} kalos_object_dispatch;
 
 typedef enum kalos_value_type {
     KALOS_VALUE_NONE,
@@ -30,8 +43,7 @@ struct kalos_object {
     kalos_getindex getindex;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
-    kalos_object_dispatch dispatch;
-    kalos_object_dispatch_name dispatch_name;
+    kalos_object_dispatch* dispatch;
 };
 
 typedef union kalos_value_union {

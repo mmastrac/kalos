@@ -128,9 +128,9 @@ handle module.object(context, object) {
     }
     println("//{module.prefix}{module.name}_object_{object.name}_props");
     if (is_dynamic) {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
+        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_state state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
     } else {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
+        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_state state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
         println("\tswitch (function) {{");
     }
     in_object = true;
@@ -144,6 +144,14 @@ handle module.object(context, object) {
         println("\treturn true;");
     }
     println("}}");
+    println("");
+    println("kalos_object_dispatch {module.prefix}{module.name}_object_{object.name}_props = {{");
+    if (is_dynamic) {
+        println("\t.dispatch_name = {module.prefix}{module.name}_object_{object.name}_props_fn");
+    } else {
+        println("\t.dispatch_id = {module.prefix}{module.name}_object_{object.name}_props_fn");
+    }
+    println("}};");
     println("");
 }
 
