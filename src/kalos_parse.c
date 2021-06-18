@@ -726,6 +726,9 @@ static void parse_for_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
     TRY(res = resolve_word(parse_state, NULL));
+    if (res.type == NAME_RESOLUTION_NOT_FOUND) {
+        THROW(ERROR_UNKNOWN_VARIABLE);
+    }
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_IN));
     TRY(parse_expression(parse_state));
     TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR));

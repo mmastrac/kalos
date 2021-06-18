@@ -1,4 +1,4 @@
-F2
+# FAIL 3 Invalid token
 handle init {
     var foo = "{1:{}"
 }

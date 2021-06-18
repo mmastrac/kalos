@@ -94,101 +94,65 @@ kalos_module_parsed parse_modules_for_test() {
     return kalos_idl_parse_module(TEST_IDL);
 }
 
-void lex_test(const char* file) {
-    uint8_t script_buffer[1024];
-    const int BUFFER_SIZE = 2048;
-
-    char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(make_test_filename(file, "fdl"), buffer, BUFFER_SIZE);
-
-    char outbuf[128];
-
-    const char* s = buffer;
-    if (s[0] == 'F') {
-        // This is a failure test
-        int expected_fail_line = strtol(++s, NULL, 10);
-        while (*s++ != '\n') {}
-        kalos_lex_state state = {0};
-        kalos_lex_init(s, &state);
-
-        for (int i = 0; i < MAX_TOKENS; i++) {
-            int token = kalos_lex(&state, &outbuf[0]);
-            if (token == KALOS_TOKEN_EOF) {
-                TEST_FAIL_MESSAGE("Expected an error"); // Expected failure
-            } else if (token == KALOS_TOKEN_ERROR) {
-                TEST_ASSERT_EQUAL_MESSAGE(expected_fail_line, state.line, "Failure happened on the wrong line");
-                goto success;
-            }
-        }
-    } else {
-        kalos_lex_state state = {0};
-        kalos_lex_init(s, &state);
-
-        for (int i = 0; i < MAX_TOKENS; i++) {
-            int token = kalos_lex(&state, &outbuf[0]);
-            // printf("%s (%s)\n", kalos_token_strings[token], outbuf);
-            if (token == KALOS_TOKEN_EOF) {
-                goto success;
-            }
-            TEST_ASSERT_NOT_EQUAL_MESSAGE(KALOS_TOKEN_ERROR, token, test_format_string("Got an error token on line %d! Remainder was '%.10s...'", state.line, state.s));
-        }
-        TEST_FAIL_MESSAGE("Parsed too many tokens");
-    }
-
-success:
-    free(buffer);
-}
-
-void parse_test(const char* file) {
-    uint8_t script_buffer[1024];
-    const int BUFFER_SIZE = 4096;
-
-    char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(make_test_filename(file, "fdl"), buffer, BUFFER_SIZE);
- 
-    char* s = buffer;
-    if (s[0] == 'F') {
-        // This is a failure test
-        int expected_fail_line = strtol(++s, NULL, 10);
-        while (*s++ != '\n') {}
-        kalos_script script = {0};
-        script.script_ops = &script_buffer[0];
-        script.script_buffer_size = sizeof(script_buffer);
-
-        kalos_parse_options options = {0};
-        kalos_module_parsed parsed_modules = parse_modules_for_test();
-        kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
-        kalos_idl_free_module(parsed_modules);
-
-        TEST_ASSERT_FALSE_MESSAGE(res.success, "Expected an error");
-        free(buffer);
-        return;
-    }
-
+kalos_parse_result parse_test_runner(char* script_buffer, const char* bytecode_buffer) {
+    const int PARSE_BUFFER_SIZE = 32 * 1024;
     kalos_script script = {0};
-    script.script_ops = &script_buffer[0];
+    script.script_ops = malloc(PARSE_BUFFER_SIZE);
     script.script_buffer_size = sizeof(script_buffer);
 
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
+    kalos_parse_result res = kalos_parse((const char*)script_buffer, parsed_modules, options, &script);
     kalos_idl_free_module(parsed_modules);
-    TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
+    if (res.error) {
+        // Don't check bytecode if we failed to parse
+        free(script.script_ops);
+        return res;
+    } else {
+        TEST_ASSERT_NOT_NULL_MESSAGE(bytecode_buffer, "Expected this test to fail but it didn't");
+    }
 
-    memset(buffer, 0, BUFFER_SIZE);
-    kalos_dump(&script, buffer);
+    char* dump_buffer = malloc(PARSE_BUFFER_SIZE);
+    memset(dump_buffer, 0, PARSE_BUFFER_SIZE);
+    kalos_dump(&script, dump_buffer);
 
-    char* buffer2 = malloc(BUFFER_SIZE);
-    read_buffer(make_test_filename(file, "bytecode"), buffer2, BUFFER_SIZE);
-
-    if (strcmp(buffer, buffer2) != 0) {
-        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", buffer2, buffer);
+    if (strcmp(dump_buffer, bytecode_buffer) != 0) {
+        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode_buffer, dump_buffer);
         // write_buffer(full_file, buffer);
         TEST_FAIL();
     }
 
-    free(buffer);
-    free(buffer2);
+    free(script.script_ops);
+    free(dump_buffer);
+    return res;
+}
+
+void parse_test(const char* file) {
+    const int BUFFER_SIZE = 4096;
+    char* script_buffer = malloc(BUFFER_SIZE);
+    char* bytecode_buffer = NULL;
+    read_buffer(make_test_filename(file, "fdl"), script_buffer, BUFFER_SIZE);
+    bool is_failure_test = strncmp(script_buffer, "# FAIL ", 7) == 0;
+    if (!is_failure_test) {
+        bytecode_buffer = malloc(BUFFER_SIZE);
+        read_buffer(make_test_filename(file, "bytecode"), bytecode_buffer, BUFFER_SIZE);
+    }
+    kalos_parse_result result = parse_test_runner(script_buffer, bytecode_buffer);
+    if (is_failure_test) {
+        // This is a failure case!
+        *strchr(script_buffer, '\n') = 0;
+        char error_buf[128] = {0};
+        TEST_ASSERT_TRUE_MESSAGE(result.error, "Expected a failure");
+        TEST_ASSERT_LESS_THAN(sizeof(error_buf), snprintf(error_buf, sizeof(error_buf), "# FAIL %d %s", result.line, result.error));
+        TEST_ASSERT_EQUAL_STRING(error_buf, script_buffer);
+    } else {
+        // Expected success
+        TEST_ASSERT_TRUE_MESSAGE(result.success, result.error);
+    }
+    free(script_buffer);
+    if (bytecode_buffer) {
+        free(bytecode_buffer);
+    }
 }
 
 char output_buffer[1024];
@@ -337,7 +301,6 @@ void run_test(const char* name) {
 }
 
 #define SCRIPT_TEST(x) \
-    TEST(kalos_lex_##x) { lex_test("test_"#x); } \
     TEST(kalos_parse_##x) { parse_test("test_"#x); } \
     TEST(kalos_run_##x) { run_test("test_"#x); }
 
@@ -374,23 +337,19 @@ SCRIPT_TEST(string_replace)
 SCRIPT_TEST(unary_expressions)
 SCRIPT_TEST(varargs)
 
-#define LEX_TEST_FAIL(x) \
-    TEST(kalos_lex_fail_##x) { lex_test("fail_lex_" #x); }
-
-LEX_TEST_FAIL(bad_escape)
-LEX_TEST_FAIL(string_eof)
-LEX_TEST_FAIL(string_eol)
-LEX_TEST_FAIL(unknown_token)
-
 #define PARSE_TEST_FAIL(x) \
     TEST(kalos_parse_fail_##x) { parse_test("fail_parse_" #x); }
 
+PARSE_TEST_FAIL(bad_escape)
 PARSE_TEST_FAIL(break_without_loop)
 PARSE_TEST_FAIL(invalid_const_global)
 PARSE_TEST_FAIL(loop_var_undefined)
+PARSE_TEST_FAIL(string_eof)
+PARSE_TEST_FAIL(string_eol)
 PARSE_TEST_FAIL(string_format_bad)
 PARSE_TEST_FAIL(string_format_eof)
 PARSE_TEST_FAIL(string_format_eol)
+PARSE_TEST_FAIL(unknown_token)
 
 // Exhaustive test using python to generate the output test cases
 TEST(kalos_string_format_run_exhaustive_test) {

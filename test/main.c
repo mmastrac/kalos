@@ -43,7 +43,7 @@ void test_log_direct(const char* fmt, ...) {
 }
 
 int main(void) {
-    log_stream = fopen("/tmp/fdl-test.log", "wb");
+    log_stream = fopen("/tmp/kalos-test.log", "wb");
     int failures = 0;
 
     for (int i = 0; i < test_suite_count; i++) {
