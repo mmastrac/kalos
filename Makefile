@@ -8,6 +8,7 @@ HOST_OBJDIR=$(OBJDIR)/host
 CC := $(shell which clang || which gcc)
 
 SOURCES=$(wildcard $(SRCDIR)/*.c)
+HOST_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(HOST_OBJDIR)/%.o,$(SOURCES))
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
 TEST_LIB_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(TEST_OBJDIR)/lib/%.o,$(SOURCES))
 TEST_OBJECTS=$(TEST_LIB_OBJECTS) $(patsubst $(TESTDIR)/%.c,$(TEST_OBJDIR)/test/%.o,$(TEST_SOURCES))
@@ -54,6 +55,16 @@ test: $(OUTDIR)/tests/test
 clean:
 	$(call color,"CLEAN","all",$(OUTDIR))
 	@rm -rf $(OUTDIR)
+
+$(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+	$(call color,"CC","host",$<)
+	@mkdir -p $(dir $@)
+	@$(CC) $(HOST_CFLAGS) -c $< -o $@
+
+$(OUTDIR)/compiler: $(HOST_OBJECTS) $(HOST_OBJDIR)/compiler/compiler_main.o
+	$(call color,"LINK","host",$@)
+	@mkdir -p $(dir $@)
+	@$(CC) $(HOST_CFLAGS) $^ -o $@
 
 $(SRCDIR)/kalos_lex.c: $(SRCDIR)/kalos_lex.re
 	$(call color,"re2c","all",$<)
