@@ -114,16 +114,16 @@ const char* read_file_string(const char* input, size_t* n) {
     return buf;
 }
 
-void* read_file(const char* input, size_t* n) {
+kalos_buffer read_file(const char* input, size_t* n) {
     FILE* fd = fopen(input, "rb");
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
-    char* buf = malloc(PAGE_ROUND_UP(size, 16));
+    kalos_buffer buffer = kalos_buffer_alloc(&compiler_env, PAGE_ROUND_UP(size, 16));
     fseek(fd, 0, SEEK_SET);
-    fread((void*)buf, size, 1, fd);
+    fread((void*)buffer.buffer, size, 1, fd);
     if (n) *n = (size_t)size;
     fclose(fd);
-    return buf;
+    return buffer;
 }
 
 void write_file(const char* output, void* data, size_t size) {
@@ -135,9 +135,7 @@ void write_file(const char* output, void* data, size_t size) {
 int compile_script(int verbose, const char* idl, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     const char* idl_data = read_file_string(idl, NULL);
-    kalos_script script = {0};
-    script.script_ops = malloc(10*1024);
-    script.script_buffer_size = 10*1024;
+    kalos_script script = kalos_buffer_alloc(&compiler_env, 10 * 1024);
     kalos_module_parsed modules = kalos_idl_parse_module(idl_data, &compiler_env);
     kalos_parse_options options = {0};
     kalos_parse_result res = kalos_parse(input_data, modules, options, &script);
@@ -145,16 +143,13 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
         printf("ERROR on line %d: %s\n", res.line, res.error);
         exit(1);
     }
-    write_file(output, script.script_ops, script.script_buffer_size);
+    write_file(output, script.buffer, kalos_buffer_size(script));
     return 0;
 }
 
 int dump_script(int verbose, const char* input) {
     size_t n;
-    uint8_t* input_data = read_file(input, &n);
-    kalos_script script;
-    script.script_ops = (uint8_t*)input_data;
-    script.script_buffer_size = n;
+    kalos_script script = read_file(input, &n);
     char* buffer = malloc(10 * 1024);
     kalos_dump(&script, buffer);
     printf("%s\n", buffer);

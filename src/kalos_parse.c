@@ -955,7 +955,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
 kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script) {
     struct parse_state parse_state_data = {0};
     parse_state_data.options = options;
-    parse_state_data.output_script = script->script_ops;
+    parse_state_data.output_script = script->buffer;
     parse_state_data.all_modules = modules;
     parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");
     parse_state_data.dispatch_name = (kalos_module_get_header(modules)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0;

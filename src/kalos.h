@@ -35,11 +35,6 @@ typedef struct {
  */
 typedef struct { kalos_string_allocated* s; } kalos_writable_string;
 
-typedef struct kalos_script {
-    uint8_t* script_ops;
-    uint16_t script_buffer_size;
-} kalos_script;
-
 typedef void* (*kalos_mem_alloc_fn)(size_t);
 typedef void* (*kalos_mem_realloc_fn)(void*, size_t);
 typedef void (*kalos_mem_free_fn)(void*);
@@ -69,3 +64,14 @@ static inline void* kalos_mem_realloc(kalos_state state_, void* ptr, size_t size
 static inline void kalos_mem_free(kalos_state state_, void* ptr) {
     ((kalos_basic_environment*)state_)->free(ptr);
 }
+
+typedef struct kalos_buffer {
+    uint8_t* buffer;
+} kalos_buffer;
+
+typedef kalos_buffer kalos_script;
+typedef kalos_buffer kalos_modules_parsed;
+
+kalos_buffer kalos_buffer_alloc(kalos_state state, size_t size);
+size_t kalos_buffer_size(kalos_buffer buffer);
+void kalos_buffer_free(kalos_buffer buffer);

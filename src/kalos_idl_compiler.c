@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "defines.h"
+#include "kalos.h"
 #include "kalos_dump.h"
 #include "kalos_module.h"
 #include "kalos_parse.h"
@@ -625,15 +626,13 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
         #include "kalos_idl_compiler.kidl.inc"
     };
     script_environment = env;
-    kalos_script script = {0};
-    script.script_buffer_size = 8192;
-    script.script_ops = env->alloc(8192);
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, env);
     if (!modules.data) {
         printf("ERROR: %s\n", "failed to parse compiler IDL");
         return false;
     }
     kalos_parse_options options = {0};
+    kalos_script script = kalos_buffer_alloc(env, 8192);
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);

@@ -5,8 +5,6 @@
 #include "kalos.h"
 #include "kalos_module.h"
 
-typedef struct kalos_script kalos_script;
-typedef struct kalos_module kalos_module;
 kalos_state kalos_init_for_test(kalos_basic_environment* env);
 kalos_state kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_basic_environment* env);
 void kalos_load_arg_any(kalos_state state_, kalos_int index, kalos_value* arg);

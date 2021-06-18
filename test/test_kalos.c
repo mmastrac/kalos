@@ -80,12 +80,17 @@ kalos_basic_environment test_env = {
     .print = test_print_string,
 };
 
-void read_buffer(const char* file, char* buffer, int buffer_size) { 
-    int fd = open(file, O_RDONLY);
-    TEST_ASSERT_GREATER_THAN_INT_MESSAGE(-1, fd, file);
-    int n = read(fd, buffer, buffer_size);
-    close(fd);
-    buffer[n] = 0;
+
+kalos_buffer read_buffer(const char* input) {
+    FILE* fd = fopen(input, "rb");
+    fseek(fd, 0, SEEK_END);
+    off_t size = ftell(fd);
+    kalos_buffer buffer = kalos_buffer_alloc(&test_env, size + 1);
+    fseek(fd, 0, SEEK_SET);
+    fread((void*)buffer.buffer, size, 1, fd);
+    fclose(fd);
+    buffer.buffer[size] = 0;
+    return buffer;
 }
 
 void write_buffer(const char* file, char* buffer) { 
@@ -109,66 +114,58 @@ kalos_module_parsed parse_modules_for_test() {
     return kalos_idl_parse_module(TEST_IDL, &test_env);
 }
 
-kalos_parse_result parse_test_runner(char* script_buffer, const char* bytecode_buffer) {
+kalos_parse_result parse_test_runner(kalos_buffer script_text, kalos_buffer bytecode) {
     const int PARSE_BUFFER_SIZE = 32 * 1024;
-    kalos_script script = {0};
-    script.script_ops = malloc(PARSE_BUFFER_SIZE);
-    script.script_buffer_size = sizeof(script_buffer);
-
+    kalos_script script = kalos_buffer_alloc(&test_env, PARSE_BUFFER_SIZE);
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_parse_result res = kalos_parse((const char*)script_buffer, parsed_modules, options, &script);
+    kalos_parse_result res = kalos_parse((const char*)script_text.buffer, parsed_modules, options, &script);
     kalos_idl_free_module(parsed_modules, &test_env);
     if (res.error) {
         // Don't check bytecode if we failed to parse
-        free(script.script_ops);
+        kalos_buffer_free(script);
         return res;
     } else {
-        TEST_ASSERT_NOT_NULL_MESSAGE(bytecode_buffer, "Expected this test to fail but it didn't");
+        TEST_ASSERT_NOT_NULL_MESSAGE(bytecode.buffer, "Expected this test to fail but it didn't");
     }
 
     char* dump_buffer = malloc(PARSE_BUFFER_SIZE);
     memset(dump_buffer, 0, PARSE_BUFFER_SIZE);
     kalos_dump(&script, dump_buffer);
 
-    if (strcmp(dump_buffer, bytecode_buffer) != 0) {
-        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode_buffer, dump_buffer);
+    if (strcmp(dump_buffer, (const char*)bytecode.buffer) != 0) {
+        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer);
         // write_buffer(full_file, buffer);
         TEST_FAIL();
     }
 
-    free(script.script_ops);
+    kalos_buffer_free(script);
     free(dump_buffer);
     return res;
 }
 
 void parse_test(const char* file) {
     total_allocated = 0;
-    const int BUFFER_SIZE = 4096;
-    char* script_buffer = malloc(BUFFER_SIZE);
-    char* bytecode_buffer = NULL;
-    read_buffer(make_test_filename(file, "fdl"), script_buffer, BUFFER_SIZE);
-    bool is_failure_test = strncmp(script_buffer, "# FAIL ", 7) == 0;
+    kalos_buffer bytecode = {NULL};
+    kalos_buffer script = read_buffer(make_test_filename(file, "fdl"));
+    bool is_failure_test = strncmp((const char*)script.buffer, "# FAIL ", 7) == 0;
     if (!is_failure_test) {
-        bytecode_buffer = malloc(BUFFER_SIZE);
-        read_buffer(make_test_filename(file, "bytecode"), bytecode_buffer, BUFFER_SIZE);
+        bytecode = read_buffer(make_test_filename(file, "bytecode"));
     }
-    kalos_parse_result result = parse_test_runner(script_buffer, bytecode_buffer);
+    kalos_parse_result result = parse_test_runner(script, bytecode);
     if (is_failure_test) {
         // This is a failure case!
-        *strchr(script_buffer, '\n') = 0;
+        *strchr((const char*)script.buffer, '\n') = 0;
         char error_buf[128] = {0};
         TEST_ASSERT_TRUE_MESSAGE(result.error, "Expected a failure");
         TEST_ASSERT_LESS_THAN(sizeof(error_buf), snprintf(error_buf, sizeof(error_buf), "# FAIL %d %s", result.line, result.error));
-        TEST_ASSERT_EQUAL_STRING(error_buf, script_buffer);
+        TEST_ASSERT_EQUAL_STRING(error_buf, script.buffer);
     } else {
         // Expected success
         TEST_ASSERT_TRUE_MESSAGE(result.success, result.error);
     }
-    free(script_buffer);
-    if (bytecode_buffer) {
-        free(bytecode_buffer);
-    }
+    kalos_buffer_free(script);
+    kalos_buffer_free(bytecode);
     TEST_ASSERT_EQUAL(0, total_allocated);
 }
 
@@ -273,20 +270,14 @@ kalos_object_ref test_make_b(kalos_state state) {
 
 void run_test(const char* name) {
     total_allocated = 0;
-    uint8_t script_buffer[1024];
     const int BUFFER_SIZE = 2048;
     output_buffer[0] = 0;
 
-    char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(make_test_filename(name, "fdl"), buffer, BUFFER_SIZE);
-
-    kalos_script script = {0};
-    script.script_ops = &script_buffer[0];
-    script.script_buffer_size = sizeof(script_buffer);
-
+    kalos_buffer buffer = read_buffer(make_test_filename(name, "fdl"));
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
+    kalos_script script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
+    kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, &script);
     kalos_idl_free_module(parsed_modules, &test_env);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 
@@ -298,16 +289,16 @@ void run_test(const char* name) {
     kalos_module_dispatch_test_test_trigger_with_args(state, &s);
     kalos_run_free(state);
 
-    char* buffer2 = malloc(BUFFER_SIZE);
-    read_buffer(make_test_filename(name, "output"), buffer2, BUFFER_SIZE);
+    kalos_buffer output = read_buffer(make_test_filename(name, "output"));
 
-    if (strcmp(output_buffer, buffer2) != 0) {
-        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", buffer2, output_buffer);
+    if (strcmp(output_buffer, (const char*)output.buffer) != 0) {
+        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", output.buffer, output_buffer);
         // write_buffer(full_file, output_buffer);
         TEST_FAIL();
     }
-    free(buffer);
-    free(buffer2);
+    kalos_buffer_free(output);
+    kalos_buffer_free(buffer);
+    kalos_buffer_free(script);
     TEST_ASSERT_EQUAL(0, total_allocated);
 }
 

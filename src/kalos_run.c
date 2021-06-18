@@ -364,7 +364,7 @@ static kalos_object_ref op_iterator(kalos_state_internal* state, kalos_op op, ka
 static inline void op_drop(kalos_state_internal* state, kalos_op op, kalos_value* value) {}
 
 static kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
-    kalos_string string = kalos_string_allocate(state, (const char*)&state->script->script_ops[state->pc]);
+    kalos_string string = kalos_string_allocate(state, (const char*)&state->script->buffer[state->pc]);
     LOG("push: %s", kalos_string_c(state, string));
     state->pc += kalos_string_length(state, string) + 1;
     return string;
@@ -372,7 +372,7 @@ static kalos_string op_push_string(kalos_state_internal* state, kalos_op op) {
 
 static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
-    memcpy(&int_value, &state->script->script_ops[state->pc], sizeof(kalos_int));
+    memcpy(&int_value, &state->script->buffer[state->pc], sizeof(kalos_int));
     state->pc += sizeof(kalos_int);
     return int_value;
 }
@@ -386,7 +386,7 @@ static kalos_int op_push_bool(kalos_state_internal* state, kalos_op op) {
 }
 
 static kalos_string op_format(kalos_state_internal* state, kalos_op op, kalos_value* v) {
-    kalos_string_format* format = (kalos_string_format*)&state->script->script_ops[state->pc];
+    kalos_string_format* format = (kalos_string_format*)&state->script->buffer[state->pc];
     state->pc += sizeof(kalos_string_format);
     if (v->type == KALOS_VALUE_NUMBER) {
         return kalos_string_format_int(state, v->value.number, format);
@@ -487,12 +487,13 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     }
     state->locals = &state->stack.stack[original_stack_index];
     state->stack.stack_index += header->locals_size;
+    size_t script_size = kalos_buffer_size(*state->script);
     for (;;) {
-        if (state->pc >= state->script->script_buffer_size) {
+        if (state->pc >= script_size) {
             state->fns.error(0, "Internal error");
             goto done;
         }
-        kalos_op op = state->script->script_ops[state->pc++];
+        kalos_op op = state->script->buffer[state->pc++];
         kalos_value *v1, *v2;
         if (op >= KALOS_OP_MAX || state->stack.stack_index < 0) {
             state->fns.error(0, "Internal error");

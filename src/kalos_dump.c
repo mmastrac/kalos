@@ -21,7 +21,7 @@ static bool kalos_dump_section(void* context, kalos_script* script, kalos_sectio
             break;
         }
         s += sprintf(s, "L%04x: ", offset);
-        uint8_t op = script->script_ops[offset++];
+        uint8_t op = script->buffer[offset++];
         if (op >= KALOS_OP_MAX) {
             // Don't try to continue after this.
             s += sprintf(s, "<invalid_op %02x>\n", op);
@@ -30,14 +30,14 @@ static bool kalos_dump_section(void* context, kalos_script* script, kalos_sectio
         s += sprintf(s, "%s", kalos_op_strings[op]);
         switch (op) {
             case KALOS_OP_PUSH_INTEGER: {
-                uint16_t value = script->script_ops[offset++];
-                value |= (uint16_t)script->script_ops[offset++] << 8;
+                uint16_t value = script->buffer[offset++];
+                value |= (uint16_t)script->buffer[offset++] << 8;
                 s += sprintf(s, " %04x", value);
                 break;
             }
             case KALOS_OP_PUSH_STRING: {
-                int len = strlen((char *)&script->script_ops[offset]);
-                char* str = (char *)&script->script_ops[offset];
+                int len = strlen((char *)&script->buffer[offset]);
+                char* str = (char *)&script->buffer[offset];
                 *s++ = ' ';
                 *s++ = '"';
                 for (int i = 0; i < strlen(str); i++) {
@@ -59,7 +59,7 @@ static bool kalos_dump_section(void* context, kalos_script* script, kalos_sectio
             }
             case KALOS_OP_FORMAT: {
                 kalos_string_format string_format;
-                memcpy(&string_format, &script->script_ops[offset], sizeof(string_format));
+                memcpy(&string_format, &script->buffer[offset], sizeof(string_format));
                 offset += sizeof(kalos_string_format);
                 *s++ = ' ';
                 *s++ = '"';
@@ -99,10 +99,10 @@ void kalos_dump(kalos_script* script, char* s) {
 }
 
 void kalos_walk(kalos_script* script, void* context, kalos_walk_fn walk_fn) {
-    kalos_script_header* script_header = (kalos_script_header*)script->script_ops;
+    kalos_script_header* script_header = (kalos_script_header*)script->buffer;
     int offset = sizeof(*script_header);
     for (;;) {
-        kalos_section_header* header = (kalos_section_header*)&script->script_ops[offset];
+        kalos_section_header* header = (kalos_section_header*)&script->buffer[offset];
         offset += sizeof(*header);
         uint16_t length = header->next_section == 0 ? script_header->length - offset : header->next_section - offset;
         if (!walk_fn(context, script, header, offset, length)) {
