@@ -32,12 +32,13 @@ WATCOM_MODEL=m
 WATCOM_CFLAGS=-march=i86 -Wall -Werror -std=c99 \
 	-fno-writable-strings -fnonconst-initializers -fshort-enum -ffunction-sections \
 	-mcmodel=$(WATCOM_MODEL) -O3 -frerun-optimizer -floop-optimize -funroll-loops -fno-stack-check
-TEST_CFLAGS=-std=c99 -fmacro-backtrace-limit=0 \
+#TODO: re-add -fmacro-backtrace-limit=0
+TEST_CFLAGS=-std=c99 \
 	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-gnu-flexible-array-initializer -ftrapv \
 	-DIS_TEST -g -O0 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
-HOST_CFLAGS=-std=c99 -fmacro-backtrace-limit=0 \
+HOST_CFLAGS=-std=c99 \
 	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-gnu-flexible-array-initializer -ftrapv \
 	-g -O0 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
