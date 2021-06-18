@@ -48,7 +48,15 @@ HOST_CFLAGS=-std=c99 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 
-.PHONY: test
+.PHONY: all test clean nore2c
+
+all: $(OUTDIR)/compiler
+
+nore2c:
+	$(call color,"TOUCH","host",(re2c targets))
+	@touch $(SRCDIR)/kalos_string_format.c
+	@touch $(SRCDIR)/kalos_idl_parse.c
+	@touch $(SRCDIR)/kalos_lex.c
 
 test: $(OUTDIR)/tests/test
 	$(call color,"TEST","host",$<)

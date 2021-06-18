@@ -16,4 +16,4 @@ jobs:
     - name: install clang
       run: sudo apt install clang
     - name: make test
-      run: make test
+      run: make nore2c test
