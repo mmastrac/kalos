@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "../defines.h"
 #include "../kalos_dump.h"
 #include "../kalos_idl_compiler.h"
 #include "../kalos_parse.h"
@@ -11,6 +12,71 @@
 
 static int verbose = 0;
 static FILE* output_file;
+
+static int32_t total_allocated = 0;
+static uint16_t allocation_id;
+struct allocation_record {
+    uint16_t id;
+    size_t size;
+};
+
+static void* internal_malloc(size_t size) {
+    total_allocated += size;
+    LOG("alloc #%d %d", allocation_id, size);
+    // Stash the size in the allocation
+    struct allocation_record info;
+    info.size = size;
+    info.id = allocation_id++;
+    uint8_t* allocated = malloc(size + sizeof(info));
+    memcpy(allocated, &info, sizeof(info));
+    return allocated + sizeof(info);
+}
+
+static void internal_free(void* memory) {
+    uint8_t* allocated = memory;
+    struct allocation_record info;
+    allocated -= sizeof(info);
+    memcpy(&info, allocated, sizeof(info));
+    LOG("free #%d %d", info.id, info.size);
+    total_allocated -= info.size;
+    free(allocated);
+}
+
+static void* internal_realloc(void* ptr, size_t size) {
+    if (ptr == NULL) {
+        return internal_malloc(size);
+    }
+    uint8_t* allocated = ptr;
+    struct allocation_record info;
+    allocated -= sizeof(info);
+    memcpy(&info, allocated, sizeof(info));
+    allocated = realloc(allocated, size + sizeof(info));
+    total_allocated += (ssize_t)size - (ssize_t)info.size;
+    info.size = size;
+    memcpy(allocated, &info, sizeof(info));
+    return allocated + sizeof(info);
+}
+
+static void internal_error(int line, const char* error) {
+    if (line) {
+        printf("ERROR on line %d: %s\n", line, error);
+    } else {
+        printf("ERROR: %s\n", error);
+    }
+    exit(1);
+}
+
+static void internal_print(const char* s) {
+    fprintf(output_file, "%s", s);
+}
+
+kalos_basic_environment compiler_env = {
+    internal_malloc,
+    internal_realloc,
+    internal_free,
+    internal_print,
+    internal_error,
+};
 
 int help(const char* message, const char* cmd) {
     if (strchr(cmd, '/')) {
@@ -72,7 +138,7 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
     kalos_script script = {0};
     script.script_ops = malloc(10*1024);
     script.script_buffer_size = 10*1024;
-    kalos_module_parsed modules = kalos_idl_parse_module(idl_data);
+    kalos_module_parsed modules = kalos_idl_parse_module(idl_data, &compiler_env);
     kalos_parse_options options = {0};
     kalos_parse_result res = kalos_parse(input_data, modules, options, &script);
     if (!res.success) {
@@ -97,27 +163,23 @@ int dump_script(int verbose, const char* input) {
 
 int compile_idl(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
-    kalos_module_parsed modules = kalos_idl_parse_module(input_data);
+    kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
     write_file(output, modules.data, modules.size);
+    if (total_allocated != 0) {
+        printf("WARNING: IDL compiler leaked %d bytes(s)\n", (int)total_allocated);
+    }
     return 0;
-}
-
-void output_printer(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(output_file, fmt, args);
-    va_end(args);
 }
 
 int compile_dispatch(int verbose, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
-    kalos_module_parsed modules = kalos_idl_parse_module(input_data);
+    kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
     if (!modules.data) {
         printf("ERROR: failed to compile KIDL\n");
         exit(1);
     }
     output_file = fopen(output, "w");
-    if (!kalos_idl_generate_dispatch(modules, output_printer)) {
+    if (!kalos_idl_generate_dispatch(modules, &compiler_env)) {
         printf("ERROR: failed to generate dispatch\n");
         fclose(output_file);
         unlink(output);

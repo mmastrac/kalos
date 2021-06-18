@@ -58,11 +58,27 @@ static void* test_realloc(void* ptr, size_t size) {
     allocated -= sizeof(info);
     memcpy(&info, allocated, sizeof(info));
     allocated = realloc(allocated, size + sizeof(info));
-    total_allocated += (ssize_t)size - info.size;
+    total_allocated += (ssize_t)size - (ssize_t)info.size;
     info.size = size;
     memcpy(allocated, &info, sizeof(info));
     return allocated + sizeof(info);
 }
+
+static void test_error(int line, const char* error) {
+    LOG("Error reported: %d %s", line, error);
+}
+
+static void test_print_string(const char* s) {
+    LOG("print: %s", s);
+}
+
+kalos_basic_environment test_env = {
+    .alloc = test_malloc,
+    .realloc = test_realloc,
+    .free = test_free,
+    .error = test_error,
+    .print = test_print_string,
+};
 
 void read_buffer(const char* file, char* buffer, int buffer_size) { 
     int fd = open(file, O_RDONLY);
@@ -90,7 +106,7 @@ kalos_module_parsed parse_modules_for_test() {
         #include "test_kalos.kidl.inc"
     };
 
-    return kalos_idl_parse_module(TEST_IDL);
+    return kalos_idl_parse_module(TEST_IDL, &test_env);
 }
 
 kalos_parse_result parse_test_runner(char* script_buffer, const char* bytecode_buffer) {
@@ -102,7 +118,7 @@ kalos_parse_result parse_test_runner(char* script_buffer, const char* bytecode_b
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_parse_result res = kalos_parse((const char*)script_buffer, parsed_modules, options, &script);
-    kalos_idl_free_module(parsed_modules);
+    kalos_idl_free_module(parsed_modules, &test_env);
     if (res.error) {
         // Don't check bytecode if we failed to parse
         free(script.script_ops);
@@ -127,6 +143,7 @@ kalos_parse_result parse_test_runner(char* script_buffer, const char* bytecode_b
 }
 
 void parse_test(const char* file) {
+    total_allocated = 0;
     const int BUFFER_SIZE = 4096;
     char* script_buffer = malloc(BUFFER_SIZE);
     char* bytecode_buffer = NULL;
@@ -152,6 +169,7 @@ void parse_test(const char* file) {
     if (bytecode_buffer) {
         free(bytecode_buffer);
     }
+    TEST_ASSERT_EQUAL(0, total_allocated);
 }
 
 char output_buffer[1024];
@@ -254,6 +272,7 @@ kalos_object_ref test_make_b(kalos_state state) {
 #include "test_kalos.dispatch.inc"
 
 void run_test(const char* name) {
+    total_allocated = 0;
     uint8_t script_buffer[1024];
     const int BUFFER_SIZE = 2048;
     output_buffer[0] = 0;
@@ -268,23 +287,16 @@ void run_test(const char* name) {
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_parse_result res = kalos_parse(buffer, parsed_modules, options, &script);
-    kalos_idl_free_module(parsed_modules);
+    kalos_idl_free_module(parsed_modules, &test_env);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
-
-    total_allocated = 0;
-    kalos_fn fns = {0};
-    fns.alloc = test_malloc;
-    fns.realloc = test_realloc;
-    fns.free = test_free;
 
     kalos_dispatch dispatch = {0};
     dispatch.modules = kalos_module_dispatch_test_dispatch;
-    kalos_state state = kalos_init(&script, &dispatch, &fns);
+    kalos_state state = kalos_init(&script, &dispatch, &test_env);
     kalos_module_dispatch_test_trigger_init(state);
     kalos_string s = kalos_string_allocate(state, "hello world");
     kalos_module_dispatch_test_test_trigger_with_args(state, &s);
     kalos_run_free(state);
-    TEST_ASSERT_EQUAL(0, total_allocated);
 
     char* buffer2 = malloc(BUFFER_SIZE);
     read_buffer(make_test_filename(name, "output"), buffer2, BUFFER_SIZE);
@@ -296,7 +308,7 @@ void run_test(const char* name) {
     }
     free(buffer);
     free(buffer2);
-    total_allocated = 0;
+    TEST_ASSERT_EQUAL(0, total_allocated);
 }
 
 #define SCRIPT_TEST(x) \
@@ -352,17 +364,12 @@ PARSE_TEST_FAIL(unknown_token)
 
 // Exhaustive test using python to generate the output test cases
 TEST(kalos_string_format_run_exhaustive_test) {
+    total_allocated = 0;
     FILE* test = fopen("test/data/format/exhaustive_format_test.txt", "r");
     char line[256];
     int linenum = 0;
 
-    total_allocated = 0;
-    kalos_fn fns = {0};
-    fns.alloc = test_malloc;
-    fns.realloc = test_realloc;
-    fns.free = test_free;
-
-    kalos_state state = kalos_init_for_test(&fns);
+    kalos_state state = kalos_init_for_test(&test_env);
     while (fgets(line, sizeof(line), test)) {
         linenum++;
         int value = strtol(line, NULL, 10);
@@ -387,7 +394,6 @@ TEST(kalos_string_format_run_exhaustive_test) {
     fclose(test);
     kalos_run_free(state);
     TEST_ASSERT_EQUAL(0, total_allocated);
-    total_allocated = 0;
 }
 
 /*

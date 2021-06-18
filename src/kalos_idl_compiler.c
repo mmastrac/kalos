@@ -9,6 +9,7 @@
 #include "kalos_util.h"
 
 struct kalos_module_builder {
+    kalos_basic_environment* env;
     void* kalos_module_buffer;
     size_t module_buffer_size, module_buffer_index;
     char* string_buffer;
@@ -23,7 +24,7 @@ static void* allocate_item(struct kalos_module_builder* builder, kalos_module_it
     if (builder->module_buffer_index + struct_size > builder->module_buffer_size) {
         ptrdiff_t list_offset = PTR_BYTE_SUBTRACT(*list, builder->kalos_module_buffer);
         builder->module_buffer_size *= 2;
-        builder->kalos_module_buffer = realloc(builder->kalos_module_buffer, builder->module_buffer_size);
+        builder->kalos_module_buffer = builder->env->realloc(builder->kalos_module_buffer, builder->module_buffer_size);
         (*list) = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list_offset);
     }
     void* ptr = PTR_BYTE_OFFSET(builder->kalos_module_buffer, builder->module_buffer_index);
@@ -127,7 +128,7 @@ static kalos_int strpack(struct kalos_module_builder* builder, const char* s) {
             builder->string_buffer_size = 16;
         }
         builder->string_buffer_size *= 2;
-        builder->string_buffer = realloc(builder->string_buffer, builder->string_buffer_size);
+        builder->string_buffer = builder->env->realloc(builder->string_buffer, builder->string_buffer_size);
     }
     strcpy(builder->string_buffer + builder->string_buffer_index, s);
     builder->string_buffer_index += l;
@@ -380,7 +381,7 @@ static void property(void* context, const char* name, const char* type, const ch
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
 }
 
-kalos_module_parsed kalos_idl_parse_module(const char* s) {
+kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environment* env) {
     kalos_idl_callbacks callbacks = {
         error,
         prefix,
@@ -402,8 +403,9 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     };
 
     struct kalos_module_builder context = {0};
+    context.env = env;
     context.module_buffer_size = 1024;
-    context.kalos_module_buffer = malloc(context.module_buffer_size);
+    context.kalos_module_buffer = env->alloc(context.module_buffer_size);
     context.module_buffer_index = sizeof(kalos_module_header);
     memset(root(&context), 0, sizeof(kalos_module_header));
     strpack(&context, ""); // zero string = empty
@@ -422,13 +424,13 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
         LOG("PROP %s=%d", context.string_buffer + prop_addr->name_index, prop_addr->invoke_id);
     }
 
-    context.kalos_module_buffer = realloc(context.kalos_module_buffer, context.module_buffer_index + context.string_buffer_index);
+    context.kalos_module_buffer = env->realloc(context.kalos_module_buffer, context.module_buffer_index + context.string_buffer_index);
     kalos_module_header* header = root(&context);
     header->version = 1;
     header->string_offset = context.module_buffer_index;
     header->string_size = context.string_buffer_index;
     memcpy(PTR_BYTE_OFFSET(context.kalos_module_buffer, header->string_offset), context.string_buffer, context.string_buffer_index);
-    free(context.string_buffer);
+    env->free(context.string_buffer);
 
     kalos_module_parsed parsed;
     parsed.data = context.kalos_module_buffer;
@@ -437,7 +439,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s) {
     return parsed;
 }
 
-static kalos_printer_fn script_output;
+static kalos_basic_environment* script_environment;
 static kalos_module_parsed script_modules;
 static kalos_module_header* script_current_header;
 static kalos_module* script_current_module;
@@ -446,11 +448,12 @@ static kalos_function* script_current_function;
 static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
-    script_output("%s", kalos_string_c(state, *string));
+    script_environment->print(kalos_string_c(state, *string));
 }
 
 void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
-    script_output("%s\n", kalos_string_c(state, *string));
+    script_environment->print(kalos_string_c(state, *string));
+    script_environment->print("\n");
 }
 
 void kalos_idl_compiler_log(kalos_state state, kalos_string* string) {
@@ -612,55 +615,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     return true;
 }
 
-static int32_t total_allocated = 0;
-static uint16_t allocation_id;
-struct allocation_record {
-    uint16_t id;
-    size_t size;
-};
-
-static void* internal_malloc(size_t size) {
-    total_allocated += size;
-    LOG("alloc #%d %d", allocation_id, size);
-    // Stash the size in the allocation
-    struct allocation_record info;
-    info.size = size;
-    info.id = allocation_id++;
-    uint8_t* allocated = malloc(size + sizeof(info));
-    memcpy(allocated, &info, sizeof(info));
-    return allocated + sizeof(info);
-}
-
-static void internal_free(void* memory) {
-    uint8_t* allocated = memory;
-    struct allocation_record info;
-    allocated -= sizeof(info);
-    memcpy(&info, allocated, sizeof(info));
-    LOG("free #%d %d", info.id, info.size);
-    total_allocated -= info.size;
-    free(allocated);
-}
-
-static void* internal_realloc(void* ptr, size_t size) {
-    if (ptr == NULL) {
-        return internal_malloc(size);
-    }
-    uint8_t* allocated = ptr;
-    struct allocation_record info;
-    allocated -= sizeof(info);
-    memcpy(&info, allocated, sizeof(info));
-    void* ptr2 = internal_malloc(size);
-    memcpy(ptr, ptr2, info.size);
-    internal_free(ptr);
-    return ptr2;
-}
-
-static void internal_error(char* error) {
-    printf("ERROR: %s\n", error);
-    exit(1);
-}
-
-bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printer_fn output) {
+bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_environment* env) {
     // TODO: Watcom takes forever to compile if these aren't static
     static const char IDL_COMPILER_SCRIPT[] = {
         #include "kalos_idl_compiler.kalos.inc"
@@ -669,11 +624,11 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
     static const char IDL_COMPILER_IDL[] = {
         #include "kalos_idl_compiler.kidl.inc"
     };
-    script_output = output;
+    script_environment = env;
     kalos_script script = {0};
     script.script_buffer_size = 8192;
-    script.script_ops = malloc(8192);
-    kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL);
+    script.script_ops = env->alloc(8192);
+    kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, env);
     if (!modules.data) {
         printf("ERROR: %s\n", "failed to parse compiler IDL");
         return false;
@@ -684,32 +639,17 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_printe
         printf("ERROR: %s\n", result.error);
         return false;
     }
-    char* s = malloc(60 * 1024);
-    s[0] = 0;
-    kalos_dump(&script, s);
-    printf("%s", s);
-    free(s);
-    kalos_fn fns = {
-        internal_malloc,
-        internal_realloc,
-        internal_free,
-        internal_error
-    };
     script_modules = parsed_module;
     script_current_header = (kalos_module_header*)parsed_module.data;
     kalos_dispatch dispatch = {0};
-    // dispatch.modules = &kalos_module_idl_dispatch[0];
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
-    kalos_state state = kalos_init(&script, &dispatch, &fns);
+    kalos_state state = kalos_init(&script, &dispatch, env);
     kalos_module_idl_trigger_open(state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
     kalos_module_idl_trigger_close(state);
     kalos_run_free(state);
-    if (total_allocated != 0) {
-        printf("WARNING: IDL compiler leaked %d bytes(s)\n", (int)total_allocated);
-    }
     return true;
 }
 
-void kalos_idl_free_module(kalos_module_parsed parsed_modules) {
-    free(parsed_modules.data);
+void kalos_idl_free_module(kalos_module_parsed parsed_modules, kalos_basic_environment* env) {
+    env->free(parsed_modules.data);
 }

@@ -23,11 +23,8 @@ static const int8_t kalos_op_output_size[] = {
 };
 
 typedef struct kalos_state_internal {
-    kalos_mem_alloc_fn alloc; // part of public interface
-    kalos_mem_realloc_fn realloc; // part of public interface
-    kalos_mem_free_fn free; // part of public interface
+    kalos_basic_environment fns;
     kalos_script* script;
-    kalos_fn* fns;
     kalos_dispatch* dispatch;
     kalos_stack stack;
     kalos_value globals[KALOS_VAR_SLOT_SIZE];
@@ -419,32 +416,33 @@ static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int s
     return kalos_value_clone(state, &storage[slot]);
 }
 
-kalos_state kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_fn* fns) {
-    kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
+kalos_state kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_basic_environment* env) {
+    kalos_state_internal* state = env->alloc(sizeof(kalos_state_internal));
     if (!state) {
-        fns->error("malloc");
+        if (env->error) {
+            env->error(0, "malloc");
+        }
+        return NULL;
     }
     memset(state, 0, sizeof(kalos_state_internal));
-    state->alloc = fns->alloc;
-    state->realloc = fns->realloc;
-    state->free = fns->free;
+    state->fns = *env;
     state->dispatch = dispatch;
     state->script = script;
-    state->fns = fns;
     LOG("%s", "Triggering global");
     kalos_trigger((kalos_state)state, kalos_make_address(-1, -1));
     return (kalos_state)state;
 }
 
-kalos_state kalos_init_for_test(kalos_fn* fns) {
-    kalos_state_internal* state = fns->alloc(sizeof(kalos_state_internal));
+kalos_state kalos_init_for_test(kalos_basic_environment* env) {
+    kalos_state_internal* state = env->alloc(sizeof(kalos_state_internal));
     if (!state) {
-        fns->error("malloc");
+        if (env->error) {
+            env->error(0, "malloc");
+        }
+        return NULL;
     }
     memset(state, 0, sizeof(kalos_state_internal));
-    state->alloc = fns->alloc;
-    state->free = fns->free;
-    state->fns = fns;
+    state->fns = *env;
     return (kalos_state)state;
 }
 
@@ -491,13 +489,13 @@ void kalos_trigger(kalos_state state_, kalos_export_address handle_address) {
     state->stack.stack_index += header->locals_size;
     for (;;) {
         if (state->pc >= state->script->script_buffer_size) {
-            state->fns->error("Internal error");
+            state->fns.error(0, "Internal error");
             goto done;
         }
         kalos_op op = state->script->script_ops[state->pc++];
         kalos_value *v1, *v2;
         if (op >= KALOS_OP_MAX || state->stack.stack_index < 0) {
-            state->fns->error("Internal error");
+            state->fns.error(0, "Internal error");
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack.stack_index);
@@ -747,5 +745,5 @@ void kalos_run_free(kalos_state state_) {
     for (int i = 0; i < KALOS_VAR_SLOT_SIZE; i++) {
         kalos_clear(state, &state->globals[i]);
     }
-    state->fns->free(state);
+    state->fns.free(state);
 }

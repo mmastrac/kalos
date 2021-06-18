@@ -9,6 +9,7 @@ HOST_OBJDIR=$(OBJDIR)/host
 CC := $(shell which clang || which gcc)
 
 SOURCES=$(wildcard $(SRCDIR)/*.c)
+HEADERS=$(wildcard $(SRCDIR)/*.h)
 HOST_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(HOST_OBJDIR)/%.o,$(SOURCES))
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
 TEST_LIB_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(TEST_OBJDIR)/lib/%.o,$(SOURCES))

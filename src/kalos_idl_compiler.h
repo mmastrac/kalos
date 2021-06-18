@@ -1,8 +1,6 @@
 #pragma once
 #include "kalos_module.h"
 
-typedef void (*kalos_printer_fn)(const char* fmt, ...);
-
-kalos_module_parsed kalos_idl_parse_module(const char* s);
-void kalos_idl_free_module(kalos_module_parsed parsed);
-bool kalos_idl_generate_dispatch(kalos_module_parsed, kalos_printer_fn);
+kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environment* env);
+void kalos_idl_free_module(kalos_module_parsed parsed_modules, kalos_basic_environment* env);
+bool kalos_idl_generate_dispatch(kalos_module_parsed, kalos_basic_environment* env);
