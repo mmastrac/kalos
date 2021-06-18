@@ -65,7 +65,7 @@ static void* test_realloc(void* ptr, size_t size) {
     return allocated + sizeof(info);
 }
 
-void read_buffer(char* file, char* buffer, int buffer_size) { 
+void read_buffer(const char* file, char* buffer, int buffer_size) { 
     int fd = open(file, O_RDONLY);
     TEST_ASSERT_GREATER_THAN_INT_MESSAGE(-1, fd, file);
     int n = read(fd, buffer, buffer_size);
@@ -73,11 +73,17 @@ void read_buffer(char* file, char* buffer, int buffer_size) {
     buffer[n] = 0;
 }
 
-void write_buffer(char* file, char* buffer) { 
+void write_buffer(const char* file, char* buffer) { 
     int fd = open(file, O_WRONLY|O_TRUNC);
     TEST_ASSERT_GREATER_THAN_INT_MESSAGE(-1, fd, file);
     int n = write(fd, buffer, strlen(buffer));
     close(fd);
+}
+
+const char* make_test_filename(const char* name, const char* extension) {
+    static char filename[128] = {0};
+    TEST_ASSERT_LESS_THAN(sizeof(filename), snprintf(filename, sizeof(filename), "%s/%s.%s", SCRIPT_DIR, name, extension));
+    return filename;
 }
 
 kalos_module_parsed parse_modules_for_test() {
@@ -92,14 +98,8 @@ void lex_test(const char* file) {
     uint8_t script_buffer[1024];
     const int BUFFER_SIZE = 2048;
 
-    char full_file[128] = {0};
-    strcat(full_file, SCRIPT_DIR);
-    strcat(full_file, "/");
-    strcat(full_file, file);
-    strcat(full_file, ".fdl");
-
     char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(full_file, buffer, BUFFER_SIZE);
+    read_buffer(make_test_filename(file, "fdl"), buffer, BUFFER_SIZE);
 
     char outbuf[128];
 
@@ -143,15 +143,9 @@ void parse_test(const char* file) {
     uint8_t script_buffer[1024];
     const int BUFFER_SIZE = 4096;
 
-    char full_file[128] = {0};
-    strcat(full_file, SCRIPT_DIR);
-    strcat(full_file, "/");
-    strcat(full_file, file);
-    strcat(full_file, ".fdl");
-
     char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(full_file, buffer, BUFFER_SIZE);
-
+    read_buffer(make_test_filename(file, "fdl"), buffer, BUFFER_SIZE);
+ 
     char* s = buffer;
     if (s[0] == 'F') {
         // This is a failure test
@@ -185,9 +179,7 @@ void parse_test(const char* file) {
     kalos_dump(&script, buffer);
 
     char* buffer2 = malloc(BUFFER_SIZE);
-    full_file[strlen(full_file) - 3] = 0;
-    strcat(full_file, "bytecode");
-    read_buffer(full_file, buffer2, BUFFER_SIZE);
+    read_buffer(make_test_filename(file, "bytecode"), buffer2, BUFFER_SIZE);
 
     if (strcmp(buffer, buffer2) != 0) {
         printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", buffer2, buffer);
@@ -298,22 +290,13 @@ kalos_object_ref test_make_b(kalos_state state) {
 
 #include "test_kalos.dispatch.inc"
 
-void run_test(const char* file) {
-    if (strcmp(file, "test_varargs") == 0) {
-        int x = 1;
-    }
+void run_test(const char* name) {
     uint8_t script_buffer[1024];
     const int BUFFER_SIZE = 2048;
     output_buffer[0] = 0;
 
-    char full_file[128] = {0};
-    strcat(full_file, SCRIPT_DIR);
-    strcat(full_file, "/");
-    strcat(full_file, file);
-    strcat(full_file, ".fdl");
-
     char* buffer = malloc(BUFFER_SIZE);
-    read_buffer(full_file, buffer, BUFFER_SIZE);
+    read_buffer(make_test_filename(name, "fdl"), buffer, BUFFER_SIZE);
 
     kalos_script script = {0};
     script.script_ops = &script_buffer[0];
@@ -341,9 +324,7 @@ void run_test(const char* file) {
     TEST_ASSERT_EQUAL(0, total_allocated);
 
     char* buffer2 = malloc(BUFFER_SIZE);
-    full_file[strlen(full_file) - 3] = 0;
-    strcat(full_file, "output");
-    read_buffer(full_file, buffer2, BUFFER_SIZE);
+    read_buffer(make_test_filename(name, "output"), buffer2, BUFFER_SIZE);
 
     if (strcmp(output_buffer, buffer2) != 0) {
         printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", buffer2, output_buffer);
