@@ -53,6 +53,9 @@ typedef struct {
     kalos_error_fn error;
 } kalos_basic_environment;
 
+/**
+ * The opaque runtime state.
+ */
 typedef void* kalos_state;
 
 static inline void* kalos_mem_alloc(kalos_state state_, size_t size) {
@@ -72,6 +75,17 @@ typedef struct kalos_buffer {
 typedef kalos_buffer kalos_script;
 typedef kalos_buffer kalos_module_parsed;
 
+/**
+ * Allocate a buffer that can be freed without reference to the Kalos environment.
+ */
 kalos_buffer kalos_buffer_alloc(kalos_basic_environment* env, size_t size);
+
+/**
+ * Get the intrinsic size of a Kalos buffer.
+ */
 size_t kalos_buffer_size(kalos_buffer buffer);
+
+/**
+ * Free a Kalos buffer.
+ */
 void kalos_buffer_free(kalos_buffer buffer);

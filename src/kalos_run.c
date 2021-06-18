@@ -3,10 +3,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "defines.h"
-#include "kalos_dump.h"
 #include "kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"
+#include "kalos_script.h"
 #include "kalos_string_format.h"
 #include "kalos_string_system.h"
 #include "kalos_util.h"
