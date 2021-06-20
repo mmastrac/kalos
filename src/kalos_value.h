@@ -197,10 +197,10 @@ static inline void kalos_load_arg_##name_(kalos_run_state* state, kalos_int inde
     state->stack->stack[state->stack->stack_index + index].value.field_ = take_; \
 }
 
-KALOS_VALUE(NUMBER, number, number, kalos_int,,         arg);
-KALOS_VALUE(BOOL,   bool,   number, kalos_int,,         arg);
-KALOS_VALUE(STRING, string, string, kalos_string,*,     kalos_string_take(kalos_state_from_run_state(state), arg));
-KALOS_VALUE(OBJECT, object, object, kalos_object_ref,*, kalos_object_take(kalos_state_from_run_state(state), arg));
+KALOS_VALUE(NUMBER, number, number, kalos_int,,         arg)
+KALOS_VALUE(BOOL,   bool,   number, kalos_int,,         arg)
+KALOS_VALUE(STRING, string, string, kalos_string,*,     kalos_string_take(kalos_state_from_run_state(state), arg))
+KALOS_VALUE(OBJECT, object, object, kalos_object_ref,*, kalos_object_take(kalos_state_from_run_state(state), arg))
 
 static inline kalos_value* pop(kalos_stack* stack) {
     return &stack->stack[--stack->stack_index];
