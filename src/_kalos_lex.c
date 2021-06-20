@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "kalos_lex.h"
+#include "_kalos_lex.h"
 
 enum yyc_state {
     yycinit,
@@ -14,7 +14,7 @@ enum yyc_state {
 
 #define KALOS_TOKEN(x) #x ,
 const char* kalos_token_strings[] = {
-    #include "kalos_constants.inc"
+    #include "_kalos_constants.inc"
     "<invalid>",
 };
 

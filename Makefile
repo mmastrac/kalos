@@ -76,15 +76,15 @@ $(OUTDIR)/compiler: $(HOST_OBJECTS) $(HOST_OBJDIR)/compiler/compiler_main.o
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) $^ -o $@
 
-$(SRCDIR)/kalos_lex.c: $(SRCDIR)/kalos_lex.re
+$(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -c --tags --no-debug-info $< -o $@
 
-$(SRCDIR)/kalos_string_format.c: $(SRCDIR)/kalos_string_format.re
+$(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@
 
-$(SRCDIR)/kalos_idl_parse.c: $(SRCDIR)/kalos_idl_parse.re
+$(SRCDIR)/_kalos_idl_parse.c: $(SRCDIR)/_kalos_idl_parse.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -c --tags --no-debug-info $< -o $@
 
@@ -114,11 +114,11 @@ gen-compiler: $(OUTDIR)/compiler
 	rm -rf $(GENDIR)/compiler || true
 	mkdir -p $(GENDIR)/compiler
 	cp -R $(SRCDIR)/* $(GENDIR)/compiler
-	xxd -i < src/kalos_idl_compiler.kidl > $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc
-	echo , 0 >> $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc
-	xxd -i < src/kalos_idl_compiler.kalos > $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc
-	echo , 0 >> $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc
+	xxd -i < src/_kalos_idl_compiler.kidl > $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
+	echo , 0 >> $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
+	xxd -i < src/_kalos_idl_compiler.kalos > $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
+	echo , 0 >> $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
 	$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
-	$(OUTDIR)/bootstrap-compiler dispatch src/kalos_idl_compiler.kidl src/kalos_idl_compiler.dispatch.inc
-	cp $(GENDIR)/compiler/kalos_idl_compiler.kidl.inc $(SRCDIR)
-	cp $(GENDIR)/compiler/kalos_idl_compiler.kalos.inc $(SRCDIR)
+	$(OUTDIR)/bootstrap-compiler dispatch src/_kalos_idl_compiler.kidl src/_kalos_idl_compiler.dispatch.inc
+	cp $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc $(SRCDIR)
+	cp $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc $(SRCDIR)

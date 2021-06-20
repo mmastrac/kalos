@@ -5,16 +5,16 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include <defines.h>
+#include <_kalos_defines.h>
 #include <kalos.h>
-#include <kalos_idl_compiler.h>
-#include <kalos_lex.h>
+#include <_kalos_idl_compiler.h>
+#include <_kalos_lex.h>
 #include <kalos_parse.h>
 #include <kalos_run.h>
-#include <kalos_script.h>
-#include <kalos_string_format.h>
-#include <kalos_string_system.h>
-#include <kalos_value.h>
+#include <_kalos_script.h>
+#include <_kalos_string_format.h>
+#include <_kalos_string_system.h>
+#include <_kalos_value.h>
 
 TEST_SUITE(kalos)
 

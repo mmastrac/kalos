@@ -1,6 +1,6 @@
 #include "_kalos_defines.h"
-#include "kalos_module.h"
-#include "kalos_util.h"
+#include "_kalos_module.h"
+#include "_kalos_util.h"
 
 void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset) {
     ASSERT(offset > 0);

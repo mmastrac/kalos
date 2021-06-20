@@ -1,13 +1,13 @@
 #include <stdbool.h>
 #include "_kalos_defines.h"
 #include "kalos.h"
-#include "kalos_module.h"
+#include "_kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"
-#include "kalos_script.h"
-#include "kalos_idl_compiler.h"
-#include "kalos_idl_parse.h"
-#include "kalos_util.h"
+#include "_kalos_script.h"
+#include "_kalos_idl_compiler.h"
+#include "_kalos_idl_parse.h"
+#include "_kalos_util.h"
 
 struct kalos_module_builder {
     kalos_state* state;
@@ -576,7 +576,7 @@ void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* s
     script_current_property = NULL;
 }
 
-#include "kalos_idl_compiler.dispatch.inc"
+#include "_kalos_idl_compiler.dispatch.inc"
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;
@@ -622,11 +622,11 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
     // TODO: Watcom takes forever to compile if these aren't static
     static const char IDL_COMPILER_SCRIPT[] = {
-        #include "kalos_idl_compiler.kalos.inc"
+        #include "_kalos_idl_compiler.kalos.inc"
     };
 
     static const char IDL_COMPILER_IDL[] = {
-        #include "kalos_idl_compiler.kidl.inc"
+        #include "_kalos_idl_compiler.kidl.inc"
     };
     script_environment = state;
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, state);

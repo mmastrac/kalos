@@ -9,7 +9,7 @@
 
 #define KALOS_OP(x, in, out, args) KALOS_OP_##x,
 typedef enum kalos_op {
-#include "kalos_constants.inc"
+#include "_kalos_constants.inc"
     KALOS_OP_MAX,
 } kalos_op;
 

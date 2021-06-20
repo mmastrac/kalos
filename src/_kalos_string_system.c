@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include "_kalos_defines.h"
 #define KALOS_STRING_SYSTEM_C
-#include "kalos_string_system.h"
+#include "_kalos_string_system.h"
 
 static inline const char* get_alt_format(kalos_string_format* format) {
     if (!format->alt_fmt) {

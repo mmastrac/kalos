@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "kalos.h"
-#include "kalos_string_format.h"
+#include "_kalos_string_format.h"
 
 #pragma warning 303 9
 

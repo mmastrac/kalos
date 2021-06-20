@@ -3,10 +3,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "../defines.h"
-#include "../kalos_idl_compiler.h"
+#include "../_kalos_defines.h"
+#include "../_kalos_idl_compiler.h"
 #include "../kalos_parse.h"
-#include "../kalos_script.h"
+#include "../_kalos_script.h"
 
 #define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
 

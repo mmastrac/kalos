@@ -1,5 +1,5 @@
 #include "_kalos_defines.h"
-#include "kalos_value.h"
+#include "_kalos_value.h"
 
 void kalos_object_release(kalos_state* state, kalos_object_ref* ref) {
     if (!*ref) {

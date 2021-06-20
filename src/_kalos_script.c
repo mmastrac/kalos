@@ -3,8 +3,8 @@
 #include <strings.h>
 
 #include "kalos_parse.h"
-#include "kalos_script.h"
-#include "kalos_string_format.h"
+#include "_kalos_script.h"
+#include "_kalos_string_format.h"
 
 static bool kalos_dump_section(void* context, kalos_script* script, kalos_section_header* header, uint16_t offset, uint16_t length) {
     char** out = context;

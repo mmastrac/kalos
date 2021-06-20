@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kalos.h"
-#include "kalos_value.h"
+#include "_kalos_value.h"
 
 typedef kalos_buffer kalos_module_parsed;
 

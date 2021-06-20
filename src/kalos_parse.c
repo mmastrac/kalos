@@ -1,17 +1,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "kalos_lex.h"
-#include "kalos_module.h"
+#include "_kalos_lex.h"
+#include "_kalos_module.h"
 #include "kalos_parse.h"
-#include "kalos_string_format.h"
+#include "_kalos_string_format.h"
 #include "_kalos_defines.h"
 
 #define KALOS_MAX_IMPORTS 16
 
 #define KALOS_OP(x, in, out, args) #x ,
 const char* kalos_op_strings[] = {
-    #include "kalos_constants.inc"
+    #include "_kalos_constants.inc"
     "<invalid>",
 };
 
@@ -24,7 +24,7 @@ typedef struct kalos_builtin {
 // Keep sorted for binary search
 #define KALOS_BUILTIN(x, y, z) { .name=#x, .param_count=y, .op=KALOS_OP_##z },
 static kalos_builtin kalos_builtins[] = {
-    #include "kalos_constants.inc"
+    #include "_kalos_constants.inc"
     { NULL },
 };
 
@@ -176,7 +176,7 @@ static int lex_peek(struct parse_state* parse_state) {
 static int8_t get_operator_precedence(kalos_token token) {
     #define KALOS_TOKEN_OP(x, y, z) case KALOS_TOKEN_##y: return x;
     switch (token) {
-        #include "kalos_constants.inc"
+        #include "_kalos_constants.inc"
         default:
             return NO_OPERATOR_PRECEDENCE;
     }
@@ -185,7 +185,7 @@ static int8_t get_operator_precedence(kalos_token token) {
 static kalos_op get_operator_from_token(kalos_token token) {
     #define KALOS_TOKEN_OP(x, y, z) case KALOS_TOKEN_##y: return KALOS_OP_##z;
     switch (token) {
-        #include "kalos_constants.inc"
+        #include "_kalos_constants.inc"
         default:
             return KALOS_OP_MAX;
     }
@@ -194,7 +194,7 @@ static kalos_op get_operator_from_token(kalos_token token) {
 static bool is_assignment_token(kalos_token token) {
     #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: return true;
     switch (token) {
-        #include "kalos_constants.inc"
+        #include "_kalos_constants.inc"
         case KALOS_TOKEN_EQ: return true;
         default:
             return false;
@@ -480,7 +480,7 @@ static void parse_word_statement(struct parse_state* parse_state) {
         kalos_op op = 0;
         #define KALOS_TOKEN_OP_ASG(x, y) case KALOS_TOKEN_EQ_##x: op = KALOS_OP_##y; break;
         switch (peek) {
-            #include "kalos_constants.inc"
+            #include "_kalos_constants.inc"
             default: break;
         }
         if (op) {

@@ -7,8 +7,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "kalos.h"
-#include "kalos_value.h"
-#include "kalos_module.h"
+#include "_kalos_value.h"
+#include "_kalos_module.h"
 
 /**
  * Initialize the Kalos virtual machine.

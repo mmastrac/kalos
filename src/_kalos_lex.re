@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "kalos_lex.h"
+#include "_kalos_lex.h"
 
 enum yyc_state {
     yycinit,

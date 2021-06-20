@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 #include "kalos.h"
-#include "kalos_string_system.h"
+#include "_kalos_string_system.h"
 
 typedef struct kalos_object kalos_object;
 typedef kalos_object* kalos_object_ref;

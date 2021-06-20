@@ -3,23 +3,23 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "_kalos_defines.h"
-#include "kalos_module.h"
+#include "_kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"
-#include "kalos_script.h"
-#include "kalos_string_format.h"
-#include "kalos_string_system.h"
-#include "kalos_util.h"
+#include "_kalos_script.h"
+#include "_kalos_string_format.h"
+#include "_kalos_string_system.h"
+#include "_kalos_util.h"
 
 #define KALOS_VAR_SLOT_SIZE 16
 
 static const int8_t kalos_op_input_size[] = {
 #define KALOS_OP(x, in, out, args) in, 
-#include "kalos_constants.inc"
+#include "_kalos_constants.inc"
 };
 static const int8_t kalos_op_output_size[] = {
 #define KALOS_OP(x, in, out, args) out, 
-#include "kalos_constants.inc"
+#include "_kalos_constants.inc"
 };
 
 typedef struct kalos_state_internal {
@@ -108,7 +108,7 @@ static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalo
     }
     #define KALOS_OP_C(x, operator) case KALOS_OP_##x: return a operator b;
     switch (op) {
-        #include "kalos_constants.inc"
+        #include "_kalos_constants.inc"
         case KALOS_OP_MINIMUM:
             return min(a, b);
         case KALOS_OP_MAXIMUM:

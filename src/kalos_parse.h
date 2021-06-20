@@ -5,8 +5,8 @@
  */
 
 #include "kalos.h"
-#include "kalos_module.h"
-#include "kalos_script.h"
+#include "_kalos_module.h"
+#include "_kalos_script.h"
 
 typedef struct kalos_parse_result {
     bool success;

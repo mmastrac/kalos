@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "kalos_string_format.h"
+#include "_kalos_string_format.h"
 
 // Comparison equivalent to 'unsigned == 0'
 #pragma warning 136 9

@@ -10,7 +10,7 @@
 
 #define KALOS_TOKEN(x) KALOS_TOKEN_##x,
 typedef enum kalos_token {
-    #include "kalos_constants.inc"
+    #include "_kalos_constants.inc"
     KALOS_TOKEN_MAX,
 } kalos_token;
 
