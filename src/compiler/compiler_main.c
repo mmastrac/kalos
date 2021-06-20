@@ -70,12 +70,12 @@ static void internal_print(const char* s) {
     fprintf(output_file, "%s", s);
 }
 
-kalos_basic_environment compiler_env = {
-    internal_malloc,
-    internal_realloc,
-    internal_free,
-    internal_print,
-    internal_error,
+kalos_state compiler_env = {
+    .alloc = internal_malloc,
+    .realloc = internal_realloc,
+    .free = internal_free,
+    .print = internal_print,
+    .error = internal_error,
 };
 
 int help(const char* message, const char* cmd) {

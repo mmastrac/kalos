@@ -124,7 +124,7 @@ struct parse_state {
     kalos_token last_token;
     int loop_break, loop_continue;
     kalos_section_header* last_section_header;
-    char token[128];
+    char token[256];
     bool const_mode;
 };
 
@@ -164,7 +164,7 @@ static int lex(struct parse_state* parse_state) {
 }
 
 static int lex_peek(struct parse_state* parse_state) {
-    char buffer[128];
+    char buffer[256];
     int token = kalos_lex_peek(&parse_state->lex_state, buffer);
     if (token == KALOS_TOKEN_ERROR) {
         THROW(ERROR_INVALID_TOKEN);

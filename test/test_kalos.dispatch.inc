@@ -17,11 +17,11 @@
 #define K__t_object KALOS_VALUE_OBJECT
 #define K__t_any    KALOS_VALUE_ANY
 
-#define K__clean_string(stack, x) kalos_string_release((void*)state, x);
+#define K__clean_string(stack, x) kalos_string_release((kalos_state*)state, x);
 #define K__clean_number(stack, x) ;
 #define K__clean_bool  (stack, x) ;
-#define K__clean_object(stack, x) kalos_object_release((void*)state, &x);
-#define K__clean_any   (stack, x) kalos_clear((void*)state, x);
+#define K__clean_object(stack, x) kalos_object_release((kalos_state*)state, &x);
+#define K__clean_any   (stack, x) kalos_clear((kalos_state*)state, x);
 #define K__arg(n, x)     peek(stack, (n)-(x))
 #define K__arg_string(x) &((x)->value.string)
 #define K__arg_number(x) (x)->value.number
@@ -239,7 +239,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		LOG("Invoke %s", "trigger_self");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_string, K__t_object);
-		kalos_module_dispatch_test_test_trigger_self_trigger(state, K__arg_string(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
+		kalos_module_dispatch_test_test_trigger_self_trigger((void*)state, K__arg_string(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
 		kalos_stack_cleanup(state, arg_count);
 		break;
 	}

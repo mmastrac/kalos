@@ -12,11 +12,11 @@ const HANDLE = "handle";
 const DISPATCH = "dispatch";
 const OBJECT = "object";
 const TYPES = [
-    ["string",  "STRING",   "kalos_string", "*",      "kalos_string_release(state, x);"],
+    ["string",  "STRING",   "kalos_string", "*",      "kalos_string_release((kalos_state*)state, x);"],
     ["number",  "NUMBER",   "kalos_int", "",          ";"],
     ["bool",    "BOOL",     "kalos_int", "",          ";"],
-    ["object",  "OBJECT",   "kalos_object_ref", "*",  "kalos_object_release(state, &x);"],
-    ["any",     "ANY",      "kalos_value", "*",       "kalos_clear(state, x);"],
+    ["object",  "OBJECT",   "kalos_object_ref", "*",  "kalos_object_release((kalos_state*)state, &x);"],
+    ["any",     "ANY",      "kalos_value", "*",       "kalos_clear((kalos_state*)state, x);"],
 ];
 
 handle open(dynamic) {
@@ -49,7 +49,7 @@ handle open(dynamic) {
 
 handle close {
     if (is_dynamic) {
-        println("bool {module.prefix}dynamic_dispatch(kalos_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
+        println("bool {module.prefix}dynamic_dispatch(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         println(dynamic_dispatch);
         println("\tLOG(\"Module %s not found\", module);");
         println("\treturn false;");
@@ -74,9 +74,9 @@ handle module.begin(context, m) {
         module.walk_exports(HANDLE);
         if (is_dynamic) {
             dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {m.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
-            println("bool {m.prefix}{m.name}_dynamic_dispatch(kalos_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
+            println("bool {m.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else {
-            println("void {m.prefix}{m.name}(kalos_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
+            println("void {m.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
             println("\tswitch (function) {{");
         }
         in_module = true;
@@ -101,9 +101,9 @@ handle module.handle_(context, handle_) {
     }
     println("// id={handle_.module_index:04x}:{handle_.handle_index:04x} name={handle_.name}");
     if (module.name == "builtin") {
-        print("void {module.prefix}trigger_{handle_.name}(kalos_state* state");
+        print("void {module.prefix}trigger_{handle_.name}(kalos_run_state* state");
     } else {
-        print("void {module.prefix}{module.name}_trigger_{handle_.name}(kalos_state* state");
+        print("void {module.prefix}{module.name}_trigger_{handle_.name}(kalos_run_state* state");
     }
     var index = 0;
     var arg;
@@ -128,9 +128,9 @@ handle module.object(context, object) {
     }
     println("//{module.prefix}{module.name}_object_{object.name}_props");
     if (is_dynamic) {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
+        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
     } else {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
+        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
         println("\tswitch (function) {{");
     }
     in_object = true;
@@ -173,7 +173,7 @@ handle module.function(context, function) {
         println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
         println("\t\tconst int arg_count = {function.arg_count + 1} + vararg_count;");
     }
-    print("\t\tkalos_stack_setup_{function.arg_count}(stack");
+    print("\t\tkalos_stack_setup_{function.arg_count}(state");
     for arg in function.args {
         print(", K__t_{arg}");
     }
@@ -191,7 +191,7 @@ handle module.function(context, function) {
         }
         println("{c};");
     } else {
-        print("{function.realname}(state");
+        print("{function.realname}((void*)state");
         for arg in function.args {
             print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
             index += 1;
@@ -201,7 +201,7 @@ handle module.function(context, function) {
         }
         println(");");
     }
-    println("\t\tkalos_stack_cleanup(arg_count, state, stack);");
+    println("\t\tkalos_stack_cleanup(state, arg_count);");
     if (function.return_type != "void") {
         println("\t\tif (retval) {{");
         println("\t\t\tpush_{function.return_type}(stack, x);");
@@ -233,7 +233,7 @@ handle module.property(context, property) {
         } else {
             println("\tcase {property.read_id}: {{");
         }
-        println("\t\tpush_{property.type}(stack, {property.read_symbol}(state{maybe_object}));");
+        println("\t\tpush_{property.type}(stack, {property.read_symbol}((void*)state{maybe_object}));");
         if (is_dynamic) {
             println("\t\treturn true;");
         } else {
@@ -248,8 +248,8 @@ handle module.property(context, property) {
         } else {
             println("\tcase {property.write_id}: {{");
         }
-        println("\t\t{property.write_symbol}(state{maybe_object}, K__arg_{property.type}(K__arg(1, {1})));");
-        println("\t\tkalos_stack_cleanup(1, state, stack);");
+        println("\t\t{property.write_symbol}((void*)state{maybe_object}, K__arg_{property.type}(K__arg(1, {1})));");
+        println("\t\tkalos_stack_cleanup(state, 1);");
         if (is_dynamic) {
             println("\t\treturn true;");
         } else {

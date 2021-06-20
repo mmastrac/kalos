@@ -17,11 +17,11 @@
 #define K__t_object KALOS_VALUE_OBJECT
 #define K__t_any    KALOS_VALUE_ANY
 
-#define K__clean_string(stack, x) kalos_string_release(state, x);
+#define K__clean_string(stack, x) kalos_string_release((kalos_state*)state, x);
 #define K__clean_number(stack, x) ;
 #define K__clean_bool  (stack, x) ;
-#define K__clean_object(stack, x) kalos_object_release(state, &x);
-#define K__clean_any   (stack, x) kalos_clear(state, x);
+#define K__clean_object(stack, x) kalos_object_release((kalos_state*)state, &x);
+#define K__clean_any   (stack, x) kalos_clear((kalos_state*)state, x);
 #define K__arg(n, x)     peek(stack, (n)-(x))
 #define K__arg_string(x) &((x)->value.string)
 #define K__arg_number(x) (x)->value.number
