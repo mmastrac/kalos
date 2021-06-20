@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
 #include "_kalos_lex.h"
 #include "_kalos_module.h"
 #include "kalos_parse.h"

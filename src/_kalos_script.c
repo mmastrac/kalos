@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
-
 #include "kalos_parse.h"
 #include "_kalos_script.h"
 #include "_kalos_string_format.h"

@@ -1,5 +1,4 @@
-#include <string.h>
-#include <stdlib.h>
+#include "_kalos_defines.h"
 #include "_kalos_lex.h"
 
 enum yyc_state {
