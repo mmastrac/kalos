@@ -1,7 +1,5 @@
-#include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
-
+#include "_kalos_defines.h"
 #include "_kalos_string_format.h"
 
 // Comparison equivalent to 'unsigned == 0'
