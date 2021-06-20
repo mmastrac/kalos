@@ -10,7 +10,7 @@
 #include "kalos_util.h"
 
 struct kalos_module_builder {
-    kalos_basic_environment* env;
+    kalos_state* state;
     void* kalos_module_buffer;
     size_t module_buffer_size, module_buffer_index;
     char* string_buffer;
@@ -25,7 +25,7 @@ static void* allocate_item(struct kalos_module_builder* builder, kalos_module_it
     if (builder->module_buffer_index + struct_size > builder->module_buffer_size) {
         ptrdiff_t list_offset = PTR_BYTE_SUBTRACT(*list, builder->kalos_module_buffer);
         builder->module_buffer_size *= 2;
-        builder->kalos_module_buffer = builder->env->realloc(builder->kalos_module_buffer, builder->module_buffer_size);
+        builder->kalos_module_buffer = builder->state->realloc(builder->kalos_module_buffer, builder->module_buffer_size);
         (*list) = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list_offset);
     }
     void* ptr = PTR_BYTE_OFFSET(builder->kalos_module_buffer, builder->module_buffer_index);
@@ -129,7 +129,7 @@ static kalos_int strpack(struct kalos_module_builder* builder, const char* s) {
             builder->string_buffer_size = 16;
         }
         builder->string_buffer_size *= 2;
-        builder->string_buffer = builder->env->realloc(builder->string_buffer, builder->string_buffer_size);
+        builder->string_buffer = builder->state->realloc(builder->string_buffer, builder->string_buffer_size);
     }
     strcpy(builder->string_buffer + builder->string_buffer_index, s);
     builder->string_buffer_index += l;
@@ -382,7 +382,7 @@ static void property(void* context, const char* name, const char* type, const ch
     LOG("prop %s %s %s %s %s", name, type, mode, symbol, symbol2);
 }
 
-kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environment* env) {
+kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_idl_callbacks callbacks = {
         error,
         prefix,
@@ -404,9 +404,9 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environmen
     };
 
     struct kalos_module_builder context = {0};
-    context.env = env;
+    context.state = state;
     context.module_buffer_size = 1024;
-    context.kalos_module_buffer = env->alloc(context.module_buffer_size);
+    context.kalos_module_buffer = state->alloc(context.module_buffer_size);
     context.module_buffer_index = sizeof(kalos_module_header);
     memset(root(&context), 0, sizeof(kalos_module_header));
     strpack(&context, ""); // zero string = empty
@@ -425,20 +425,20 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_basic_environmen
         LOG("PROP %s=%d", context.string_buffer + prop_addr->name_index, prop_addr->invoke_id);
     }
 
-    kalos_module_parsed parsed = kalos_buffer_alloc(env, context.module_buffer_index + context.string_buffer_index);
+    kalos_module_parsed parsed = kalos_buffer_alloc(state, context.module_buffer_index + context.string_buffer_index);
     memcpy(parsed.buffer, context.kalos_module_buffer, context.module_buffer_index);
-    env->free(context.kalos_module_buffer);
+    state->free(context.kalos_module_buffer);
     kalos_module_header* header = (kalos_module_header*)parsed.buffer;
     header->version = 1;
     header->string_offset = context.module_buffer_index;
     header->string_size = context.string_buffer_index;
     memcpy(PTR_BYTE_OFFSET(parsed.buffer, header->string_offset), context.string_buffer, context.string_buffer_index);
-    env->free(context.string_buffer);
+    state->free(context.string_buffer);
 
     return parsed;
 }
 
-static kalos_basic_environment* script_environment;
+static kalos_state* script_environment;
 static kalos_module_parsed script_modules;
 static kalos_module_header* script_current_header;
 static kalos_module* script_current_module;
@@ -446,16 +446,16 @@ static kalos_export* script_current_export;
 static kalos_function* script_current_function;
 static kalos_object_property* script_current_property;
 
-void kalos_idl_compiler_print(kalos_state state, kalos_string* string) {
+void kalos_idl_compiler_print(kalos_state* state, kalos_string* string) {
     script_environment->print(kalos_string_c(state, *string));
 }
 
-void kalos_idl_compiler_println(kalos_state state, kalos_string* string) {
+void kalos_idl_compiler_println(kalos_state* state, kalos_string* string) {
     script_environment->print(kalos_string_c(state, *string));
     script_environment->print("\n");
 }
 
-void kalos_idl_compiler_log(kalos_state state, kalos_string* string) {
+void kalos_idl_compiler_log(kalos_state* state, kalos_string* string) {
     LOG("%s", kalos_string_c(state, *string));
 }
 
@@ -477,7 +477,7 @@ char* function_type_to_string(kalos_function_type type) {
     return "";
 }
 
-static void iter_function_arg(kalos_state state, void* context, uint16_t index, kalos_value* value) {
+static void iter_function_arg(kalos_state* state, void* context, uint16_t index, kalos_value* value) {
     kalos_int* record = context;
     kalos_arg* arg = kalos_module_get_list_item(script_modules, *record);
     *record = arg->arg_list.next;
@@ -485,76 +485,79 @@ static void iter_function_arg(kalos_state state, void* context, uint16_t index, 
     value->value.string = kalos_string_allocate(state, function_type_to_string(arg->type));
 }
 
-static kalos_string kalos_idl_module_name(kalos_state state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-static kalos_string kalos_idl_module_prefix(kalos_state state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
-static kalos_string kalos_idl_obj_module_name(kalos_state state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-static kalos_string kalos_idl_obj_module_prefix(kalos_state state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_header->prefix_index)); }
+static kalos_string kalos_idl_module_name(kalos_state* state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
+static kalos_string kalos_idl_module_prefix(kalos_state* state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
+static kalos_string kalos_idl_obj_module_name(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
+static kalos_string kalos_idl_obj_module_prefix(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_header->prefix_index)); }
 
-static kalos_string kalos_idl_export_name2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
-static kalos_int kalos_idl_function_id2(kalos_state state, kalos_object_ref* o) { return script_current_function->invoke_id; }
-static kalos_string kalos_idl_function_return_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
-static kalos_string kalos_idl_function_realname2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->symbol_index)); }
-static kalos_string kalos_idl_function_c(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->c_index)); }
-static kalos_object_ref kalos_idl_function_args2(kalos_state state, kalos_object_ref* o) {
+static kalos_string kalos_idl_export_name2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
+static kalos_int kalos_idl_function_id2(kalos_state* state, kalos_object_ref* o) { return script_current_function->invoke_id; }
+static kalos_string kalos_idl_function_return_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
+static kalos_string kalos_idl_function_realname2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->symbol_index)); }
+static kalos_string kalos_idl_function_c(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->c_index)); }
+static kalos_object_ref kalos_idl_function_args2(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_function->arg_list.count);
     *index = script_current_function->arg_list.head;
     return obj;
 }
-static kalos_int kalos_idl_function_arg_count2(kalos_state state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
-static kalos_string kalos_idl_function_varargs2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
+static kalos_int kalos_idl_function_arg_count2(kalos_state* state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
+static kalos_string kalos_idl_function_varargs2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
 
 static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 
-static kalos_string kalos_idl_property_name(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
-static kalos_int kalos_idl_property_read_id2(kalos_state state, kalos_object_ref* o) { return prop()->read_invoke_id; }
-static kalos_int kalos_idl_property_write_id2(kalos_state state, kalos_object_ref* o) { return prop()->write_invoke_id; }
-static kalos_string kalos_idl_property_read_symbol2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read_symbol_index)); }
-static kalos_string kalos_idl_property_write_symbol2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
-static kalos_string kalos_idl_property_type2(kalos_state state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
+static kalos_string kalos_idl_property_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
+static kalos_int kalos_idl_property_read_id2(kalos_state* state, kalos_object_ref* o) { return prop()->read_invoke_id; }
+static kalos_int kalos_idl_property_write_id2(kalos_state* state, kalos_object_ref* o) { return prop()->write_invoke_id; }
+static kalos_string kalos_idl_property_read_symbol2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read_symbol_index)); }
+static kalos_string kalos_idl_property_write_symbol2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
+static kalos_string kalos_idl_property_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 
-static kalos_object_ref kalos_idl_handle_args(kalos_state state, kalos_object_ref* o) {
+static kalos_object_ref kalos_idl_handle_args(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_export->entry.handler.arg_list.count);
     *index = script_current_export->entry.handler.arg_list.head;
     return obj;
 }
-static kalos_int kalos_idl_handle_index2(kalos_state state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
-static kalos_int kalos_idl_handle_module_index2(kalos_state state, kalos_object_ref* o) { return script_current_module->index; }
+static kalos_int kalos_idl_handle_index2(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
+static kalos_int kalos_idl_handle_module_index2(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
 
 struct walk_callback_context {
     bool handles;
     kalos_module_parsed modules;
-    kalos_state state;
+    kalos_run_state* state;
     kalos_value script_context;
 };
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export);
 bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module);
 
-void kalos_idl_walk_modules(kalos_state state, kalos_value* script_context) {
+void kalos_idl_walk_modules(kalos_run_state* run_state, kalos_value* script_context) {
+    kalos_state* state = kalos_state_from_run_state(run_state);
     struct walk_callback_context context;
-    context.state = state;
+    context.state = run_state;
     kalos_value_move_to(state, script_context, &context.script_context);
     context.modules = script_modules;
     kalos_module_walk_modules(&context, script_modules, module_walk_callback);
     kalos_clear(state, &context.script_context);
 }
 
-void kalos_idl_walk_exports(kalos_state state, kalos_value* script_context) {
+void kalos_idl_walk_exports(kalos_run_state* run_state, kalos_value* script_context) {
+    kalos_state* state = kalos_state_from_run_state(run_state);
     struct walk_callback_context context;
-    context.state = state;
+    context.state = run_state;
     kalos_value_move_to(state, script_context, &context.script_context);
     context.modules = script_modules;
     kalos_module_walk_exports(&context, script_modules, script_current_module, export_walk_callback);
     kalos_clear(state, &context.script_context);
 }
 
-void kalos_module_idl_module_trigger_property(kalos_state state, kalos_value* a0, kalos_object_ref* a1);
+void kalos_module_idl_module_trigger_property(kalos_run_state* state, kalos_value* a0, kalos_object_ref* a1);
 
 kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
 
-void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_context, kalos_object_ref* object) {
+void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* script_context, kalos_object_ref* object) {
+    kalos_state* state = kalos_state_from_run_state(run_state);
     kalos_value v = kalos_value_clone(state, script_context);
     kalos_int prop_index = script_current_export->entry.object.prop_list.head;
     while (prop_index) {
@@ -566,7 +569,7 @@ void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_con
         if (script_current_property->property.write_invoke_id)
             script_current_property->property.write_invoke_id = kalos_module_lookup_property(script_modules, true, kalos_module_get_string(script_modules, script_current_property->name_index));
         kalos_object_ref obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_property_obj_props);
-        kalos_module_idl_module_trigger_property(state, &ctx, &obj);
+        kalos_module_idl_module_trigger_property(run_state, &ctx, &obj);
         prop_index = script_current_property->prop_list.next;
     }
     kalos_clear(state, &v);
@@ -577,26 +580,27 @@ void kalos_idl_walk_object_properties(kalos_state state, kalos_value* script_con
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;
+    kalos_state* state = kalos_state_from_run_state(context->state);
     script_current_export = export;
-    kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
+    kalos_value ctx = kalos_value_clone(state, &context->script_context);
     kalos_object_ref obj = NULL;
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
-            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_function_obj_props);
+            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_function_obj_props);
             script_current_function = kalos_module_get_list_item(parsed, export->entry.function_overload_list.head);
             kalos_module_idl_module_trigger_function(context->state, &ctx, &obj);
             script_current_function = NULL;
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
-            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_property_obj_props);
+            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_property_obj_props);
             kalos_module_idl_module_trigger_property(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
-            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_handle_obj_props);
+            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_handle_obj_props);
             kalos_module_idl_module_trigger_handle_(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
-            obj = kalos_allocate_prop_object(context->state, NULL, &kalos_module_idl_module_object_object_obj_props);
+            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_object_obj_props);
             kalos_module_idl_module_trigger_object(context->state, &ctx, &obj);
             break;
         default:
@@ -607,14 +611,15 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 
 bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module) {
     struct walk_callback_context* context = context_;
+    kalos_state* state = kalos_state_from_run_state(context->state);
     script_current_module = module;
-    kalos_value ctx = kalos_value_clone(context->state, &context->script_context);
-    kalos_object_ref obj = kalos_allocate_prop_object(context->state, module, &kalos_module_idl_module_object_module_obj_props);
+    kalos_value ctx = kalos_value_clone(state, &context->script_context);
+    kalos_object_ref obj = kalos_allocate_prop_object(state, module, &kalos_module_idl_module_object_module_obj_props);
     kalos_module_idl_module_trigger_begin(context->state, &ctx, &obj);
     return true;
 }
 
-bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_environment* env) {
+bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
     // TODO: Watcom takes forever to compile if these aren't static
     static const char IDL_COMPILER_SCRIPT[] = {
         #include "kalos_idl_compiler.kalos.inc"
@@ -623,14 +628,14 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
     static const char IDL_COMPILER_IDL[] = {
         #include "kalos_idl_compiler.kidl.inc"
     };
-    script_environment = env;
-    kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, env);
+    script_environment = state;
+    kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, state);
     if (!modules.buffer) {
         printf("ERROR: %s\n", "failed to parse compiler IDL");
         return false;
     }
     kalos_parse_options options = {0};
-    kalos_script script = kalos_buffer_alloc(env, 8192);
+    kalos_script script = kalos_buffer_alloc(state, 8192);
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
@@ -640,9 +645,9 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_basic_
     script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
-    kalos_state state = kalos_init(&script, &dispatch, env);
-    kalos_module_idl_trigger_open(state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
-    kalos_module_idl_trigger_close(state);
-    kalos_run_free(state);
+    kalos_run_state* run_state = kalos_init(&script, &dispatch, state);
+    kalos_module_idl_trigger_open(run_state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
+    kalos_module_idl_trigger_close(run_state);
+    kalos_run_free(run_state);
     return true;
 }

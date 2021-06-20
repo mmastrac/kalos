@@ -72,14 +72,13 @@ static void test_print_string(const char* s) {
     LOG("print: %s", s);
 }
 
-kalos_basic_environment test_env = {
+kalos_state test_env = {
     .alloc = test_malloc,
     .realloc = test_realloc,
     .free = test_free,
     .error = test_error,
     .print = test_print_string,
 };
-
 
 kalos_buffer read_buffer(const char* input) {
     FILE* fd = fopen(input, "rb");
@@ -171,7 +170,7 @@ void parse_test(const char* file) {
 
 char output_buffer[1024];
 
-void test_print(kalos_state state, int size, kalos_value* args) {
+void test_print(kalos_state* state, int size, kalos_value* args) {
     while (size--) {
         if (args->type == KALOS_VALUE_STRING) {
             sprintf(output_buffer, "%s%s", output_buffer, kalos_string_c(state, args->value.string));
@@ -186,7 +185,7 @@ void test_print(kalos_state state, int size, kalos_value* args) {
     }
 }
 
-kalos_int test_kalos_sum_numbers(kalos_state state, int size, kalos_value* args) {
+kalos_int test_kalos_sum_numbers(kalos_state* state, int size, kalos_value* args) {
     int n = 0;
     for (int i = 0; i < size; i++) {
         n += args[i].value.number;
@@ -194,7 +193,7 @@ kalos_int test_kalos_sum_numbers(kalos_state state, int size, kalos_value* args)
     return n;
 }
 
-kalos_int test_kalos_sum_numbers_2(kalos_state state, kalos_int a, kalos_int b, int size, kalos_value* args) {
+kalos_int test_kalos_sum_numbers_2(kalos_state* state, kalos_int a, kalos_int b, int size, kalos_value* args) {
     int n = a+b;
     for (int i = 0; i < size; i++) {
         n += args[i].value.number;
@@ -202,7 +201,7 @@ kalos_int test_kalos_sum_numbers_2(kalos_state state, kalos_int a, kalos_int b, 
     return n;
 }
 
-kalos_string test_kalos_concat(kalos_state state, kalos_string* s1, kalos_string* s2, kalos_string* s3, kalos_string* s4, 
+kalos_string test_kalos_concat(kalos_state* state, kalos_string* s1, kalos_string* s2, kalos_string* s3, kalos_string* s4, 
     kalos_string* s5, kalos_string* s6, kalos_string* s7, kalos_string* s8) {
     return kalos_string_allocate_fmt(state, "%s%s%s%s%s%s%s%s", 
         kalos_string_c(state, *s1), 
@@ -215,54 +214,54 @@ kalos_string test_kalos_concat(kalos_state state, kalos_string* s1, kalos_string
         kalos_string_c(state, *s8));
 }
 
-kalos_int test_read_only_read(kalos_state state) {
+kalos_int test_read_only_read(kalos_state* state) {
     return 42;
 }
 
 static kalos_int read_write_prop = 0;
 
-kalos_int test_read_write_read(kalos_state state) {
+kalos_int test_read_write_read(kalos_state* state) {
     return read_write_prop;
 }
 
-void test_read_write_write(kalos_state state, kalos_int value) {
+void test_read_write_write(kalos_state* state, kalos_int value) {
     read_write_prop = value;
 }
 
-void test_write_only_write(kalos_state state, kalos_int value) {
+void test_write_only_write(kalos_state* state, kalos_int value) {
     sprintf(output_buffer, "%s%d", output_buffer, value);
 }
 
-kalos_string test_read_a(kalos_state state, kalos_object_ref* object) {
+kalos_string test_read_a(kalos_state* state, kalos_object_ref* object) {
     return kalos_string_allocate_fmt(state, "a:%s", (*object)->context);
 }
 
-kalos_string test_read_b(kalos_state state, kalos_object_ref* object) {
+kalos_string test_read_b(kalos_state* state, kalos_object_ref* object) {
     return kalos_string_allocate_fmt(state, "b:%s", (*object)->context);
 }
 
 static kalos_int c = 0;
 
-kalos_int test_read_c(kalos_state state, kalos_object_ref* object) {
+kalos_int test_read_c(kalos_state* state, kalos_object_ref* object) {
     return c;
 }
 
-kalos_int test_read_c2(kalos_state state, kalos_object_ref* object) {
+kalos_int test_read_c2(kalos_state* state, kalos_object_ref* object) {
     return ((const char*)(*object)->context)[0];
 }
 
-void test_write_c(kalos_state state, kalos_object_ref* object, kalos_int value) {
+void test_write_c(kalos_state* state, kalos_object_ref* object, kalos_int value) {
     c = value;
 }
 
 kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props;
 kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props;
 
-kalos_object_ref test_make_a(kalos_state state) {
+kalos_object_ref test_make_a(kalos_state* state) {
     return kalos_allocate_prop_object(state, "a", &kalos_module_dispatch_test_test_object_a_props);
 }
 
-kalos_object_ref test_make_b(kalos_state state) {
+kalos_object_ref test_make_b(kalos_state* state) {
     return kalos_allocate_prop_object(state, "b", &kalos_module_dispatch_test_test_object_b_props);
 }
 
@@ -283,9 +282,9 @@ void run_test(const char* name) {
 
     kalos_dispatch dispatch = {0};
     dispatch.modules = kalos_module_dispatch_test_dispatch;
-    kalos_state state = kalos_init(&script, &dispatch, &test_env);
+    kalos_run_state* state = kalos_init(&script, &dispatch, &test_env);
     kalos_module_dispatch_test_trigger_init(state);
-    kalos_string s = kalos_string_allocate(state, "hello world");
+    kalos_string s = kalos_string_allocate((kalos_state*)state, "hello world");
     kalos_module_dispatch_test_test_trigger_with_args(state, &s);
     kalos_run_free(state);
 
@@ -360,7 +359,7 @@ TEST(kalos_string_format_run_exhaustive_test) {
     char line[256];
     int linenum = 0;
 
-    kalos_state state = kalos_init_for_test(&test_env);
+    kalos_state* state = &test_env;
     while (fgets(line, sizeof(line), test)) {
         linenum++;
         int value = strtol(line, NULL, 10);
@@ -383,7 +382,6 @@ TEST(kalos_string_format_run_exhaustive_test) {
         kalos_string_release(state, str);
     }
     fclose(test);
-    kalos_run_free(state);
     TEST_ASSERT_EQUAL(0, total_allocated);
 }
 

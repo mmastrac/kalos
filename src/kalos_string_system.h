@@ -44,39 +44,39 @@ KALOS_STRING_ALWAYS_INLINE char* __kalos_string_data(kalos_string s) {
     return s.length__ <= 0 ? (char*)s.sc : ((char*)s.sa + sizeof(kalos_string_allocated));
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state state, const char* string);
-KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state state, const char* fmt, ...);
-KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable(kalos_state state, const char* string);
-KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state state, int size);
+KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state* state, const char* string);
+KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state* state, const char* fmt, ...);
+KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable(kalos_state* state, const char* string);
+KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state* state, int size);
 
-KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state state, kalos_string s);
-KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state state, kalos_writable_string string);
-KALOS_STRING_INLINE void kalos_string_release(kalos_state state, kalos_string string);
+KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state* state, kalos_string s);
+KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state* state, kalos_writable_string string);
+KALOS_STRING_INLINE void kalos_string_release(kalos_state* state, kalos_string string);
 
-KALOS_STRING_ALWAYS_INLINE char* kalos_string_writable_c(kalos_state state, kalos_writable_string s) { return (char*)s.s + sizeof(kalos_string_allocated); }
-KALOS_STRING_INLINE const char* kalos_string_c(kalos_state state, kalos_string s);
-KALOS_STRING_ALWAYS_INLINE char kalos_string_char_at(kalos_state state, kalos_string s, kalos_int index) { return __kalos_string_data(s)[index]; }
+KALOS_STRING_ALWAYS_INLINE char* kalos_string_writable_c(kalos_state* state, kalos_writable_string s) { return (char*)s.s + sizeof(kalos_string_allocated); }
+KALOS_STRING_INLINE const char* kalos_string_c(kalos_state* state, kalos_string s);
+KALOS_STRING_ALWAYS_INLINE char kalos_string_char_at(kalos_state* state, kalos_string s, kalos_int index) { return __kalos_string_data(s)[index]; }
 
-KALOS_STRING_ALWAYS_INLINE bool kalos_string_isempty(kalos_state state, kalos_string string) { return string.length__ == 0; }
-KALOS_STRING_ALWAYS_INLINE kalos_int kalos_string_length(kalos_state state, kalos_string string) { return abs(string.length__); }
-KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state state, kalos_string a, kalos_string b);
-KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state state, kalos_string a, kalos_string b);
-KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state state, kalos_string a, kalos_string b, int start);
+KALOS_STRING_ALWAYS_INLINE bool kalos_string_isempty(kalos_state* state, kalos_string string) { return string.length__ == 0; }
+KALOS_STRING_ALWAYS_INLINE kalos_int kalos_string_length(kalos_state* state, kalos_string string) { return abs(string.length__); }
+KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state* state, kalos_string a, kalos_string b);
+KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state* state, kalos_string a, kalos_string b);
+KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state* state, kalos_string a, kalos_string b, int start);
 
-KALOS_STRING_INLINE kalos_string kalos_string_take(kalos_state state, kalos_string* string);
-KALOS_STRING_INLINE kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string, int start, int length);
-KALOS_STRING_ALWAYS_INLINE kalos_string kalos_string_take_substring_start(kalos_state state, kalos_string* string, int start) {
+KALOS_STRING_INLINE kalos_string kalos_string_take(kalos_state* state, kalos_string* string);
+KALOS_STRING_INLINE kalos_string kalos_string_take_substring(kalos_state* state, kalos_string* string, int start, int length);
+KALOS_STRING_ALWAYS_INLINE kalos_string kalos_string_take_substring_start(kalos_state* state, kalos_string* string, int start) {
     return kalos_string_take_substring(state, string, start, kalos_string_length(state, *string) - start);
 }
-KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state state, kalos_string* a, kalos_string* b);
-KALOS_STRING_INLINE kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a, kalos_int b);
+KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state* state, kalos_string* a, kalos_string* b);
+KALOS_STRING_INLINE kalos_string kalos_string_take_repeat(kalos_state* state, kalos_string* a, kalos_int b);
 
-kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* string_format);
-kalos_string kalos_string_take_replace(kalos_state state, kalos_string* s, kalos_string* a, kalos_string* b);
+kalos_string kalos_string_format_int(kalos_state* state, kalos_int value, kalos_string_format* string_format);
+kalos_string kalos_string_take_replace(kalos_state* state, kalos_string* s, kalos_string* a, kalos_string* b);
 
 #if defined(KALOS_STRING_SYSTEM_C) || KALOS_STRING_AGGRESSIVE_INLINE
 
-KALOS_STRING_INLINE kalos_string __kalos_string_alloc(kalos_state state, kalos_int size) {
+KALOS_STRING_INLINE kalos_string __kalos_string_alloc(kalos_state* state, kalos_int size) {
     kalos_string s;
     s.length__ = size;
     if (size) {
@@ -88,7 +88,7 @@ KALOS_STRING_INLINE kalos_string __kalos_string_alloc(kalos_state state, kalos_i
     return s;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state state, const char* string) {
+KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state* state, const char* string) {
 #ifdef KALOS_STRING_TORTURE_TEST
     return kalos_string_allocate_fmt(state, "%s", string);
 #else
@@ -100,7 +100,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state state, const 
 #endif
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state state, const char* fmt, ...) {
+KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state* state, const char* fmt, ...) {
     kalos_string s;
 
     va_list args;
@@ -117,14 +117,14 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state state, co
     return s;
 }
 
-KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state state, int size) {
+KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state* state, int size) {
     kalos_writable_string s;
     s.s = kalos_mem_alloc(state, size + sizeof(kalos_string_allocated) + 1);
     kalos_string_writable_c(state, s)[size] = 0;
     return s;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state state, kalos_string s) {
+KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state* state, kalos_string s) {
     VALIDATE_STRING(s);
     if (s.length__ <= 0) {
         return s;
@@ -134,7 +134,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state state, kalos
     }
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state state, kalos_writable_string string) {
+KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state* state, kalos_writable_string string) {
     kalos_string s;
     s.length__ = strlen(kalos_string_writable_c(state, string));
     s.sa = string.s;
@@ -143,7 +143,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state state, kalos_wr
     return s;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state state, kalos_writable_string string, int length) {
+KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state* state, kalos_writable_string string, int length) {
     kalos_string s;
     s.length__ = length;
     s.sa = string.s;
@@ -152,7 +152,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state state, k
     return s;
 }
 
-KALOS_STRING_INLINE void kalos_string_release(kalos_state state, kalos_string s) {
+KALOS_STRING_INLINE void kalos_string_release(kalos_state* state, kalos_string s) {
     if (s.length__ > 0) {
         if (s.sa->count == 0) {
             s.sa->count = KALOS_STRING_POISONED;
@@ -164,16 +164,16 @@ KALOS_STRING_INLINE void kalos_string_release(kalos_state state, kalos_string s)
     }
 }
 
-KALOS_STRING_INLINE const char* kalos_string_c(kalos_state state, kalos_string s) {
+KALOS_STRING_INLINE const char* kalos_string_c(kalos_state* state, kalos_string s) {
     VALIDATE_STRING(s);
     return __kalos_string_data(s);
 }
 
-KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state state, kalos_string a, kalos_string b) {
+KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state* state, kalos_string a, kalos_string b) {
     return strcmp(__kalos_string_data(a), __kalos_string_data(b));
 }
 
-KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state state, kalos_string a, kalos_string b) {
+KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state* state, kalos_string a, kalos_string b) {
     char* found = strstr(__kalos_string_data(a), __kalos_string_data(b));
     if (!found) {
         return -1;
@@ -181,7 +181,7 @@ KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state state, kalos_string 
     return found - __kalos_string_data(a);
 }
 
-KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state state, kalos_string a, kalos_string b, int start) {
+KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state* state, kalos_string a, kalos_string b, int start) {
     char* found = strstr(__kalos_string_data(a) + start, __kalos_string_data(b));
     if (!found) {
         return -1;
@@ -189,14 +189,14 @@ KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state state, kalos_st
     return found - __kalos_string_data(a);
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_take(kalos_state state, kalos_string* string) {
+KALOS_STRING_INLINE kalos_string kalos_string_take(kalos_state* state, kalos_string* string) {
     kalos_string copy = *string;
     string->length__ = 0;
     string->sc = "";
     return copy;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_take_substring(kalos_state state, kalos_string* string_, int start, int length) {
+KALOS_STRING_INLINE kalos_string kalos_string_take_substring(kalos_state* state, kalos_string* string_, int start, int length) {
     kalos_string string = kalos_string_take(state, string_);
     kalos_string str = __kalos_string_alloc(state, length);
     char* s = __kalos_string_data(str);
@@ -209,7 +209,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_take_substring(kalos_state state, 
     return str;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state state, kalos_string* a_, kalos_string* b_) {
+KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state* state, kalos_string* a_, kalos_string* b_) {
     kalos_string a = kalos_string_take(state, a_);
     kalos_string b = kalos_string_take(state, b_);
     kalos_int al = kalos_string_length(state, a);
@@ -232,7 +232,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state state, kal
     return str;
 }
 
-KALOS_STRING_INLINE kalos_string kalos_string_take_repeat(kalos_state state, kalos_string* a_, kalos_int b) {
+KALOS_STRING_INLINE kalos_string kalos_string_take_repeat(kalos_state* state, kalos_string* a_, kalos_int b) {
     kalos_string a = kalos_string_take(state, a_);
     kalos_int al = kalos_string_length(state, a);
     ASSERT(b > 0 && al > 0);

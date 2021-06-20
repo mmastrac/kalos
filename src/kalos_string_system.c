@@ -32,7 +32,7 @@ static inline char get_sign(kalos_string_format* format, kalos_int value) {
     return 0;
 }
 
-kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_string_format* format) {
+kalos_string kalos_string_format_int(kalos_state* state, kalos_int value, kalos_string_format* format) {
     kalos_string str;
     if (format->align == KALOS_STRING_FORMAT_ALIGN_PADDING_AFTER_SIGN) {
         // TODO
@@ -89,7 +89,7 @@ kalos_string kalos_string_format_int(kalos_state state, kalos_int value, kalos_s
 }
 
 // Adapted from https://creativeandcritical.net/str-replace-c
-static kalos_string repl_str(kalos_state state, kalos_string s, const char *from, const char *to) {
+static kalos_string repl_str(kalos_state* state, kalos_string s, const char *from, const char *to) {
 	/* Adjust each of the below values to suit your needs. */
 
 	/* Increment positions cache size initially by this number. */
@@ -172,7 +172,7 @@ end_repl_str:
 	return kalos_string_commit_length(state, w, retlen);
 }
 
-kalos_string kalos_string_take_replace(kalos_state state, kalos_string* s_, kalos_string* a_, kalos_string* b_) {
+kalos_string kalos_string_take_replace(kalos_state* state, kalos_string* s_, kalos_string* a_, kalos_string* b_) {
     kalos_string s = kalos_string_take(state, s_);
     kalos_string a = kalos_string_take(state, a_);
     kalos_string b = kalos_string_take(state, b_);
