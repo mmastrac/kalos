@@ -1,5 +1,9 @@
 #pragma once
 
+/** @file
+ * Common include for all Kalos users.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 

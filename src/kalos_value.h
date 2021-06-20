@@ -186,34 +186,21 @@ static inline void kalos_value_clone_to(kalos_state* state, kalos_value* from, k
     kalos_retain__(state, to);
 }
 
-static inline void push_number(kalos_stack* stack, kalos_int value) {
-    stack->stack[stack->stack_index].type = KALOS_VALUE_NUMBER;
-    stack->stack[stack->stack_index].value.number = value;
-    stack->stack_index++;
+#define KALOS_VALUE(TYPE, name_, field_, type_, ptr_, take_) \
+static inline void push_##name_(kalos_stack* stack, type_ value) {\
+    stack->stack[stack->stack_index].type = KALOS_VALUE_##TYPE; \
+    stack->stack[stack->stack_index].value.field_ = value; \
+    stack->stack_index++; \
+} \
+static inline void kalos_load_arg_##name_(kalos_run_state* state, kalos_int index, type_ ptr_ arg) {\
+    state->stack->stack[state->stack->stack_index + index].type = KALOS_VALUE_##TYPE; \
+    state->stack->stack[state->stack->stack_index + index].value.field_ = take_; \
 }
 
-static inline void push_string(kalos_stack* stack, kalos_string value) {
-    stack->stack[stack->stack_index].type = KALOS_VALUE_STRING;
-    stack->stack[stack->stack_index].value.string = value;
-    stack->stack_index++;
-}
-
-static inline void push_bool(kalos_stack* stack, kalos_int value) {
-    stack->stack[stack->stack_index].type = KALOS_VALUE_BOOL;
-    stack->stack[stack->stack_index].value.number = value;
-    stack->stack_index++;
-}
-
-static inline void push_object(kalos_stack* stack, kalos_object_ref object) {
-    stack->stack[stack->stack_index].type = KALOS_VALUE_OBJECT;
-    stack->stack[stack->stack_index].value.object = object;
-    stack->stack_index++;
-}
-
-static inline void push_none(kalos_stack* stack) {
-    stack->stack[stack->stack_index].type = KALOS_VALUE_NONE;
-    stack->stack_index++;
-}
+KALOS_VALUE(NUMBER, number, number, kalos_int,,         arg);
+KALOS_VALUE(BOOL,   bool,   number, kalos_int,,         arg);
+KALOS_VALUE(STRING, string, string, kalos_string,*,     kalos_string_take(kalos_state_from_run_state(state), arg));
+KALOS_VALUE(OBJECT, object, object, kalos_object_ref,*, kalos_object_take(kalos_state_from_run_state(state), arg));
 
 static inline kalos_value* pop(kalos_stack* stack) {
     return &stack->stack[--stack->stack_index];
@@ -234,26 +221,6 @@ static inline kalos_value* push_raw(kalos_stack* stack) {
 
 static inline void kalos_load_arg_any(kalos_run_state* state, kalos_int index, kalos_value* arg) {
     kalos_value_move_to(kalos_state_from_run_state(state), arg, &state->stack->stack[state->stack->stack_index + index]);
-}
-
-static inline void kalos_load_arg_object(kalos_run_state* state, kalos_int index, kalos_object_ref* arg) {
-    state->stack->stack[state->stack->stack_index + index].type = KALOS_VALUE_OBJECT;
-    state->stack->stack[state->stack->stack_index + index].value.object = kalos_object_take(kalos_state_from_run_state(state), arg);
-}
-
-static inline void kalos_load_arg_number(kalos_run_state* state, kalos_int index, kalos_int arg) {
-    state->stack->stack[state->stack->stack_index + index].type = KALOS_VALUE_NUMBER;
-    state->stack->stack[state->stack->stack_index + index].value.number = arg;
-}
-
-static inline void kalos_load_arg_string(kalos_run_state* state, kalos_int index, kalos_string* arg) {
-    state->stack->stack[state->stack->stack_index + index].type = KALOS_VALUE_STRING;
-    state->stack->stack[state->stack->stack_index + index].value.string = kalos_string_take(kalos_state_from_run_state(state), arg);
-}
-
-static inline void kalos_load_arg_bool(kalos_run_state* state, kalos_int index, bool arg) {
-    state->stack->stack[state->stack->stack_index + index].type = KALOS_VALUE_BOOL;
-    state->stack->stack[state->stack->stack_index + index].value.number = arg;
 }
 
 kalos_object_ref kalos_allocate_object(kalos_state* state, size_t context_size);
