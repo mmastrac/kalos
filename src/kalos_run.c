@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "defines.h"
+#include "_kalos_defines.h"
 #include "kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"

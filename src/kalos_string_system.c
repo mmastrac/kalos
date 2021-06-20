@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
-#include "defines.h"
+#include "_kalos_defines.h"
 #define KALOS_STRING_SYSTEM_C
 #include "kalos_string_system.h"
 
