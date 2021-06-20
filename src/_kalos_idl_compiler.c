@@ -4,7 +4,6 @@
 #include "kalos_run.h"
 #include "_kalos_idl_compiler.h"
 #include "_kalos_idl_parse.h"
-#include "_kalos_util.h"
 
 struct kalos_module_builder {
     kalos_state* state;

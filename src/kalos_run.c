@@ -8,7 +8,6 @@
 #include "_kalos_script.h"
 #include "_kalos_string_format.h"
 #include "_kalos_string_system.h"
-#include "_kalos_util.h"
 
 #define KALOS_VAR_SLOT_SIZE 16
 

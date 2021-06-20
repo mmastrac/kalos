@@ -1,5 +1,5 @@
 #include "kalos.h"
-#include "_kalos_util.h"
+#include "_kalos_defines.h"
 
 typedef struct {
     size_t size;
