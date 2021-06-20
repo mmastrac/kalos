@@ -64,22 +64,31 @@ typedef struct {
     KALOS_BASIC_ENVIRONMENT;
 } kalos_state;
 
+/**
+ * Helper function to call the allocation method from a kalos_state*.
+ */
 static inline void* kalos_mem_alloc(kalos_state* state, size_t size) {
     return state->alloc(size);
 }
+/**
+ * Helper function to call the re-allocation method from a kalos_state*.
+ */
 static inline void* kalos_mem_realloc(kalos_state* state, void* ptr, size_t size) {
     return state->realloc(ptr, size);
 }
+/**
+ * Helper function to call the allocation-freeing method from a kalos_state*.
+ */
 static inline void kalos_mem_free(kalos_state* state, void* ptr) {
     state->free(ptr);
 }
 
+/**
+ * A sized buffer that is free-able without having access to the kalos_state* it was created under.
+ */
 typedef struct kalos_buffer {
     uint8_t* buffer;
 } kalos_buffer;
-
-typedef kalos_buffer kalos_script;
-typedef kalos_buffer kalos_module_parsed;
 
 /**
  * Allocate a buffer that can be freed without reference to the Kalos environment.

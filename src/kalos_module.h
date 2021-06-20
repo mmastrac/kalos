@@ -3,9 +3,9 @@
 #include "kalos.h"
 #include "kalos_value.h"
 
+typedef kalos_buffer kalos_module_parsed;
+
 #define MAX_KALOS_EXPORT_NAME_LENGTH 64
-#define MAX_KALOS_ARGS 8
-#define MAX_KALOS_OBJ_PROPS 8
 
 typedef enum kalos_function_type {
     FUNCTION_TYPE_VOID,
