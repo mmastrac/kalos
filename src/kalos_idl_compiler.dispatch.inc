@@ -40,14 +40,9 @@ void kalos_module_idl_trigger_open(kalos_run_state* state, K__pbool a0) {
 	kalos_trigger(state, kalos_make_address(0x0, 0x2));
 }
 
-// id=0000:0003 name=open2
-void kalos_module_idl_trigger_open2(kalos_run_state* state) {
-	kalos_trigger(state, kalos_make_address(0x0, 0x3));
-}
-
-// id=0000:0004 name=object_property
+// id=0000:0003 name=object_property
 void kalos_module_idl_trigger_object_property(kalos_run_state* state) {
-	kalos_trigger(state, kalos_make_address(0x0, 0x4));
+	kalos_trigger(state, kalos_make_address(0x0, 0x3));
 }
 
 bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {

@@ -9,7 +9,6 @@ module builtin {
     # Old handles
     handle close;
     handle open(dynamic: bool);
-    handle open2;
     handle object_property;
 }
 
