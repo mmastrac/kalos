@@ -4,8 +4,6 @@
  * The Kalos virtual machine for running compiled scripts.
  */
 
-#include <stddef.h>
-#include <stdint.h>
 #include "kalos.h"
 #include "_kalos_value.h"
 #include "_kalos_module.h"

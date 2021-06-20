@@ -4,6 +4,7 @@
  * Common include for all Kalos users.
  */
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 

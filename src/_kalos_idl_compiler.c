@@ -1,10 +1,7 @@
-#include <stdbool.h>
 #include "_kalos_defines.h"
 #include "kalos.h"
-#include "_kalos_module.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"
-#include "_kalos_script.h"
 #include "_kalos_idl_compiler.h"
 #include "_kalos_idl_parse.h"
 #include "_kalos_util.h"

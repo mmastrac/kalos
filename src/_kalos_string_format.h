@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
 #include "kalos.h"
 
 typedef enum kalos_string_format_align {

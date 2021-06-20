@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include <memory.h>
 #include <ctype.h>
 #include "_kalos_idl_parse.h"

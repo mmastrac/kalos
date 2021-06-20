@@ -4,9 +4,6 @@
  * Utilities for introspection of compiled script files.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #define KALOS_OP(x, in, out, args) KALOS_OP_##x,
 typedef enum kalos_op {
 #include "_kalos_constants.inc"

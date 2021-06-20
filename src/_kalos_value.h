@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
 #include "kalos.h"
 #include "_kalos_string_system.h"
 
