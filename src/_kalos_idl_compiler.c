@@ -81,11 +81,6 @@ static void* insert_list_item(struct kalos_module_builder* builder, kalos_module
     return append_list_item(builder, list, struct_size);
 }
 
-// Finds either the insertion point for a new item, or the existing item that matches
-static void* find_list_item(struct kalos_module_builder* builder, kalos_module_item_list_header* list, void* context, void* a, list_find_fn fn) {
-    return NULL;
-}
-
 static void* get_list_item(struct kalos_module_builder* builder, kalos_int offset) {
     ASSERT(offset > 0);
     return PTR_BYTE_OFFSET(builder->kalos_module_buffer, offset);
