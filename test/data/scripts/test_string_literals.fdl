@@ -1,4 +1,4 @@
-handle init {
+on init {
     if ("aa" == "a" "a") {
         print("correct 1!\n");
     }

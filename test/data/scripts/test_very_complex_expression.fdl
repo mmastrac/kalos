@@ -1,5 +1,5 @@
 var foo;
-handle init {
+on init {
     foo = 21 | 55 & 56 << 1 + 3 * 4 / 2 * (9 + 3) + 4 - 87 - -11;
     if (foo == 53) {
         print("correct!\n");

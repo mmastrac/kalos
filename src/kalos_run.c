@@ -384,13 +384,13 @@ kalos_run_state* kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalo
     return (kalos_run_state*)state;
 }
 
-void kalos_trigger(kalos_run_state* state_, kalos_export_address handle_address) {
+void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     kalos_section_header* header;
     int original_stack_index = state->stack->stack_index;
     int original_pc = state->pc;
     kalos_value* original_locals = state->locals;
-    state->pc = kalos_find_section(state->script, handle_address, &header);
+    state->pc = kalos_find_section(state->script, handler_address, &header);
     if (state->pc == 0) {
         goto done;
     }

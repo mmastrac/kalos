@@ -6,10 +6,10 @@ module builtin {
     fn print(s: string) = kalos_idl_compiler_print;
     fn log(s: string) = kalos_idl_compiler_log;
 
-    # Old handles
-    handle close;
-    handle open(dynamic: bool);
-    handle object_property;
+    # Old handlers
+    handler close;
+    handler open(dynamic: bool);
+    handler object_property;
 }
 
 module kidl {
@@ -23,11 +23,11 @@ module module {
 
     prop(read) name: string = kalos_idl_module_name;
     prop(read) prefix: string = kalos_idl_module_prefix;
-    handle begin(context: any, module: object);
-    handle function(context: any, function: object);
-    handle handle_(context: any, handle: object);
-    handle property(context: any, property: object);
-    handle object(context: any, property: object);
+    handler begin(context: any, module: object);
+    handler function(context: any, function: object);
+    handler handler(context: any, handler: object);
+    handler property(context: any, property: object);
+    handler object(context: any, property: object);
 
     object module_obj {
         prop(read) name: string = kalos_idl_obj_module_name;
@@ -54,11 +54,11 @@ module module {
         prop(read) write_symbol: string = kalos_idl_property_write_symbol2;
     }
 
-    object handle_obj {
+    object handler_obj {
         prop(read) name: string = kalos_idl_export_name2;
-        prop(read) module_index: number = kalos_idl_handle_module_index2;
-        prop(read) handle_index: number = kalos_idl_handle_index2;
-        prop(read) args: object = kalos_idl_handle_args;
+        prop(read) module_index: number = kalos_idl_handler_module_index2;
+        prop(read) handler_index: number = kalos_idl_handler_index2;
+        prop(read) args: object = kalos_idl_handler_args;
     }
 
     object object_obj {

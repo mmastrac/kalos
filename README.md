@@ -14,7 +14,7 @@ import app;
 import color;
 import window;
 
-handle app.init {
+on app.init {
     var x;
     app.fill(0, 0, window.WIDTH, window.HEIGHT, color.BLUE);
     # Draw lines every four pixels

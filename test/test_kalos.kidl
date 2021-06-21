@@ -2,7 +2,7 @@ prefix "kalos_module_dispatch_test_";
 
 module builtin {
     fn print(args: any...) = test_print;
-    handle init;
+    handler init;
 }
 
 module test {
@@ -21,8 +21,8 @@ module test {
     fn overloaded_add(n1: number, n2: number): number = C "111";
     fn overloaded_add(s1: string, s2: string): number = C "222";
 
-    handle with_args(s: string);
-    handle self_trigger(s: string, o: object);
+    handler with_args(s: string);
+    handler self_trigger(s: string, o: object);
     fn trigger_self(s: string, o: object) = kalos_module_dispatch_test_test_trigger_self_trigger;
     fn raw_c(a: number, b: number): number = C "@0*10+@1";
     fn make_a(): object = test_make_a;

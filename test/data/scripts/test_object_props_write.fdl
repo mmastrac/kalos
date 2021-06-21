@@ -1,6 +1,6 @@
 import test;
 
-handle init {
+on init {
     var ax = test.make_a();
     ax.c = 213;
     print("{ax.c}\n");

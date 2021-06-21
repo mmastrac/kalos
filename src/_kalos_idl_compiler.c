@@ -12,7 +12,7 @@ struct kalos_module_builder {
     size_t string_buffer_size;
     size_t string_buffer_index;
     bool in_object;
-    kalos_int handle_index;
+    kalos_int handler_index;
     kalos_int function_index;
 };
 
@@ -231,7 +231,7 @@ static void begin_module(void* context, const char* module) {
     m->name_index = strpack(builder, module);
     m->index = root(builder)->module_list.count - 1;
     builder->function_index = 0;
-    builder->handle_index = 0;
+    builder->handler_index = 0;
     LOG("module %s", module);
 }
 
@@ -294,16 +294,16 @@ static void end_function_c(void* context, const char* name, const char* type, co
     LOG("/fn %s %s %s", name, type, c);
 }
 
-static void begin_handle(void* context, const char* name) {
+static void begin_handler(void* context, const char* name) {
     struct kalos_module_builder* builder = context;
     new_export(builder);
     current_export(builder)->name_index = strpack(builder, name);
     current_export(builder)->type = KALOS_EXPORT_TYPE_HANDLE;
-    current_export(builder)->entry.handler.invoke_id = ++builder->handle_index;
-    LOG("handle %s", name);
+    current_export(builder)->entry.handler.invoke_id = ++builder->handler_index;
+    LOG("handler %s", name);
 }
 
-static void handle_arg(void* context, const char* name, const char* type, bool is_varargs) {
+static void handler_arg(void* context, const char* name, const char* type, bool is_varargs) {
     struct kalos_module_builder* builder = context;
     kalos_arg* arg = append_list_item(builder, &current_export(builder)->entry.handler.arg_list, sizeof(kalos_arg));
     arg->name_index = strpack(builder, name);
@@ -311,8 +311,8 @@ static void handle_arg(void* context, const char* name, const char* type, bool i
     LOG("arg %s %s", name, type);
 }
 
-static void end_handle(void* context) {
-    LOG("/handle");
+static void end_handler(void* context) {
+    LOG("/handler");
 }
 
 static bool constant_string(void* context, const char* name, const char* type, const char* s) {
@@ -390,9 +390,9 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
         function_arg,
         end_function,
         end_function_c,
-        begin_handle,
-        handle_arg,
-        end_handle,
+        begin_handler,
+        handler_arg,
+        end_handler,
         constant_string,
         constant_number,
         property
@@ -508,17 +508,17 @@ static kalos_string kalos_idl_property_read_symbol2(kalos_state* state, kalos_ob
 static kalos_string kalos_idl_property_write_symbol2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write_symbol_index)); }
 static kalos_string kalos_idl_property_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 
-static kalos_object_ref kalos_idl_handle_args(kalos_state* state, kalos_object_ref* o) {
+static kalos_object_ref kalos_idl_handler_args(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_export->entry.handler.arg_list.count);
     *index = script_current_export->entry.handler.arg_list.head;
     return obj;
 }
-static kalos_int kalos_idl_handle_index2(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
-static kalos_int kalos_idl_handle_module_index2(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
+static kalos_int kalos_idl_handler_index2(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
+static kalos_int kalos_idl_handler_module_index2(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
 
 struct walk_callback_context {
-    bool handles;
+    bool handlers;
     kalos_module_parsed modules;
     kalos_run_state* state;
     kalos_value script_context;
@@ -591,8 +591,8 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
             kalos_module_idl_module_trigger_property(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_HANDLE:
-            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_handle_obj_props);
-            kalos_module_idl_module_trigger_handle_(context->state, &ctx, &obj);
+            obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_handler_obj_props);
+            kalos_module_idl_module_trigger_handler(context->state, &ctx, &obj);
             break;
         case KALOS_EXPORT_TYPE_OBJECT:
             obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_object_obj_props);

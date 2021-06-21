@@ -82,6 +82,7 @@ kalos_state test_env = {
 
 kalos_buffer read_buffer(const char* input) {
     FILE* fd = fopen(input, "rb");
+    ASSERT(fd);
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
     kalos_buffer buffer = kalos_buffer_alloc(&test_env, size + 1);
@@ -110,7 +111,9 @@ kalos_module_parsed parse_modules_for_test() {
         #include "test_kalos.kidl.inc"
     };
 
-    return kalos_idl_parse_module(TEST_IDL, &test_env);
+    kalos_module_parsed parsed = kalos_idl_parse_module(TEST_IDL, &test_env);
+    ASSERT(parsed.buffer);
+    return parsed;
 }
 
 kalos_parse_result parse_test_runner(kalos_buffer script_text, kalos_buffer bytecode) {
@@ -312,7 +315,7 @@ SCRIPT_TEST(comparisons)
 SCRIPT_TEST(complex_expressions)
 SCRIPT_TEST(const)
 SCRIPT_TEST(global_local)
-SCRIPT_TEST(handle_with_args)
+SCRIPT_TEST(handler_with_args)
 SCRIPT_TEST(if)
 SCRIPT_TEST(if_else)
 SCRIPT_TEST(ignored_return)

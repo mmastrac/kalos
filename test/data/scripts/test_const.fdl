@@ -1,7 +1,7 @@
 const foo = 3;
 const bar = foo + 2;
 
-handle init {
+on init {
     const baz = foo + bar;
     print(baz);
 }

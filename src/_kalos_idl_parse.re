@@ -11,7 +11,7 @@ enum yyc_state {
     yycfunction,
     yycfcomma,
     yycfret,
-    yychandle,
+    yychandler,
     yychcomma,
     yycobject,
 };
@@ -52,8 +52,8 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
         mode = "read" | "write";
         type = "number" | "string" | "bool" | "void" | "any" | "object";
 
-        <init,module,object,function,fcomma,fret,handle,hcomma> * { callbacks->error(context, start, s - start); return false; }
-        <init,module,object,function,fcomma,fret,handle,hcomma> ws { continue; }
+        <init,module,object,function,fcomma,fret,handler,hcomma> * { callbacks->error(context, start, s - start); return false; }
+        <init,module,object,function,fcomma,fret,handler,hcomma> ws { continue; }
         <init> end { return true; }
         <init,module,object> "#" [^\n\x00]* "\n" { /* comment */ continue; }
         <init> "prefix" ws? @a string @b ws? ";" { if (!callbacks->prefix(context, copy_string(buffers[0], a, b))) return false; continue; }
@@ -128,24 +128,24 @@ bool kalos_idl_parse_callback(const char* s, void* context, kalos_idl_callbacks*
             callbacks->end_function_c(context, buffers[0], buffers[1], copy_string(buffers[2], c, d));
             continue;
         }
-        <module> "handle" ws @a word @b ws? "(" ws? => handle {
+        <module> "handler" ws @a word @b ws? "(" ws? => handler {
             copy_string(buffers[0], a, b);
-            callbacks->begin_handle(context, buffers[0]);
+            callbacks->begin_handler(context, buffers[0]);
             continue;
         }
-        <module> "handle" ws @a word @b ";" {
+        <module> "handler" ws @a word @b ";" {
             copy_string(buffers[0], a, b);
-            callbacks->begin_handle(context, buffers[0]);
-            callbacks->end_handle(context);
+            callbacks->begin_handler(context, buffers[0]);
+            callbacks->end_handler(context);
             continue;
         }
-        <handle> @a word @b ws? ":" ws? @c type @d ws? (@e "..." @f)? ws? / ","|")" => hcomma {
-            callbacks->handle_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), e != NULL);
+        <handler> @a word @b ws? ":" ws? @c type @d ws? (@e "..." @f)? ws? / ","|")" => hcomma {
+            callbacks->handler_arg(context, copy_string(buffers[1], a, b), copy_string(buffers[2], c, d), e != NULL);
             continue;
         }
-        <hcomma> "," :=> handle
-        <hcomma,handle> ")" ws? ";" => module {
-            callbacks->end_handle(context);
+        <hcomma> "," :=> handler
+        <hcomma,handler> ")" ws? ";" => module {
+            callbacks->end_handler(context);
         }
         <module> "}" => init { callbacks->end_module(context); continue; }
     */

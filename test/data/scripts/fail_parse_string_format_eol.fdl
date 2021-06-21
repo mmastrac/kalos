@@ -1,5 +1,5 @@
 # FAIL 3 Invalid token
-handle init {
+on init {
     var foo = "{1
     +1}";
 }

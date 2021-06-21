@@ -1,5 +1,5 @@
 # FAIL 3 Unknown variable
-handle init {
+on init {
     for i in range(0, 10) {
     }
 }

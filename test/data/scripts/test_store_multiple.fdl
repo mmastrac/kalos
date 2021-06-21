@@ -1,4 +1,4 @@
-handle init {
+on init {
     var foo = range(0, 100);
     foo = range(0, 1);
     foo = range(0, 2);

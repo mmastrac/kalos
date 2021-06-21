@@ -1,4 +1,4 @@
-handle init {
+on init {
     var i;
     for i in split("1,2,3,4", ",") {
         print(">{i}<");

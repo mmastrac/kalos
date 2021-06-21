@@ -1,13 +1,13 @@
 import test;
 var n = 0;
 
-handle init {
+on init {
     test.trigger_self("a" + 1, test.make_a());
     n += 1;
     test.trigger_self("b" + 2, test.make_b());
 }
 
-handle test.self_trigger(s, o) {
+on test.self_trigger(s, o) {
     if (n == 0) {
         print(s + "\n");
         print(o.a + "\n");

@@ -16,9 +16,9 @@ typedef struct kalos_idl_callbacks {
     void (*end_function)(void* context, const char* name, const char* type, const char* symbol);
     void (*end_function_c)(void* context, const char* name, const char* type, const char* c);
 
-    void (*begin_handle)(void* context, const char* name);
-    void (*handle_arg)(void* context, const char* name, const char* type, bool is_varargs);
-    void (*end_handle)(void* context);
+    void (*begin_handler)(void* context, const char* name);
+    void (*handler_arg)(void* context, const char* name, const char* type, bool is_varargs);
+    void (*end_handler)(void* context);
 
     bool (*constant_string)(void* context, const char* name, const char* type, const char* string);
     void (*constant_number)(void* context, const char* name, const char* type, kalos_int number);

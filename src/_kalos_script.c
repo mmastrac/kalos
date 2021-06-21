@@ -5,10 +5,10 @@
 static bool kalos_dump_section(void* context, kalos_script* script, kalos_section_header* header, uint16_t offset, uint16_t length) {
     char** out = context;
     char* s = *out;
-    if (header->handle_address.module_index == -1 && header->handle_address.export_index == -1) {
+    if (header->handler_address.module_index == -1 && header->handler_address.export_index == -1) {
         s += sprintf(s, "<global> locals=%d\n", header->locals_size);
     } else {
-        s += sprintf(s, "%04x:%04x locals=%d\n", header->handle_address.module_index, header->handle_address.export_index, header->locals_size);
+        s += sprintf(s, "%04x:%04x locals=%d\n", header->handler_address.module_index, header->handler_address.export_index, header->locals_size);
     }
 
     uint16_t start = offset;
@@ -112,7 +112,7 @@ void kalos_walk(kalos_script* script, void* context, kalos_walk_fn walk_fn) {
 }
 
 struct kalos_walk_find_section {
-    kalos_export_address handle_address;
+    kalos_export_address handler_address;
     kalos_section_header* header;
     uint16_t pc;
 };
@@ -120,7 +120,7 @@ struct kalos_walk_find_section {
 #pragma warning 303 9
 static bool kalos_find_section_walk(void* context_, kalos_script* script, kalos_section_header* header, uint16_t pc, uint16_t length) {
     struct kalos_walk_find_section* context = (struct kalos_walk_find_section*)context_;
-    if (bcmp(&header->handle_address, &context->handle_address, sizeof(header->handle_address)) == 0) {
+    if (bcmp(&header->handler_address, &context->handler_address, sizeof(header->handler_address)) == 0) {
         context->pc = pc;
         context->header = header;
         return false;
@@ -129,9 +129,9 @@ static bool kalos_find_section_walk(void* context_, kalos_script* script, kalos_
 }
 #pragma warning 303 3
 
-uint16_t kalos_find_section(kalos_script* script, kalos_export_address handle_address, kalos_section_header** header) {
+uint16_t kalos_find_section(kalos_script* script, kalos_export_address handler_address, kalos_section_header** header) {
     struct kalos_walk_find_section context = {0};
-    context.handle_address = handle_address;
+    context.handler_address = handler_address;
     kalos_walk(script, (void*)&context, kalos_find_section_walk);
     if (context.pc) {
         *header = context.header;

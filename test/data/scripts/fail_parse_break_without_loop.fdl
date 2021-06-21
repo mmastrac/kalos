@@ -1,4 +1,4 @@
 # FAIL 3 Break or continue but no loop
-handle init {
+on init {
     break;
 }

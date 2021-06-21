@@ -1,4 +1,4 @@
-handle init {
+on init {
     print(1 - -1 - -+1); # 3
     print("\n");
     print(1 - - - - 1);  # 2

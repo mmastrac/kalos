@@ -1,4 +1,4 @@
-handle init {
+on init {
     var number = 31000;
     var guess = abs(number);
     var new_guess;

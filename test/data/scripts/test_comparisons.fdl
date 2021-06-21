@@ -1,4 +1,4 @@
-handle init {
+on init {
     print("{1==1}");
     print("{1!=1}");
     print("{1==0}");

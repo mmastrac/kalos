@@ -109,6 +109,8 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 
 gen-test: $(OUTDIR)/compiler
 	$(OUTDIR)/compiler dispatch test/test_kalos.kidl test/test_kalos.dispatch.inc
+	xxd -i < test/test_kalos.kidl > test/test_kalos.kidl.inc
+	echo , 0 >> test/test_kalos.kidl.inc
 
 gen-compiler: $(OUTDIR)/compiler
 	rm -rf $(GENDIR)/compiler || true

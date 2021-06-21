@@ -175,7 +175,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
             return KALOS_TOKEN_COLON;
         }
 
-        <init> "handle" { return KALOS_TOKEN_HANDLE; }
+        <init> "on" { return KALOS_TOKEN_HANDLE; }
         <init> "var" { return KALOS_TOKEN_VAR; }
         <init> "import" { return KALOS_TOKEN_IMPORT; }
         <init> "const" { return KALOS_TOKEN_CONST; }

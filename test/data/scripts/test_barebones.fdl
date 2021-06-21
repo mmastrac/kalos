@@ -1,6 +1,6 @@
 var foo;
 
-handle init {
+on init {
     foo = 2 + 3;
     print(foo);
     print("I say \"hi!\"\n");

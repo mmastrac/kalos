@@ -36,9 +36,9 @@ static const char* ERROR_UNEXPECTED_HANDLER = "Unexpected handler";
 static const char* ERROR_BREAK_CONTINUE_WITHOUT_LOOP = "Break or continue but no loop";
 static const char* ERROR_INTERNAL_ERROR = "Internal error";
 static const char* ERROR_UNKNOWN_VARIABLE = "Unknown variable";
-static const char* ERROR_UNKNOWN_HANDLE = "Unknown handle";
+static const char* ERROR_UNKNOWN_HANDLE = "Unknown handler";
 static const char* ERROR_UNKNOWN_PROPERTY = "Unknown property";
-static const char* ERROR_MISSING_HANDLE = "Missing handle statement";
+static const char* ERROR_MISSING_HANDLE = "Missing handler statement";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
@@ -265,14 +265,14 @@ static void parse_fixup_offset(struct parse_state* parse_state, int offset, int 
     LOG("FIXUP: @%d %d", offset, pc);
 }
 
-static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handle_address) {
+static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address) {
     if (parse_state->last_section_header) {
         parse_state->last_section_header->next_section = parse_state->output_script_index;
     }
 
     parse_state->last_section_header = (kalos_section_header*)&parse_state->output_script[parse_state->output_script_index];
     memset(parse_state->last_section_header, 0, sizeof(*parse_state->last_section_header));
-    parse_state->last_section_header->handle_address = handle_address;
+    parse_state->last_section_header->handler_address = handler_address;
     parse_state->output_script_index += sizeof(*parse_state->last_section_header);
 }
 
@@ -900,8 +900,8 @@ static void parse_handler_statement(struct parse_state* parse_state) {
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
     struct name_resolution_result res;
     kalos_module* context = NULL;
-    kalos_export* handle = NULL;
-    kalos_int module_index, handle_index;
+    kalos_export* handler = NULL;
+    kalos_int module_index, handler_index;
     kalos_token peek, token;
     loop {
         TRY(res = resolve_word(parse_state, context));
@@ -914,8 +914,8 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         }
         if (res.type == NAME_RESOLUTION_MODULE_EXPORT && res.export->type == KALOS_EXPORT_TYPE_HANDLE) {
             module_index = res.export_module_index;
-            handle_index = res.export->entry.handler.invoke_id;
-            handle = res.export;
+            handler_index = res.export->entry.handler.invoke_id;
+            handler = res.export;
             break;
         }
         THROW(ERROR_UNKNOWN_HANDLE);
@@ -942,7 +942,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
             }
         }
     }
-    TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handle_index)));
+    TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handler_index)));
     TRY(parse_statement_block(parse_state));
     TRY(parse_push_op(parse_state, KALOS_OP_END));
     TRY_EXIT;

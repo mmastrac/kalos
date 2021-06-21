@@ -1,4 +1,4 @@
-handle init {
+on init {
     var x;
     for x in [1,2,3,"a"+"b"] {
         print(x);

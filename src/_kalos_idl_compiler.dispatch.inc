@@ -112,8 +112,8 @@ void kalos_module_idl_module_trigger_function(kalos_run_state* state, K__pany a0
 	kalos_trigger(state, kalos_make_address(0x2, 0x2));
 }
 
-// id=0002:0003 name=handle_
-void kalos_module_idl_module_trigger_handle_(kalos_run_state* state, K__pany a0, K__pobject a1) {
+// id=0002:0003 name=handler
+void kalos_module_idl_module_trigger_handler(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
 	kalos_trigger(state, kalos_make_address(0x2, 0x3));
@@ -240,33 +240,33 @@ kalos_object_dispatch kalos_module_idl_module_object_property_obj_props = {
 	.dispatch_name = kalos_module_idl_module_object_property_obj_props_fn
 };
 
-//kalos_module_idl_module_object_handle_obj_props
-bool kalos_module_idl_module_object_handle_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+//kalos_module_idl_module_object_handler_obj_props
+bool kalos_module_idl_module_object_handler_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
 	// id=14 name=name symbol=kalos_idl_export_name2
 	if (param_count == 0 && strcmp(name, "name") == 0) {
 		push_string(stack, kalos_idl_export_name2((void*)state, object));
 		return true;
 	}
-	// id=12 name=module_index symbol=kalos_idl_handle_module_index2
+	// id=12 name=module_index symbol=kalos_idl_handler_module_index2
 	if (param_count == 0 && strcmp(name, "module_index") == 0) {
-		push_number(stack, kalos_idl_handle_module_index2((void*)state, object));
+		push_number(stack, kalos_idl_handler_module_index2((void*)state, object));
 		return true;
 	}
-	// id=8 name=handle_index symbol=kalos_idl_handle_index2
-	if (param_count == 0 && strcmp(name, "handle_index") == 0) {
-		push_number(stack, kalos_idl_handle_index2((void*)state, object));
+	// id=8 name=handler_index symbol=kalos_idl_handler_index2
+	if (param_count == 0 && strcmp(name, "handler_index") == 0) {
+		push_number(stack, kalos_idl_handler_index2((void*)state, object));
 		return true;
 	}
-	// id=4 name=args symbol=kalos_idl_handle_args
+	// id=4 name=args symbol=kalos_idl_handler_args
 	if (param_count == 0 && strcmp(name, "args") == 0) {
-		push_object(stack, kalos_idl_handle_args((void*)state, object));
+		push_object(stack, kalos_idl_handler_args((void*)state, object));
 		return true;
 	}
 	return false;
 }
 
-kalos_object_dispatch kalos_module_idl_module_object_handle_obj_props = {
-	.dispatch_name = kalos_module_idl_module_object_handle_obj_props_fn
+kalos_object_dispatch kalos_module_idl_module_object_handler_obj_props = {
+	.dispatch_name = kalos_module_idl_module_object_handler_obj_props_fn
 };
 
 //kalos_module_idl_module_object_object_obj_props

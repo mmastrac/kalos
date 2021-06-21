@@ -16,7 +16,7 @@ kalos_run_state* kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalo
 /**
  * Trigger a kalos export. Usually not called by anything but the generated IDL code.
  */
-void kalos_trigger(kalos_run_state* state, kalos_export_address handle_address);
+void kalos_trigger(kalos_run_state* state, kalos_export_address handler_address);
 /**
  * Free the Kalos virtual machine internal state.
  */

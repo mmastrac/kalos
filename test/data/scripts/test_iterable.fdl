@@ -1,4 +1,4 @@
-handle init {
+on init {
     var i;
     # Prints nothing but should not fail
     for i in range(0, 0) {

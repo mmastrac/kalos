@@ -1,4 +1,4 @@
-handle init {
+on init {
     print("{1 + true}\n");
     print("{1 && 2}\n");
     print("{"a" && "b"}\n");
