@@ -5,8 +5,10 @@
 static bool kalos_dump_section(void* context, kalos_script* script, kalos_section_header* header, uint16_t offset, uint16_t length) {
     char** out = context;
     char* s = *out;
-    if (header->handler_address.module_index == -1 && header->handler_address.export_index == -1) {
+    if (bcmp(&header->handler_address, &KALOS_GLOBAL_HANDLER_ADDRESS, sizeof(KALOS_GLOBAL_HANDLER_ADDRESS)) == 0) {
         s += sprintf(s, "<global> locals=%d\n", header->locals_size);
+    } else if (bcmp(&header->handler_address, &KALOS_IDL_HANDLER_ADDRESS, sizeof(KALOS_IDL_HANDLER_ADDRESS)) == 0) {
+        s += sprintf(s, "<idl> locals=%d\n", header->locals_size);
     } else {
         s += sprintf(s, "%04x:%04x locals=%d\n", header->handler_address.module_index, header->handler_address.export_index, header->locals_size);
     }
@@ -139,4 +141,10 @@ uint16_t kalos_find_section(kalos_script* script, kalos_export_address handler_a
     }
     *header = 0;
     return 0;
+}
+
+kalos_module_header* kalos_find_idl(kalos_script* script) {
+    kalos_section_header* header;
+    kalos_int offset = kalos_find_section(script, KALOS_IDL_HANDLER_ADDRESS, &header);
+    return (kalos_module_header*)(script->buffer + offset);
 }

@@ -1,0 +1,23 @@
+var idl;
+
+idl {
+    prefix "kalos_module_dispatch_test_";
+
+    module builtin {
+        fn overload {
+            (n: number) = c "1";
+            (s: string) = overload_2;
+        }
+        object example {
+            prop y: number { read = c "2"; write = write_y; }
+        }
+        fn print(args: any...) = test_print;
+        prop x: number { read = read_x; write = write_x; }
+        handler init;
+        const x2: number = 1;
+    }
+
+    module other {
+        const y: string = "a";
+    }
+}

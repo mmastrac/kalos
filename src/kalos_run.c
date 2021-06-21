@@ -41,56 +41,6 @@ void kalos_value_error(kalos_state* state) {
     state->error(0, "Value error");
 }
 
-#define COERCE(typ, NONE, NUMBER, OBJECT, STRING, BOOL) \
-static bool coerce_##typ(kalos_state* state, kalos_value* v) {\
-    switch (v->type) {\
-        case KALOS_VALUE_NONE: {NONE;};break;\
-        case KALOS_VALUE_BOOL: {BOOL;};break;\
-        case KALOS_VALUE_NUMBER: {NUMBER;};break;\
-        case KALOS_VALUE_STRING: {STRING;};break;\
-        case KALOS_VALUE_OBJECT: {OBJECT;};break;\
-    }\
-    v->type=KALOS_VALUE_##typ; return true;\
-}
-
-COERCE(BOOL, 
-    v->value.number = 0,
-    v->value.number = (v->value.number != 0),
-    v->value.number = 1,
-    kalos_int x = !kalos_string_isempty(state, v->value.string); kalos_string_release(state, v->value.string); v->value.number = x,
-    return true)
-
-COERCE(NUMBER, 
-    v->value.number = 0,
-    return true,
-    return false,
-    kalos_int x = atoi(kalos_string_c(state, v->value.string)); kalos_string_release(state, v->value.string); v->value.number = x,
-    return true)
-
-COERCE(STRING, 
-    v->value.string = kalos_string_allocate(state, ""),
-    v->value.string = kalos_string_allocate_fmt(state, "%d", v->value.number),
-    return false,
-    return true,
-    v->value.string = kalos_string_allocate(state, v->value.number ? "true" : "false"))
-
-static bool coerce(kalos_state* state, kalos_value* v, kalos_value_type type) {
-    bool success;
-    switch (type) {
-        case KALOS_VALUE_NONE:
-            return false;
-        case KALOS_VALUE_OBJECT:
-            success = false; break;
-        case KALOS_VALUE_NUMBER:
-            success = coerce_NUMBER(state, v); break;
-        case KALOS_VALUE_BOOL:
-            success = coerce_BOOL(state, v); break;
-        case KALOS_VALUE_STRING:
-            success = coerce_STRING(state, v); break;
-    }
-    return success;
-}
-
 #define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state); } }
 #define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack->stack_index - 1 < size) { kalos_internal_error((kalos_state*)state); } }
 
@@ -98,7 +48,7 @@ static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalo
     if (op == KALOS_OP_DIVIDE && b == 0) {
         return 0;
     }
-    #define KALOS_OP_C(x, operator) case KALOS_OP_##x: return a operator b;
+    #define KALOS_OP_C(x, operator) case KALOS_OP_##x: { return a operator b; }
     switch (op) {
         #include "_kalos_constants.inc"
         case KALOS_OP_MINIMUM:
@@ -113,7 +63,7 @@ static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalo
 
 static kalos_value op_logical_op(kalos_state* state, kalos_op op, kalos_value* a, kalos_value* b) {
     kalos_value v = kalos_value_clone(state, a);
-    coerce(state, &v, KALOS_VALUE_BOOL);
+    kalos_coerce(state, &v, KALOS_VALUE_BOOL);
     if (v.value.number ^ (op == KALOS_OP_LOGICAL_AND)) {
         return kalos_value_move(state, a);
     } else {
@@ -139,12 +89,12 @@ static kalos_int op_compare_type(kalos_state* state, kalos_op op, kalos_value* a
 }
 
 static kalos_string op_string_add(kalos_state* state, kalos_op op, kalos_string* a, kalos_value* b) {
-    coerce(state, b, KALOS_VALUE_STRING);
+    kalos_coerce(state, b, KALOS_VALUE_STRING);
     return kalos_string_take_append(state, a, &b->value.string);
 }
 
 static kalos_string op_string_add2(kalos_state* state, kalos_op op, kalos_value* a, kalos_string* b) {
-    coerce(state, a, KALOS_VALUE_STRING);
+    kalos_coerce(state, a, KALOS_VALUE_STRING);
     return kalos_string_take_append(state, &a->value.string, b);
 }
 
@@ -181,18 +131,18 @@ static kalos_string op_to_hex_or_char(kalos_state* state, kalos_op op, kalos_int
 }
 
 static kalos_string op_to_string(kalos_state* state, kalos_op op, kalos_value* v) {
-    coerce(state, v, KALOS_VALUE_STRING);
+    kalos_coerce(state, v, KALOS_VALUE_STRING);
     kalos_string s = kalos_string_take(state, &v->value.string);
     return s;
 }
 
 static kalos_int op_to_bool(kalos_state* state, kalos_op op, kalos_value* v) {
-    coerce(state, v, KALOS_VALUE_BOOL);
+    kalos_coerce(state, v, KALOS_VALUE_BOOL);
     return v->value.number ^ (op == KALOS_OP_LOGICAL_NOT);
 }
 
 static kalos_int op_to_int(kalos_state* state, kalos_op op, kalos_value* v) {
-    coerce(state, v, KALOS_VALUE_NUMBER);
+    kalos_coerce(state, v, KALOS_VALUE_NUMBER);
     return v->value.number;
 }
 
@@ -423,6 +373,19 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
+            case KALOS_OP_IDL: {
+                kalos_value v = kalos_value_move((kalos_state*)state, peek(state->stack, -1));
+                kalos_string s = v.value.object->tostring((kalos_state*)state, &v.value.object);
+                LOG("%s", kalos_string_c((kalos_state*)state, s));
+                kalos_string_release((kalos_state*)state, s);
+                if (!state->dispatch->idl) {
+                    kalos_value_error((kalos_state*)state);
+                    return;
+                }
+                state->dispatch->idl(state_, &v);
+                kalos_clear((kalos_state*)state, &v);
+                break;
+            }
             case KALOS_OP_DUP: {
                 kalos_value* v = peek(state->stack, 0);
                 kalos_value_clone_to((kalos_state*)state, v, push_raw(state->stack));

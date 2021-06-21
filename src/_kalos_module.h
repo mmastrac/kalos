@@ -21,7 +21,7 @@ typedef enum kalos_export_type {
     KALOS_EXPORT_TYPE_CONST_STRING,
     KALOS_EXPORT_TYPE_FUNCTION,
     KALOS_EXPORT_TYPE_PROPERTY,
-    KALOS_EXPORT_TYPE_HANDLE,
+    KALOS_EXPORT_TYPE_HANDLER,
     KALOS_EXPORT_TYPE_OBJECT,
 } kalos_export_type;
 
@@ -40,19 +40,22 @@ typedef struct kalos_arg {
     kalos_function_type type;
 } kalos_arg;
 
+typedef struct kalos_binding {
+    kalos_int invoke_id;
+    kalos_int symbol_index;
+    kalos_int c_index;
+} kalos_binding;
+
 typedef struct kalos_function {
     kalos_module_item_list fn_overload_list;
     kalos_module_item_list_header arg_list;
     kalos_function_type vararg_type;
     kalos_function_type return_type;
-    kalos_int symbol_index;
-    kalos_int c_index;
-    kalos_int invoke_id;
+    kalos_binding binding;
 } kalos_function;
 
 typedef struct kalos_handler {
     kalos_module_item_list_header arg_list;
-    uint8_t arg_count;
     kalos_function_type vararg_type;
     kalos_function_type return_type;
     kalos_int invoke_id;
@@ -60,10 +63,8 @@ typedef struct kalos_handler {
 
 typedef struct kalos_property {
     kalos_function_type type;
-    kalos_int read_symbol_index;
-    kalos_int read_invoke_id;
-    kalos_int write_symbol_index;
-    kalos_int write_invoke_id;
+    kalos_binding read;
+    kalos_binding write;
 } kalos_property;
 
 typedef struct kalos_object_property {
@@ -97,7 +98,6 @@ typedef struct kalos_module {
     kalos_module_item_list module_list;
     kalos_int index;
     kalos_int name_index;
-    kalos_int export_count;
     kalos_module_item_list_header export_list;
 } kalos_module;
 
@@ -126,7 +126,8 @@ typedef struct kalos_property_address {
 } kalos_property_address;
 #pragma pack(pop)
 
-static const kalos_export_address KALOS_GLOBAL_HANDLE_ADDRESS = { .module_index = -1, .export_index = -1 };
+static const kalos_export_address KALOS_GLOBAL_HANDLER_ADDRESS = { .module_index = -1, .export_index = -1 };
+static const kalos_export_address KALOS_IDL_HANDLER_ADDRESS = { .module_index = -1, .export_index = -2 };
 
 static inline kalos_export_address kalos_make_address(kalos_int module_index, kalos_int export_index) {
     struct kalos_export_address res = { module_index, export_index };
@@ -145,3 +146,38 @@ kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, c
 const char* kalos_module_get_string(kalos_module_parsed parsed, kalos_int index);
 void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset);
 kalos_module_header* kalos_module_get_header(kalos_module_parsed parsed);
+
+#define BUILDER_HANDLE(x) typedef struct { kalos_int x##_index; } kalos_module_##x
+typedef void* kalos_module_builder;
+typedef kalos_module_item_list_header kalos_module_list;
+typedef kalos_property kalos_module_property;
+typedef kalos_binding kalos_module_binding;
+BUILDER_HANDLE(arg);
+BUILDER_HANDLE(export);
+BUILDER_HANDLE(function);
+BUILDER_HANDLE(module);
+BUILDER_HANDLE(string);
+BUILDER_HANDLE(object_property);
+BUILDER_HANDLE(property_address);
+
+kalos_module_builder kalos_module_create_builder(kalos_state* state, uint8_t* buffer, size_t size);
+void kalos_module_free_builder(kalos_state* state, kalos_module_builder builder);
+
+void kalos_module_create_idl(kalos_module_builder, kalos_module_string prefix, bool dispatch_name, kalos_module_list modules, kalos_module_list prop_list);
+kalos_module_module kalos_module_create_module(kalos_module_builder, kalos_int index, kalos_module_string name, kalos_module_list exports);
+kalos_module_string kalos_module_create_string(kalos_module_builder, const char* s);
+kalos_module_list kalos_module_create_list(kalos_module_builder);
+void kalos_module_append_to_list(kalos_module_builder, kalos_module_list* list, void* handle);
+kalos_module_export kalos_module_create_function_export(kalos_module_builder, kalos_module_string name, kalos_module_list overrides);
+kalos_module_export kalos_module_create_property_export(kalos_module_builder, kalos_module_string name, kalos_module_property property);
+kalos_module_export kalos_module_create_const_number_export(kalos_module_builder, kalos_module_string name, kalos_int value);
+kalos_module_export kalos_module_create_const_string_export(kalos_module_builder, kalos_module_string name, kalos_module_string value);
+kalos_module_export kalos_module_create_handler_export(kalos_module_builder, kalos_module_string name, kalos_int invoke_id, kalos_module_list args);
+kalos_module_export kalos_module_create_object_export(kalos_module_builder, kalos_module_string name, kalos_module_list props);
+kalos_module_function kalos_module_create_function(kalos_module_builder, kalos_function_type type, kalos_function_type varargs, kalos_module_list args, kalos_module_binding binding);
+kalos_module_object_property kalos_module_create_object_property(kalos_module_builder, kalos_module_string name, kalos_module_property property);
+void kalos_module_add_property_address(kalos_module_builder, kalos_module_list* list, kalos_module_string name);
+kalos_module_property kalos_module_create_property(kalos_module_builder, kalos_function_type type, kalos_module_binding read, kalos_module_binding write);
+kalos_module_binding kalos_module_create_binding_c(kalos_module_builder, kalos_int invoke_id, kalos_module_string c);
+kalos_module_binding kalos_module_create_binding_function(kalos_module_builder, kalos_int invoke_id, kalos_module_string name);
+kalos_module_arg kalos_module_create_arg(kalos_module_builder, kalos_module_string name, kalos_function_type type);

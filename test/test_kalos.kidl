@@ -1,39 +1,41 @@
-prefix "kalos_module_dispatch_test_";
+idl {
+    prefix "kalos_module_dispatch_test_";
 
-module builtin {
-    fn print(args: any...) = test_print;
-    handler init;
-}
-
-module test {
-    const ONE: number = 1;
-    const PI_ISH: number = 31415;
-    const HELLO_WORLD: string = "hello world";
-    const ESCAPE: string = "\x60";
-    prop(read, write) read_write: number = test_read_write_read, test_read_write_write;
-    prop(read) read_only: number = test_read_only_read;
-    prop(write) write_only: number = test_write_only_write;
-    fn add_one(to: number): number = C "@0 + 1";
-    fn sum_numbers(n: number...): number = test_kalos_sum_numbers;
-    fn sum_numbers_2(a: number, b: number, n: number...): number = test_kalos_sum_numbers_2;
-    fn concat(s1: string, s2: string, s3: string, s4: string,
-        s5: string, s6: string, s7: string, s8: string): string = test_kalos_concat;
-    fn overloaded_add(n1: number, n2: number): number = C "111";
-    fn overloaded_add(s1: string, s2: string): number = C "222";
-
-    handler with_args(s: string);
-    handler self_trigger(s: string, o: object);
-    fn trigger_self(s: string, o: object) = kalos_module_dispatch_test_test_trigger_self_trigger;
-    fn raw_c(a: number, b: number): number = C "@0*10+@1";
-    fn make_a(): object = test_make_a;
-    fn make_b(): object = test_make_b;
-    object a {
-        prop(read) a: string = test_read_a;
-        prop(read,write) c: number = test_read_c,test_write_c;
+    module builtin {
+        fn print(args: any...) = test_print;
+        handler init;
     }
-    object b {
-        prop(read) a: string = test_read_a;
-        prop(read) b: string = test_read_b;
-        prop(read) c: number = test_read_c2;
+
+    module test {
+        const ONE: number = 1;
+        const PI_ISH: number = 31415;
+        const HELLO_WORLD: string = "hello world";
+        const ESCAPE: string = "\x60";
+        prop read_write: number { read = test_read_write_read; write = test_read_write_write; }
+        prop read_only: number { read = test_read_only_read; }
+        prop write_only: number { write = test_write_only_write; }
+        fn add_one(to: number): number = c "@0 + 1";
+        fn sum_numbers(n: number...): number = test_kalos_sum_numbers;
+        fn sum_numbers_2(a: number, b: number, n: number...): number = test_kalos_sum_numbers_2;
+        fn concat(s1: string, s2: string, s3: string, s4: string,
+            s5: string, s6: string, s7: string, s8: string): string = test_kalos_concat;
+        fn overloaded_add(n1: number, n2: number): number = c "111";
+        fn overloaded_add(s1: string, s2: string): number = c "222";
+
+        handler with_args(s: string);
+        handler self_trigger(s: string, o: object);
+        fn trigger_self(s: string, o: object) = kalos_module_dispatch_test_test_trigger_self_trigger;
+        fn raw_c(a: number, b: number): number = c "@0*10+@1";
+        fn make_a(): object = test_make_a;
+        fn make_b(): object = test_make_b;
+        object a {
+            prop a: string { read = test_read_a; }
+            prop c: number { read = test_read_c; write = test_write_c; }
+        }
+        object b {
+            prop a: string { read = test_read_a; }
+            prop b: string { read = test_read_b; }
+            prop c: number { read = test_read_c2; }
+        }
     }
 }

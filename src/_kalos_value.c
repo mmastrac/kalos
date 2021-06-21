@@ -128,6 +128,33 @@ kalos_value list_getindex(kalos_state* state, kalos_object_ref* object, kalos_in
     return kalos_value_clone(state, &array[index + 1]);
 }
 
+kalos_string list_tostring(kalos_state* state, kalos_object_ref* object) {
+    kalos_value* array = (*object)->context;
+    kalos_string out = kalos_string_allocate(state, "[");
+    kalos_int n = array[0].value.number;
+    for (kalos_int i = 0; i < n; i++) {
+        bool comma = i > 0;
+        kalos_value v = kalos_value_clone(state, &array[i + 1]);
+        kalos_string item;
+        if (v.type == KALOS_VALUE_STRING) {
+            item = kalos_string_allocate_fmt(state, "%s\"%s\"", comma ? ", " : "", kalos_string_c(state, v.value.string));
+        } else if (kalos_coerce(state, &v, KALOS_VALUE_STRING)) {
+            item = kalos_string_allocate_fmt(state, "%s%s", comma ? ", " : "", kalos_string_c(state, v.value.string));
+        } else {
+            item = kalos_string_allocate(state, comma ? ", " : "");
+        }
+        out = kalos_string_take_append(state, &out, &item);
+        kalos_clear(state, &v);
+    }
+    kalos_string end = kalos_string_allocate(state, "]");
+    return kalos_string_take_append(state, &out, &end);
+}
+
+kalos_int list_getlength(kalos_state* state, kalos_object_ref* object) {
+    kalos_value* array = (*object)->context;
+    return array[0].value.number;
+}
+
 kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values) {
     kalos_object_ref object = kalos_allocate_object(state, 0);
     object->context = kalos_mem_alloc(state, sizeof(kalos_value) * (size + 1)); // allocate size of size
@@ -138,7 +165,9 @@ kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_v
     for (int i = 0; i < size; i++) {
         values[i].type = KALOS_VALUE_NONE;
     }
+    object->tostring = list_tostring;
     object->getindex = list_getindex;
+    object->getlength = list_getlength;
     object->iterstart = list_iterstart;
     object->object_free = list_free;
     return object;
@@ -158,4 +187,54 @@ kalos_object_ref kalos_allocate_prop_object(kalos_state* state, void* context, k
     object->context = context;
     object->dispatch = dispatch;
     return object;
+}
+
+#define COERCE(typ, NONE, NUMBER, OBJECT, STRING, BOOL) \
+static bool coerce_##typ(kalos_state* state, kalos_value* v) {\
+    switch (v->type) {\
+        case KALOS_VALUE_NONE: {NONE;};break;\
+        case KALOS_VALUE_BOOL: {BOOL;};break;\
+        case KALOS_VALUE_NUMBER: {NUMBER;};break;\
+        case KALOS_VALUE_STRING: {STRING;};break;\
+        case KALOS_VALUE_OBJECT: {OBJECT;};break;\
+    }\
+    v->type=KALOS_VALUE_##typ; return true;\
+}
+
+COERCE(BOOL, 
+    v->value.number = 0,
+    v->value.number = (v->value.number != 0),
+    v->value.number = 1,
+    kalos_int x = !kalos_string_isempty(state, v->value.string); kalos_string_release(state, v->value.string); v->value.number = x,
+    return true)
+
+COERCE(NUMBER, 
+    v->value.number = 0,
+    return true,
+    return false,
+    kalos_int x = atoi(kalos_string_c(state, v->value.string)); kalos_string_release(state, v->value.string); v->value.number = x,
+    return true)
+
+COERCE(STRING, 
+    v->value.string = kalos_string_allocate(state, ""),
+    v->value.string = kalos_string_allocate_fmt(state, "%d", v->value.number),
+    if (v->value.object->tostring) { kalos_string tmp = v->value.object->tostring(state, &v->value.object); kalos_object_release(state, &v->value.object); v->value.string = tmp; } else { return false; },
+    return true,
+    v->value.string = kalos_string_allocate(state, v->value.number ? "true" : "false"))
+
+bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type) {
+    bool success;
+    switch (type) {
+        case KALOS_VALUE_NONE:
+            return false;
+        case KALOS_VALUE_OBJECT:
+            success = false; break;
+        case KALOS_VALUE_NUMBER:
+            success = coerce_NUMBER(state, v); break;
+        case KALOS_VALUE_BOOL:
+            success = coerce_BOOL(state, v); break;
+        case KALOS_VALUE_STRING:
+            success = coerce_STRING(state, v); break;
+    }
+    return success;
 }

@@ -29,7 +29,7 @@ struct allocation_record {
 
 static void* test_malloc(size_t size) {
     total_allocated += size;
-    LOG("alloc #%d %d", allocation_id, size);
+    // LOG("alloc #%d %d", allocation_id, size);
     // Stash the size in the allocation
     struct allocation_record info;
     info.size = size;
@@ -44,7 +44,7 @@ static void test_free(void* memory) {
     struct allocation_record info;
     allocated -= sizeof(info);
     memcpy(&info, allocated, sizeof(info));
-    LOG("free #%d %d", info.id, info.size);
+    // LOG("free #%d %d", info.id, info.size);
     total_allocated -= info.size;
     free(allocated);
 }
@@ -107,16 +107,14 @@ const char* make_test_filename(const char* name, const char* extension) {
 }
 
 kalos_module_parsed parse_modules_for_test() {
-    static const char TEST_IDL[] = {
-        #include "test_kalos.kidl.inc"
-    };
-
-    kalos_module_parsed parsed = kalos_idl_parse_module(TEST_IDL, &test_env);
+    kalos_buffer buffer = read_buffer("test/test_kalos.kidl");
+    kalos_module_parsed parsed = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
     ASSERT(parsed.buffer);
+    kalos_buffer_free(buffer);
     return parsed;
 }
 
-kalos_parse_result parse_test_runner(kalos_buffer script_text, kalos_buffer bytecode) {
+kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytecode_file, kalos_buffer bytecode) {
     const int PARSE_BUFFER_SIZE = 32 * 1024;
     kalos_script script = kalos_buffer_alloc(&test_env, PARSE_BUFFER_SIZE);
     kalos_parse_options options = {0};
@@ -137,7 +135,7 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, kalos_buffer byte
 
     if (strcmp(dump_buffer, (const char*)bytecode.buffer) != 0) {
         printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer);
-        // write_buffer(full_file, buffer);
+        // write_buffer(bytecode_file, dump_buffer);
         TEST_FAIL();
     }
 
@@ -154,7 +152,7 @@ void parse_test(const char* file) {
     if (!is_failure_test) {
         bytecode = read_buffer(make_test_filename(file, "bytecode"));
     }
-    kalos_parse_result result = parse_test_runner(script, bytecode);
+    kalos_parse_result result = parse_test_runner(script, make_test_filename(file, "bytecode"), bytecode);
     if (is_failure_test) {
         // This is a failure case!
         *strchr((const char*)script.buffer, '\n') = 0;
@@ -182,7 +180,11 @@ void test_print(kalos_state* state, int size, kalos_value* args) {
         } else if (args->type == KALOS_VALUE_NONE) {
             sprintf(output_buffer, "%s(none)", output_buffer);
         } else if (args->type == KALOS_VALUE_OBJECT) {
-            sprintf(output_buffer, "%s(object)", output_buffer);
+            if (kalos_coerce(state, args, KALOS_VALUE_STRING)) {
+                sprintf(output_buffer, "%s%s", output_buffer, kalos_string_c(state, args->value.string));
+            } else {
+                sprintf(output_buffer, "%s(object)", output_buffer);
+            }
         }
         args++;
     }
@@ -316,6 +318,7 @@ SCRIPT_TEST(complex_expressions)
 SCRIPT_TEST(const)
 SCRIPT_TEST(global_local)
 SCRIPT_TEST(handler_with_args)
+SCRIPT_TEST(idl)
 SCRIPT_TEST(if)
 SCRIPT_TEST(if_else)
 SCRIPT_TEST(ignored_return)
@@ -354,6 +357,22 @@ PARSE_TEST_FAIL(string_format_bad)
 PARSE_TEST_FAIL(string_format_eof)
 PARSE_TEST_FAIL(string_format_eol)
 PARSE_TEST_FAIL(unknown_token)
+
+TEST(parse_modules_for_test) {
+    total_allocated = 0;
+    kalos_module_parsed modules = parse_modules_for_test();
+    kalos_buffer_free(modules);
+    TEST_ASSERT_EQUAL(0, total_allocated);
+}
+
+TEST(kalos_idl_parser) {
+    total_allocated = 0;
+    kalos_buffer buffer = read_buffer("test/data/idl/smoketest.kidl");
+    kalos_module_parsed modules = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
+    kalos_buffer_free(buffer);
+    kalos_buffer_free(modules);
+    TEST_ASSERT_EQUAL(0, total_allocated);
+}
 
 // Exhaustive test using python to generate the output test cases
 TEST(kalos_string_format_run_exhaustive_test) {

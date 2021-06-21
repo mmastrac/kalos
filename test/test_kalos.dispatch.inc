@@ -71,13 +71,13 @@ bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_run_state* state, k
 		push_string(stack, test_read_a((void*)state, object));
 		break;
 	}
-	// id=6 name=c symbol=test_read_c
-	case 6: {
+	// id=4 name=c symbol=test_read_c
+	case 4: {
 		push_number(stack, test_read_c((void*)state, object));
 		break;
 	}
-	// id=7 name=c symbol=test_write_c
-	case 7: {
+	// id=5 name=c symbol=test_write_c
+	case 5: {
 		test_write_c((void*)state, object, K__arg_number(K__arg(1, 1)));
 		kalos_stack_cleanup(state, 1);
 		break;
@@ -99,13 +99,13 @@ bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_run_state* state, k
 		push_string(stack, test_read_a((void*)state, object));
 		break;
 	}
-	// id=4 name=b symbol=test_read_b
-	case 4: {
+	// id=6 name=b symbol=test_read_b
+	case 6: {
 		push_string(stack, test_read_b((void*)state, object));
 		break;
 	}
-	// id=6 name=c symbol=test_read_c2
-	case 6: {
+	// id=4 name=c symbol=test_read_c2
+	case 4: {
 		push_number(stack, test_read_c2((void*)state, object));
 		break;
 	}

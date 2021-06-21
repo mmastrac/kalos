@@ -94,8 +94,8 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <instring,instringmulti> @ch [^"] { *output++ = *ch; continue; }
         <instringmulti> @ch '"' / [^"] { *output++ = '"'; continue; }
         <instringmulti> @ch '""' / [^"] { *output++ = '"'; *output++ = '"'; continue; }
-        <instring> '"' => init { *output++ = 0; return KALOS_TOKEN_STRING; }
-        <instringmulti> '"""' => init { *output++ = 0; return KALOS_TOKEN_STRING; }
+        <instring> '"' => init { *output++ = 0; return KALOS_TOKEN_STRING_LITERAL; }
+        <instringmulti> '"""' => init { *output++ = 0; return KALOS_TOKEN_STRING_LITERAL; }
 
         <stringformat> * { return KALOS_TOKEN_ERROR; }
         // [[fill]align][sign][#][0][minimumwidth][.precision][type]
@@ -166,6 +166,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "<<" { return KALOS_TOKEN_LEFT_SHIFT; }
         <init> ">>" { return KALOS_TOKEN_RIGHT_SHIFT; }
 
+        <init> "..." { return KALOS_TOKEN_ELLIPSIS; }
         <init> "." { return KALOS_TOKEN_PERIOD; }
         <init> "!" { return KALOS_TOKEN_BANG; }
         <init> "~" { return KALOS_TOKEN_TILDE; }
@@ -192,14 +193,24 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "false"    { return KALOS_TOKEN_FALSE; }
         <init> "fn"       { return KALOS_TOKEN_FN; }
 
+        <init> "idl"      { return KALOS_TOKEN_IDL; }
         <init> "on"       { return KALOS_TOKEN_ON; }
         <init> "import"   { return KALOS_TOKEN_IMPORT; }
         <init> "module"   { return KALOS_TOKEN_MODULE; }
         <init> "handler"  { return KALOS_TOKEN_HANDLER; }
         <init> "prop"     { return KALOS_TOKEN_PROP; }
-        <init> "object"   { return KALOS_TOKEN_OBJECT; }
         <init> "read"     { return KALOS_TOKEN_READ; }
         <init> "write"    { return KALOS_TOKEN_WRITE; }
+        <init> "dispatch" { return KALOS_TOKEN_DISPATCH; }
+        <init> "name"     { return KALOS_TOKEN_NAME; }
+        <init> "prefix"   { return KALOS_TOKEN_PREFIX; }
+        <init> "c"        { return KALOS_TOKEN_C; }
+        <init> "object"   { return KALOS_TOKEN_OBJECT; }
+        <init> "string"   { return KALOS_TOKEN_STRING; }
+        <init> "void"     { return KALOS_TOKEN_VOID; }
+        <init> "bool"     { return KALOS_TOKEN_BOOL; }
+        <init> "number"   { return KALOS_TOKEN_NUMBER; }
+        <init> "any"      { return KALOS_TOKEN_ANY; }
 
         <init> @word_start word @word_end { KALOS_COPY_TOKEN; output[word_end - word_start] = 0; return KALOS_TOKEN_WORD; }
         <init> @word_start (int|hex) @word_end { KALOS_COPY_TOKEN; output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }

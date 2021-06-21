@@ -17,7 +17,15 @@
             "request": "launch",
             "name": "Debug IDL Dispatch Compiler",
             "program": "${workspaceFolder}/target/compiler",
-            "args": ["-v", "dispatch", "src/kalos_idl_compiler.kidl", "/tmp/out.c"],
+            "args": ["-v", "dispatch", "src/_kalos_idl_compiler.kidl", "/tmp/out.c"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug IDL Dispatch Compiler [Test]",
+            "program": "${workspaceFolder}/target/compiler",
+            "args": ["-v", "dispatch", "test/test_kalos.kidl", "/tmp/out.c"],
             "cwd": "${workspaceFolder}"
         },
         {

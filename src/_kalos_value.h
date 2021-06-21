@@ -8,19 +8,23 @@ typedef kalos_object* kalos_object_ref;
 typedef struct kalos_value kalos_value;
 typedef struct kalos_stack kalos_stack;
 typedef struct kalos_run_state kalos_run_state;
+typedef kalos_string (*kalos_tostring)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_value (*kalos_getindex)(kalos_state* state, kalos_object_ref* object, kalos_int index);
+typedef kalos_int (*kalos_getlength)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_object_ref (*kalos_iterstart)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_value (*kalos_iternext)(kalos_state* state, kalos_object_ref* object, bool* done);
 typedef void (*kalos_object_free)(kalos_state* state, kalos_object_ref* object);
 
 typedef bool (*kalos_dispatch_name_fn)(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval);
 typedef void (*kalos_dispatch_fn)(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval);
+typedef void (*kalos_idl_dispatch_fn)(kalos_run_state* state, kalos_value* idl);
 typedef bool (*kalos_object_dispatch_name_fn)(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack);
 typedef bool (*kalos_object_dispatch_fn)(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
 
 typedef struct kalos_dispatch {
     kalos_dispatch_name_fn dispatch_name;
     kalos_dispatch_fn* modules;
+    kalos_idl_dispatch_fn idl;
 } kalos_dispatch;
 
 typedef struct kalos_object_dispatch {
@@ -41,6 +45,8 @@ struct kalos_object {
     uint16_t count;
     kalos_object_free object_free;
     kalos_getindex getindex;
+    kalos_getlength getlength;
+    kalos_tostring tostring;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
     kalos_object_dispatch* dispatch;
@@ -57,7 +63,7 @@ struct kalos_value {
     kalos_value_union value;
 };
 
-#define KALOS_STACK_SIZE 32
+#define KALOS_STACK_SIZE 64
 
 typedef void (*stack_error)(const char* message);
 
@@ -222,6 +228,7 @@ static inline void kalos_load_arg_any(kalos_run_state* state, kalos_int index, k
     kalos_value_move_to(kalos_state_from_run_state(state), arg, &state->stack->stack[state->stack->stack_index + index]);
 }
 
+bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type);
 kalos_object_ref kalos_allocate_object(kalos_state* state, size_t context_size);
 kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values);
 typedef void (*kalos_iterable_fn)(kalos_state* state, void* context, uint16_t index, kalos_value* output);

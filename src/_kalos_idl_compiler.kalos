@@ -206,7 +206,7 @@ on module.function(context, function) {
     }
     println("\t\tkalos_stack_cleanup(state, arg_count);");
     if function.return_type != "void" {
-        println("\t\tif retval {{");
+        println("\t\tif (retval) {{");
         println("\t\t\tpush_{function.return_type}(stack, x);");
         println("\t\t}} else {{");
         println("\t\t\tK__clean_{function.return_type}(stack, x);");
