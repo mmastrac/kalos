@@ -21,6 +21,8 @@ enum string_state {
     STRING_STATE_DONE,
 };
 
+#define KALOS_COPY_TOKEN kalos_lex_strncpy(output, word_start, word_end - word_start)
+
 void kalos_lex_init(const char kalos_far* s, kalos_lex_state* state) {
     state->s = s;
     state->line = 1;
@@ -98,7 +100,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <stringformat> * { return KALOS_TOKEN_ERROR; }
         // [[fill]align][sign][#][0][minimumwidth][.precision][type]
         <stringformat> @word_start [^\x00{}]* @word_end "}" {
-            kalos_lex_strncpy(output, word_start, word_end - word_start);
+            KALOS_COPY_TOKEN;
             output[word_end - word_start] = 0;
             state->string_interp_state = STRING_STATE_DONE;
             return KALOS_TOKEN_STRING_FORMAT_SPEC;
@@ -175,24 +177,32 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
             return KALOS_TOKEN_COLON;
         }
 
-        <init> "on" { return KALOS_TOKEN_HANDLE; }
-        <init> "var" { return KALOS_TOKEN_VAR; }
-        <init> "import" { return KALOS_TOKEN_IMPORT; }
-        <init> "const" { return KALOS_TOKEN_CONST; }
-        <init> "if" { return KALOS_TOKEN_IF; }
-        <init> "else" { return KALOS_TOKEN_ELSE; }
-        <init> "loop" { return KALOS_TOKEN_LOOP; }
-        <init> "break" { return KALOS_TOKEN_BREAK; }
+        <init> "var"      { return KALOS_TOKEN_VAR; }
+        <init> "const"    { return KALOS_TOKEN_CONST; }
+        <init> "if"       { return KALOS_TOKEN_IF; }
+        <init> "else"     { return KALOS_TOKEN_ELSE; }
+        <init> "loop"     { return KALOS_TOKEN_LOOP; }
+        <init> "break"    { return KALOS_TOKEN_BREAK; }
         <init> "continue" { return KALOS_TOKEN_CONTINUE; }
         <init> "debugger" { return KALOS_TOKEN_DEBUGGER; }
-        <init> "return" { return KALOS_TOKEN_RETURN; }
-        <init> "for" { return KALOS_TOKEN_FOR; }
-        <init> "in" { return KALOS_TOKEN_IN; }
-        <init> "true" { return KALOS_TOKEN_TRUE; }
-        <init> "false" { return KALOS_TOKEN_FALSE; }
+        <init> "return"   { return KALOS_TOKEN_RETURN; }
+        <init> "for"      { return KALOS_TOKEN_FOR; }
+        <init> "in"       { return KALOS_TOKEN_IN; }
+        <init> "true"     { return KALOS_TOKEN_TRUE; }
+        <init> "false"    { return KALOS_TOKEN_FALSE; }
+        <init> "fn"       { return KALOS_TOKEN_FN; }
 
-        <init> @word_start word @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_WORD; }
-        <init> @word_start (int|hex) @word_end { kalos_lex_strncpy(output, word_start, word_end - word_start); output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }
+        <init> "on"       { return KALOS_TOKEN_ON; }
+        <init> "import"   { return KALOS_TOKEN_IMPORT; }
+        <init> "module"   { return KALOS_TOKEN_MODULE; }
+        <init> "handler"  { return KALOS_TOKEN_HANDLER; }
+        <init> "prop"     { return KALOS_TOKEN_PROP; }
+        <init> "object"   { return KALOS_TOKEN_OBJECT; }
+        <init> "read"     { return KALOS_TOKEN_READ; }
+        <init> "write"    { return KALOS_TOKEN_WRITE; }
+
+        <init> @word_start word @word_end { KALOS_COPY_TOKEN; output[word_end - word_start] = 0; return KALOS_TOKEN_WORD; }
+        <init> @word_start (int|hex) @word_end { KALOS_COPY_TOKEN; output[word_end - word_start] = 0; return KALOS_TOKEN_INTEGER; }
     */
     }
 }

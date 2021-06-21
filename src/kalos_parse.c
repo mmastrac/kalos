@@ -133,7 +133,7 @@ static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op)
 static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc);
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address);
 
-static bool parse_assert_token(struct parse_state* parse_state, int token);
+static void parse_assert_token(struct parse_state* parse_state, int token);
 static void parse_expression(struct parse_state* parse_state);
 static void parse_expression_paren(struct parse_state* parse_state);
 static void parse_expression_part(struct parse_state* parse_state);
@@ -351,14 +351,43 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
     return res;
 }
 
-static bool parse_assert_token(struct parse_state* parse_state, int token) {
+static kalos_token wordify(struct parse_state* parse_state) {
+    const char* wordified = NULL;
+    switch (parse_state->last_token) {
+    case KALOS_TOKEN_ON:
+        wordified = "on"; break;
+    case KALOS_TOKEN_IMPORT:
+        wordified = "import"; break;
+    case KALOS_TOKEN_MODULE:
+        wordified = "module"; break;
+    case KALOS_TOKEN_HANDLER:
+        wordified = "handler"; break;
+    case KALOS_TOKEN_PROP:
+        wordified = "prop"; break;
+    case KALOS_TOKEN_OBJECT:
+        wordified = "object"; break;
+    case KALOS_TOKEN_READ:
+        wordified = "read"; break;
+    case KALOS_TOKEN_WRITE:
+        wordified = "write"; break;
+    default:
+        return parse_state->last_token;
+    }
+    strcpy(parse_state->token, wordified);
+    parse_state->last_token = KALOS_TOKEN_WORD;
+    return KALOS_TOKEN_WORD;
+}
+
+static void parse_assert_token(struct parse_state* parse_state, int token) {
     if (lex(parse_state) != token) {
+        if (token == KALOS_TOKEN_WORD) {
+            if (wordify(parse_state) == KALOS_TOKEN_WORD) {
+                return;
+            }
+        }
         THROW(ERROR_UNEXPECTED_TOKEN);
     }
-    return true;
-
     TRY_EXIT;
-    return false;
 }
 
 static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state) {
@@ -789,7 +818,7 @@ static void parse_expression_part(struct parse_state* parse_state) {
                 break;
             }
         }
-    } else if (token == KALOS_TOKEN_WORD) {
+    } else if (wordify(parse_state) == KALOS_TOKEN_WORD) {
         TRY(parse_word_expression(parse_state));
     } else if (token == KALOS_TOKEN_PAREN_OPEN) {
         TRY(parse_expression(parse_state));
@@ -884,7 +913,7 @@ static bool parse_statement(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_RETURN) {
         TRY(parse_push_op(parse_state, KALOS_OP_END));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
-    } else if (token == KALOS_TOKEN_WORD) {
+    } else if (wordify(parse_state) == KALOS_TOKEN_WORD) {
         TRY(parse_word_statement(parse_state));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else {
@@ -927,7 +956,7 @@ static void parse_handler_statement(struct parse_state* parse_state) {
         TRY(token = lex(parse_state));
         if (token != KALOS_TOKEN_PAREN_CLOSE) {
             loop {
-                if (token == KALOS_TOKEN_WORD) {
+                if (wordify(parse_state) == KALOS_TOKEN_WORD) {
                     int slot = locals->var_index++;
                     strcpy(locals->vars[slot].name, parse_state->token);
                     TRY(token = lex(parse_state));
@@ -979,12 +1008,12 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
             break;
         }
 
-        if (handler_phase && token != KALOS_TOKEN_HANDLE) {
+        if (handler_phase && token != KALOS_TOKEN_ON) {
             THROW(ERROR_UNEXPECTED_TOKEN);
         }
 
         if (token == KALOS_TOKEN_IMPORT) {
-            TRY(token = lex(parse_state));
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
             struct name_resolution_result res;
             TRY(res = resolve_word(parse_state, NULL));
             if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
@@ -997,7 +1026,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
         } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
             TRY(parse_var_statement(parse_state, &parse_state->globals));
-        } else if (token == KALOS_TOKEN_HANDLE) {
+        } else if (token == KALOS_TOKEN_ON) {
             if (!handler_phase) {
                 handler_phase = true;
                 TRY(parse_push_op(parse_state, KALOS_OP_END));
