@@ -135,7 +135,6 @@ static void write_next_handler_section(struct parse_state* parse_state, kalos_ex
 
 static void parse_assert_token(struct parse_state* parse_state, int token);
 static void parse_expression(struct parse_state* parse_state);
-static void parse_expression_paren(struct parse_state* parse_state);
 static void parse_expression_part(struct parse_state* parse_state);
 static int parse_list_of_args(struct parse_state* parse_state, kalos_token open, kalos_token close);
 static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
@@ -534,7 +533,7 @@ static void parse_word_expression(struct parse_state* parse_state) {
 
 static void parse_if_statement(struct parse_state* parse_state) {
     int fixup_offset, fixup_offset_else;
-    TRY(parse_expression_paren(parse_state));
+    TRY(parse_expression(parse_state));
     TRY(parse_push_op(parse_state, KALOS_OP_LOGICAL_NOT));
     TRY(fixup_offset = parse_push_goto_forward(parse_state, KALOS_OP_GOTO_IF));
     TRY(parse_statement_block(parse_state));
@@ -862,13 +861,6 @@ static void parse_expression(struct parse_state* parse_state) {
         TRY(parse_push_op(parse_state, get_operator_from_token(op_stack[--op_stack_idx])))
     }
 
-    TRY_EXIT;
-}
-
-static void parse_expression_paren(struct parse_state* parse_state) {
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
-    TRY(parse_expression(parse_state));
-    TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
     TRY_EXIT;
 }
 

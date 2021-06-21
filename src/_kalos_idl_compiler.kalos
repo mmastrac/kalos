@@ -48,7 +48,7 @@ on open(dynamic) {
 }
 
 on close {
-    if (is_dynamic) {
+    if is_dynamic {
         println("bool {module.prefix}dynamic_dispatch(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         println(dynamic_dispatch);
         println("\tLOG(\"Module %s not found\", module);");
@@ -69,10 +69,10 @@ on close {
 }
 
 on module.begin(context, m) {
-    if (context == IMPL) {
+    if context == IMPL {
         dispatch += "\t{m.prefix}{m.name},\n";
         module.walk_exports(HANDLE);
-        if (is_dynamic) {
+        if is_dynamic {
             dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {m.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
             println("bool {m.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else {
@@ -82,7 +82,7 @@ on module.begin(context, m) {
         in_module = true;
         module.walk_exports(DISPATCH);
         in_module = false;
-        if (is_dynamic) {
+        if is_dynamic {
             println("\treturn false;");
         } else {
             println("\t}}");
@@ -96,11 +96,11 @@ on module.begin(context, m) {
 }
 
 on module.handler(context, handler) {
-    if (context != HANDLE) {
+    if context != HANDLE {
         return;
     }
     println("// id={handler.module_index:04x}:{handler.handler_index:04x} name={handler.name}");
-    if (module.name == "builtin") {
+    if module.name == "builtin" {
         print("void {module.prefix}trigger_{handler.name}(kalos_run_state* state");
     } else {
         print("void {module.prefix}{module.name}_trigger_{handler.name}(kalos_run_state* state");
@@ -123,11 +123,11 @@ on module.handler(context, handler) {
 }
 
 on module.object(context, object) {
-    if (context != HANDLE) {
+    if context != HANDLE {
         return;
     }
     println("//{module.prefix}{module.name}_object_{object.name}_props");
-    if (is_dynamic) {
+    if is_dynamic {
         println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
     } else {
         println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
@@ -136,7 +136,7 @@ on module.object(context, object) {
     in_object = true;
     module.walk_object_properties(OBJECT, object);
     in_object = false;
-    if (is_dynamic) {
+    if is_dynamic {
         println("\treturn false;");
     } else {
         println("\tdefault: return false;");
@@ -146,7 +146,7 @@ on module.object(context, object) {
     println("}}");
     println("");
     println("kalos_object_dispatch {module.prefix}{module.name}_object_{object.name}_props = {{");
-    if (is_dynamic) {
+    if is_dynamic {
         println("\t.dispatch_name = {module.prefix}{module.name}_object_{object.name}_props_fn");
     } else {
         println("\t.dispatch_id = {module.prefix}{module.name}_object_{object.name}_props_fn");
@@ -156,18 +156,18 @@ on module.object(context, object) {
 }
 
 on module.function(context, function) {
-    if (context != DISPATCH) {
+    if context != DISPATCH {
         return;
     }
     var arg;
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
-    if (is_dynamic) {
+    if is_dynamic {
         println("\tif (strcmp(name, \"{function.name}\") == 0) {{");
     } else {
         println("\tcase {function.id}: {{");
     }
     println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
-    if (function.varargs == "void") {
+    if function.varargs == "void" {
         println("\t\tconst int arg_count = {function.arg_count};");
     } else {
         println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
@@ -179,11 +179,11 @@ on module.function(context, function) {
     }
     println(");");
     print("\t\t");
-    if (function.return_type != "void") {
+    if function.return_type != "void" {
         print("K__{function.return_type} x = ");
     }
     var index = 0;
-    if (function.c) {
+    if function.c {
         var c = function.c;
         for arg in function.args {
             c = replace(c, "@" + index, "(K__arg_{arg}(K__arg(arg_count, {index+1})))");
@@ -196,20 +196,20 @@ on module.function(context, function) {
             print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
             index += 1;
         }
-        if (function.varargs != "void") {
+        if function.varargs != "void" {
             print(", vararg_count, kalos_stack_vararg_start(stack, vararg_count)");
         }
         println(");");
     }
     println("\t\tkalos_stack_cleanup(state, arg_count);");
-    if (function.return_type != "void") {
-        println("\t\tif (retval) {{");
+    if function.return_type != "void" {
+        println("\t\tif retval {{");
         println("\t\t\tpush_{function.return_type}(stack, x);");
         println("\t\t}} else {{");
         println("\t\t\tK__clean_{function.return_type}(stack, x);");
         println("\t\t}}");
     }
-    if (is_dynamic) {
+    if is_dynamic {
         println("\t\treturn true;");
     } else {
         println("\t\tbreak;");
@@ -219,38 +219,38 @@ on module.function(context, function) {
 }
 
 on module.property(context, property) {
-    if (!in_module && !in_object) {
+    if !in_module && !in_object {
         return;
     }
     var maybe_object = "";
-    if (in_object) {
+    if in_object {
         maybe_object = ", object";
     }
-    if (property.read_id != 0) {
+    if property.read_id != 0 {
         println("\t// id={property.read_id} name={property.name} symbol={property.read_symbol}");
-        if (is_dynamic) {
+        if is_dynamic {
             println("\tif (param_count == 0 && strcmp(name, \"{property.name}\") == 0) {{");
         } else {
             println("\tcase {property.read_id}: {{");
         }
         println("\t\tpush_{property.type}(stack, {property.read_symbol}((void*)state{maybe_object}));");
-        if (is_dynamic) {
+        if is_dynamic {
             println("\t\treturn true;");
         } else {
             println("\t\tbreak;");
         }
         println("\t}}");
     }
-    if (property.write_id != 0) {
+    if property.write_id != 0 {
         println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
-        if (is_dynamic) {
-            println("\tif (param_count == 1 && strcmp(name, \"{property.name}\") == 0) {{");
+        if is_dynamic {
+            println("\tif (param_count == 1 && strcmp(name, \"{property.name}\" == 0)) {{");
         } else {
             println("\tcase {property.write_id}: {{");
         }
         println("\t\t{property.write_symbol}((void*)state{maybe_object}, K__arg_{property.type}(K__arg(1, {1})));");
         println("\t\tkalos_stack_cleanup(state, 1);");
-        if (is_dynamic) {
+        if is_dynamic {
             println("\t\treturn true;");
         } else {
             println("\t\tbreak;");

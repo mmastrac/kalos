@@ -8,11 +8,11 @@ on init {
     loop {
         new_guess = (guess + number / guess) / 2;
         print("Guess: {new_guess}\n");
-        if (abs(guess - new_guess) <= 1) {
+        if abs(guess - new_guess) <= 1 {
             break;
         }
         guess = new_guess;
-        if (count > 100) {
+        if count > 100 {
             print("Failed to converge!\n");
             break;
         }

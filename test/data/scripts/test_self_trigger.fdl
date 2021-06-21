@@ -8,7 +8,7 @@ on init {
 }
 
 on test.self_trigger(s, o) {
-    if (n == 0) {
+    if n == 0 {
         print(s + "\n");
         print(o.a + "\n");
     }

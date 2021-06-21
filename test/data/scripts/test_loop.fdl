@@ -5,9 +5,9 @@ on init {
         foo = foo + 1;
         print(foo);
         print("\n");
-        if (foo == 3) {
+        if foo == 3 {
             break;
-        } else if (foo == 2) {
+        } else if foo == 2 {
             continue;
         }
         print("end loop!\n");

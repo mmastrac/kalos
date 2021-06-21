@@ -9,12 +9,12 @@ on init {
     print("{1 + "a"}\n");
     print("{!""}\n");
     print("{!"a"}\n");
-    if ("a") {
+    if "a" {
         print("true!\n");
     } else {
         print("false!\n");
     }
-    if ("") {
+    if "" {
         print("true!\n");
     } else {
         print("false!\n");
