@@ -42,6 +42,9 @@ on open(dynamic) {
     println("#define K__arg_bool(x)   (x)->value.number");
     println("#define K__arg_object(x) &((x)->value.object)");
     println("#define K__arg_any(x)    (x)");
+    if is_dynamic {
+        println("#define K__name(n, s) (param_count == n && strcmp(name, s) == 0)");
+    }
     println("");
     kidl.walk_modules(FORWARD);
     kidl.walk_modules(IMPL);
@@ -162,7 +165,7 @@ on module.function(context, function) {
     var arg;
     println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
     if is_dynamic {
-        println("\tif (strcmp(name, \"{function.name}\") == 0) {{");
+        println("\tif (K__name({function.arg_count}, \"{function.name}\")) {{");
     } else {
         println("\tcase {function.id}: {{");
     }
@@ -229,7 +232,7 @@ on module.property(context, property) {
     if property.read_id != 0 {
         println("\t// id={property.read_id} name={property.name} symbol={property.read_symbol}");
         if is_dynamic {
-            println("\tif (param_count == 0 && strcmp(name, \"{property.name}\") == 0) {{");
+            println("\tif (K__name(0, \"{property.name}\")) {{");
         } else {
             println("\tcase {property.read_id}: {{");
         }
@@ -244,7 +247,7 @@ on module.property(context, property) {
     if property.write_id != 0 {
         println("\t// id={property.write_id} name={property.name} symbol={property.write_symbol}");
         if is_dynamic {
-            println("\tif (param_count == 1 && strcmp(name, \"{property.name}\" == 0)) {{");
+            println("\tif (K__name(1, \"{property.name}\")) {{");
         } else {
             println("\tcase {property.write_id}: {{");
         }
