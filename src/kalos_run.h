@@ -7,6 +7,7 @@
 #include "kalos.h"
 #include "_kalos_value.h"
 #include "_kalos_module.h"
+#include "_kalos_script.h"
 
 /**
  * Initialize the Kalos virtual machine.

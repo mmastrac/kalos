@@ -1,6 +1,6 @@
 #include <ctype.h>
+#include "_kalos_defines.h"
 #include "_kalos_idl_parse.h"
-#include "_kalos_module.h"
 
 // Comparison equivalent to 'unsigned == 0'
 #pragma warning 136 9
