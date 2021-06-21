@@ -19,6 +19,14 @@
             "program": "${workspaceFolder}/target/compiler",
             "args": ["-v", "dispatch", "src/kalos_idl_compiler.kidl", "/tmp/out.c"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "VSCode Language Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/src/vscode"
+            ]
         }
     ]
 }
