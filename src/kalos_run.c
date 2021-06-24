@@ -425,7 +425,9 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 int export = pop(state->stack)->value.number;
                 int module = pop(state->stack)->value.number;
                 int count = read_inline_integer(state);
-                state->dispatch->modules[module](state_, export, count, state->stack, op == KALOS_OP_CALL);
+                if (!state->dispatch->modules[module](state_, export, count, state->stack, op == KALOS_OP_CALL)) {
+                    kalos_value_error((kalos_state*)state);
+                }
                 break;
             }
             case KALOS_OP_CALL_BYNAME:
@@ -433,7 +435,9 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 kalos_string export = pop(state->stack)->value.string;
                 kalos_string module = pop(state->stack)->value.string;
                 int count = read_inline_integer(state);
-                (*state->dispatch->dispatch_name)(state_, kalos_string_c((kalos_state*)state, module), kalos_string_c((kalos_state*)state, export), count, state->stack, op == KALOS_OP_CALL);
+                if (!state->dispatch->dispatch_name || !(*state->dispatch->dispatch_name)(state_, kalos_string_c((kalos_state*)state, module), kalos_string_c((kalos_state*)state, export), count, state->stack, op == KALOS_OP_CALL)) {
+                    kalos_value_error((kalos_state*)state);
+                }
                 break;
             }
             case KALOS_OP_MAKE_LIST: {
