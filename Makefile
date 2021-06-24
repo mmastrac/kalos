@@ -55,7 +55,6 @@ all: $(OUTDIR)/compiler
 nore2c:
 	$(call color,"TOUCH","host",(re2c targets))
 	@touch $(SRCDIR)/kalos_string_format.c
-	@touch $(SRCDIR)/kalos_idl_parse.c
 	@touch $(SRCDIR)/kalos_lex.c
 
 test: $(OUTDIR)/tests/test
@@ -83,10 +82,6 @@ $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 $(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@
-
-$(SRCDIR)/_kalos_idl_parse.c: $(SRCDIR)/_kalos_idl_parse.re
-	$(call color,"re2c","all",$<)
-	@re2c -W -c --tags --no-debug-info $< -o $@
 
 $(TEST_OBJDIR)/lib/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(call color,"CC","host",$<)
