@@ -239,6 +239,8 @@ static kalos_int kalos_idl_property_write_id2(kalos_state* state, kalos_object_r
 static kalos_string kalos_idl_property_read_symbol2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->read.symbol_index)); }
 static kalos_string kalos_idl_property_write_symbol2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, prop()->write.symbol_index)); }
 static kalos_string kalos_idl_property_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
+static kalos_object_ref kalos_idl_property_read_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &prop()->read, &kalos_module_idl_module_object_binding_obj_props ); }
+static kalos_object_ref kalos_idl_property_write_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &prop()->write, &kalos_module_idl_module_object_binding_obj_props ); }
 
 static kalos_object_ref kalos_idl_handler_args(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
