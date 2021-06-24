@@ -21,8 +21,6 @@ idl {
         fn walk_exports(context: any) = kalos_idl_walk_exports;
         fn walk_object_properties(context: any, object: object) = kalos_idl_walk_object_properties;
 
-        prop name: string { read = kalos_idl_module_name; }
-        prop prefix: string { read = kalos_idl_module_prefix; }
         handler begin(context: any, module: object);
         handler function(context: any, function: object);
         handler handler(context: any, handler: object);
@@ -30,8 +28,7 @@ idl {
         handler object(context: any, property: object);
 
         object module_obj {
-            prop name: string { read = kalos_idl_obj_module_name; }
-            prop prefix: string { read = kalos_idl_obj_module_prefix; }
+            prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object function_obj {

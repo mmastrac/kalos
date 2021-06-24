@@ -211,13 +211,10 @@ static void iter_function_arg(kalos_state* state, void* context, uint16_t index,
     value->value.string = kalos_string_allocate(state, function_type_to_string(arg->type));
 }
 
-#define IDL_STRING(x) kalos_string_allocate(state, kalos_module_get_string(script_modules, x))
+#define IDL_STRING(x) kalos_string_allocate((void*)state, kalos_module_get_string(script_modules, x))
 #define IDL_OBJECT(type) ((type*)(*object)->context)
 
-static kalos_string kalos_idl_module_name(kalos_state* state) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
 static kalos_string kalos_idl_module_prefix(kalos_state* state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
-static kalos_string kalos_idl_obj_module_name(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_module->name_index)); }
-static kalos_string kalos_idl_obj_module_prefix(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_header->prefix_index)); }
 
 static kalos_string kalos_idl_export_name2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 static kalos_int kalos_idl_function_id2(kalos_state* state, kalos_object_ref* o) { return script_current_function->binding.invoke_id; }

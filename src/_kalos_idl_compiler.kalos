@@ -6,6 +6,8 @@ var in_module = false;
 var is_dynamic = false;
 var dispatch = "";
 var dynamic_dispatch = "";
+var current_module;
+
 const FORWARD = "forward";  # Forward declaration phase
 const IMPL = "impl";        # Implementation phase
 const HANDLE = "handler";
@@ -86,14 +88,14 @@ on open(dynamic) {
 
 on close {
     if is_dynamic {
-        println("bool {module.prefix}dynamic_dispatch(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
+        println("bool {kidl.prefix}dynamic_dispatch(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         println(dynamic_dispatch);
         println("\tLOG(\"Module %s not found\", module);");
         println("\treturn false;");
         println("}}");
         println("");
     } else {
-        println("kalos_dispatch_fn {module.prefix}dispatch[] = {{");
+        println("kalos_dispatch_fn {kidl.prefix}dispatch[] = {{");
         print(dispatch);
         println("}};");
         println("");
@@ -106,14 +108,15 @@ on close {
 }
 
 on module.begin(context, m) {
+    current_module = m;
     if context == IMPL {
-        dispatch += "\t{m.prefix}{m.name},\n";
+        dispatch += "\t{kidl.prefix}{m.name},\n";
         module.walk_exports(HANDLE);
         if is_dynamic {
-            dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {m.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
-            println("bool {m.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
+            dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {kidl.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
+            println("bool {kidl.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else {
-            println("void {m.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
+            println("void {kidl.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
             println("\tswitch (function) {{");
         }
         in_module = true;
@@ -137,10 +140,10 @@ on module.handler(context, handler) {
         return;
     }
     println("// id={handler.module_index:04x}:{handler.handler_index:04x} name={handler.name}");
-    if module.name == "builtin" {
-        print("void {module.prefix}trigger_{handler.name}(kalos_run_state* state");
+    if current_module.name == "builtin" {
+        print("void {kidl.prefix}trigger_{handler.name}(kalos_run_state* state");
     } else {
-        print("void {module.prefix}{module.name}_trigger_{handler.name}(kalos_run_state* state");
+        print("void {kidl.prefix}{current_module.name}_trigger_{handler.name}(kalos_run_state* state");
     }
     var index = 0;
     var arg;
@@ -163,11 +166,11 @@ on module.object(context, object) {
     if context != HANDLE {
         return;
     }
-    println("//{module.prefix}{module.name}_object_{object.name}_props");
+    println("//{kidl.prefix}{current_module.name}_object_{object.name}_props");
     if is_dynamic {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
+        println("bool {kidl.prefix}{current_module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
     } else {
-        println("bool {module.prefix}{module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
+        println("bool {kidl.prefix}{current_module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
         println("\tswitch (function) {{");
     }
     in_object = true;
@@ -182,11 +185,11 @@ on module.object(context, object) {
     }
     println("}}");
     println("");
-    println("kalos_object_dispatch {module.prefix}{module.name}_object_{object.name}_props = {{");
+    println("kalos_object_dispatch {kidl.prefix}{current_module.name}_object_{object.name}_props = {{");
     if is_dynamic {
-        println("\t.dispatch_name = {module.prefix}{module.name}_object_{object.name}_props_fn");
+        println("\t.dispatch_name = {kidl.prefix}{current_module.name}_object_{object.name}_props_fn");
     } else {
-        println("\t.dispatch_id = {module.prefix}{module.name}_object_{object.name}_props_fn");
+        println("\t.dispatch_id = {kidl.prefix}{current_module.name}_object_{object.name}_props_fn");
     }
     println("}};");
     println("");
