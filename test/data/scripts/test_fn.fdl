@@ -1,4 +1,4 @@
-fn callable(n) {
+fn callable(n): number {
     return n * 10;
 }
 

@@ -1,6 +1,6 @@
 import test;
 
-fn callable_ret(n) {
+fn callable_ret(n): number {
     return n * 10;
 }
 

@@ -350,6 +350,9 @@ SCRIPT_TEST(varargs)
     TEST(kalos_parse_fail_##x) { parse_test("fail_parse_" #x); }
 
 PARSE_TEST_FAIL(bad_escape)
+PARSE_TEST_FAIL(bad_return)
+PARSE_TEST_FAIL(bad_return2)
+PARSE_TEST_FAIL(bad_return3)
 PARSE_TEST_FAIL(break_without_loop)
 PARSE_TEST_FAIL(invalid_const_global)
 PARSE_TEST_FAIL(loop_var_undefined)

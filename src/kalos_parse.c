@@ -40,6 +40,7 @@ static const char* ERROR_UNKNOWN_HANDLE = "Unknown handler";
 static const char* ERROR_UNKNOWN_PROPERTY = "Unknown property";
 static const char* ERROR_UNKNOWN_FUNCTION = "Unknown function";
 static const char* ERROR_MISSING_HANDLE = "Missing handler statement";
+static const char* ERROR_MISSING_RETURN = "Missing return statement";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
@@ -61,9 +62,15 @@ typedef enum var_type {
     VAR_FN,
 } var_type;
 
+struct fn_state {
+    kalos_int pc;
+    kalos_int param_count;
+    kalos_function_type ret;
+};
+
 struct var_state {
     char name[KALOS_VAR_MAX_LENGTH];
-    kalos_int data1, data2; // slot or function index
+    struct fn_state fn_state; // slot or function index
     var_type type;
 };
 
@@ -132,6 +139,8 @@ struct parse_state {
     kalos_section_header* last_section_header;
     char token[256];
     bool const_mode;
+    kalos_function_type ret;
+    kalos_token last_statement_type;
 };
 
 static void parse_push_format(struct parse_state* parse_state, kalos_op op, kalos_string_format* string_format);
@@ -150,6 +159,7 @@ static int parse_list_of_args(struct parse_state* parse_state, kalos_token open,
 static struct pending_op parse_function_call_local(struct parse_state* parse_state, struct var_state* fn);
 static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
 static struct pending_op parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
+static kalos_function_type parse_map_type(struct parse_state* parse_state, kalos_token token);
 static void parse_function_statement(struct parse_state* parse_state);
 static void parse_if_statement(struct parse_state* parse_state);
 static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot);
@@ -494,14 +504,14 @@ static struct pending_op parse_function_call_local(struct parse_state* parse_sta
     }
     int param_count = 0;
     TRY(param_count = parse_list_of_args(parse_state, KALOS_TOKEN_PAREN_OPEN, KALOS_TOKEN_PAREN_CLOSE));
-    if (param_count != fn->data2) {
+    if (param_count != fn->fn_state.param_count) {
         THROW(ERROR_UNEXPECTED_PARAMETERS);
     }
     TRY_EXIT;
     struct pending_op op = {0};
     op.op = KALOS_OP_GOSUB;
-    op.data[0] = fn->data1;
-    op.data[1] = fn->data2;
+    op.data[0] = fn->fn_state.pc;
+    op.data[1] = fn->fn_state.param_count;
     return op;
 }
 
@@ -951,6 +961,7 @@ static void parse_expression(struct parse_state* parse_state) {
 }
 
 static void parse_statement_block(struct parse_state* parse_state) {
+    parse_state->last_statement_type = KALOS_TOKEN_ERROR;
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
     loop {
         TRY(if (!parse_statement(parse_state)) { break; });
@@ -963,7 +974,9 @@ static bool parse_statement(struct parse_state* parse_state) {
     TRY(token = lex(parse_state));
     if (token == KALOS_TOKEN_BRA_CLOSE) {
         return false;
-    } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
+    }
+    parse_state->last_statement_type = token;
+    if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
         TRY(parse_var_statement(parse_state, &parse_state->locals));
     } else if (token == KALOS_TOKEN_IF) {
         TRY(parse_if_statement(parse_state));
@@ -991,7 +1004,14 @@ static bool parse_statement(struct parse_state* parse_state) {
     } else if (token == KALOS_TOKEN_RETURN) {
         TRY(peek = lex_peek(parse_state));
         if (peek != KALOS_TOKEN_SEMI) {
+            if (parse_state->ret == FUNCTION_TYPE_VOID) {
+                THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT)
+            }
             TRY(parse_expression(parse_state));
+        } else {
+            if (parse_state->ret != FUNCTION_TYPE_VOID) {
+                THROW(ERROR_ILLEGAL_IN_THIS_CONTEXT)
+            }
         }
         TRY(parse_push_op(parse_state, KALOS_OP_END));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
@@ -1063,13 +1083,39 @@ static void parse_function_statement(struct parse_state* parse_state) {
         }
     }
     if (var) {
-        var->data1 = parse_state->output_script_index;
-        var->data2 = param_count;
+        var->fn_state.pc = parse_state->output_script_index;
+        var->fn_state.param_count = param_count;
+        TRY(peek = lex_peek(parse_state));
+        if (peek == KALOS_TOKEN_COLON) {
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_COLON));
+            TRY(token = lex(parse_state));
+            TRY(parse_state->ret = var->fn_state.ret = parse_map_type(parse_state, token));
+        }
     }
     TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handler_index)));
     TRY(parse_statement_block(parse_state));
+    if (parse_state->ret != FUNCTION_TYPE_VOID) {
+        if (parse_state->last_statement_type != KALOS_TOKEN_RETURN) {
+            THROW(ERROR_MISSING_RETURN);
+        }
+        parse_state->ret = FUNCTION_TYPE_VOID;
+    }
     TRY(parse_push_op(parse_state, KALOS_OP_END));
     TRY_EXIT;
+}
+
+kalos_function_type parse_map_type(struct parse_state* parse_state, kalos_token token) {
+    switch (token) {
+        case KALOS_TOKEN_VOID: return FUNCTION_TYPE_VOID;
+        case KALOS_TOKEN_STRING: return FUNCTION_TYPE_STRING;
+        case KALOS_TOKEN_OBJECT: return FUNCTION_TYPE_OBJECT;
+        case KALOS_TOKEN_BOOL: return FUNCTION_TYPE_BOOL;
+        case KALOS_TOKEN_NUMBER: return FUNCTION_TYPE_NUMBER;
+        case KALOS_TOKEN_ANY: return FUNCTION_TYPE_ANY;
+        default: THROW(ERROR_UNEXPECTED_TOKEN);
+    }
+    TRY_EXIT;
+    return FUNCTION_TYPE_VOID;
 }
 
 void parse_idl_type(struct parse_state* parse_state) {
@@ -1079,15 +1125,7 @@ void parse_idl_type(struct parse_state* parse_state) {
     if (peek == KALOS_TOKEN_COLON) {
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_COLON));
         TRY(token = lex(parse_state));
-        switch (token) {
-            case KALOS_TOKEN_VOID: type = FUNCTION_TYPE_VOID; break;
-            case KALOS_TOKEN_STRING: type = FUNCTION_TYPE_STRING; break;
-            case KALOS_TOKEN_OBJECT: type = FUNCTION_TYPE_OBJECT; break;
-            case KALOS_TOKEN_BOOL: type = FUNCTION_TYPE_BOOL; break;
-            case KALOS_TOKEN_NUMBER: type = FUNCTION_TYPE_NUMBER; break;
-            case KALOS_TOKEN_ANY: type = FUNCTION_TYPE_ANY; break;
-            default: THROW(ERROR_UNEXPECTED_TOKEN);
-        }
+        TRY(type = parse_map_type(parse_state, token));
     }
     TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, type));
     TRY_EXIT;

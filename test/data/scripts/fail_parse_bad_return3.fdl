@@ -1,0 +1,3 @@
+# FAIL 3 Missing return statement
+fn x: number {
+}

@@ -1,0 +1,4 @@
+# FAIL 3 Illegal in this context
+fn x: number {
+    return;
+}
