@@ -34,7 +34,7 @@ void kalos_module_dispatch_test_trigger_init(kalos_run_state* state) {
 	kalos_trigger(state, kalos_make_address(0x0, 0x1));
 }
 
-void kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
+bool kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
 	switch (function) {
 	// id=1 name=print arg_count=0 binding=fn test_print
 	case 1: {
@@ -44,10 +44,11 @@ void kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, in
 		kalos_stack_setup_0(state);
 		test_print((void*)state, vararg_count, kalos_stack_vararg_start(stack, vararg_count));
 		kalos_stack_cleanup(state, arg_count);
-		break;
+		return true;
 	}
 
 	}
+	return false;
 }
 
 // id=0001:0001 name=with_args
@@ -69,19 +70,19 @@ bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_run_state* state, k
 	// id=2 name=a binding=fn test_read_a
 	case 2: {
 		push_string(stack, test_read_a((void*)state, object));
-		break;
+		return true;
 	}
 	// id=4 name=c binding=fn test_read_c
 	case 4: {
 		push_number(stack, test_read_c((void*)state, object));
-		break;
+		return true;
 	}
 	// id=5 name=c binding=fn test_write_c
 	case 5: {
 		const int arg_count = 1;
 		test_write_c((void*)state, object, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
-		break;
+		return true;
 	}
 	default: return false;
 	}
@@ -98,17 +99,17 @@ bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_run_state* state, k
 	// id=2 name=a binding=fn test_read_a
 	case 2: {
 		push_string(stack, test_read_a((void*)state, object));
-		break;
+		return true;
 	}
 	// id=6 name=b binding=fn test_read_b
 	case 6: {
 		push_string(stack, test_read_b((void*)state, object));
-		break;
+		return true;
 	}
 	// id=4 name=c binding=fn test_read_c2
 	case 4: {
 		push_number(stack, test_read_c2((void*)state, object));
-		break;
+		return true;
 	}
 	default: return false;
 	}
@@ -119,31 +120,31 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 	.dispatch_id = kalos_module_dispatch_test_test_object_b_props_fn
 };
 
-void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
+bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
 	switch (function) {
 	// id=1 name=read_write binding=fn test_read_write_read
 	case 1: {
 		push_number(stack, test_read_write_read((void*)state));
-		break;
+		return true;
 	}
 	// id=2 name=read_write binding=fn test_read_write_write
 	case 2: {
 		const int arg_count = 1;
 		test_read_write_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
-		break;
+		return true;
 	}
 	// id=3 name=read_only binding=fn test_read_only_read
 	case 3: {
 		push_number(stack, test_read_only_read((void*)state));
-		break;
+		return true;
 	}
 	// id=4 name=write_only binding=fn test_write_only_write
 	case 4: {
 		const int arg_count = 1;
 		test_write_only_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
-		break;
+		return true;
 	}
 	// id=5 name=add_one arg_count=1 binding=c @0 + 1
 	case 5: {
@@ -157,7 +158,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=6 name=sum_numbers arg_count=0 binding=fn test_kalos_sum_numbers
@@ -173,7 +174,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=7 name=sum_numbers_2 arg_count=2 binding=fn test_kalos_sum_numbers_2
@@ -189,7 +190,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=8 name=concat arg_count=8 binding=fn test_kalos_concat
@@ -204,7 +205,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_string(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=9 name=overloaded arg_count=1 binding=c 1
@@ -219,7 +220,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=10 name=overloaded arg_count=2 binding=c 2
@@ -234,7 +235,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=11 name=overloaded arg_count=3 binding=c 3
@@ -249,7 +250,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=12 name=trigger_self arg_count=2 binding=fn kalos_module_dispatch_test_test_trigger_self_trigger
@@ -259,7 +260,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		kalos_stack_setup_2(state, K__t_string, K__t_object);
 		kalos_module_dispatch_test_test_trigger_self_trigger((void*)state, K__arg_string(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
 		kalos_stack_cleanup(state, arg_count);
-		break;
+		return true;
 	}
 
 	// id=13 name=raw_c arg_count=2 binding=c @0*10+@1
@@ -274,7 +275,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_number(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=14 name=make_a arg_count=0 binding=fn test_make_a
@@ -289,7 +290,7 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_object(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	// id=15 name=make_b arg_count=0 binding=fn test_make_b
@@ -304,10 +305,11 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		} else {
 			K__clean_object(stack, x);
 		}
-		break;
+		return true;
 	}
 
 	}
+	return false;
 }
 
 kalos_dispatch_fn kalos_module_dispatch_test_dispatch[] = {

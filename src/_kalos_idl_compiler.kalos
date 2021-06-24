@@ -116,17 +116,16 @@ on module.begin(context, m) {
             dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {kidl.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
             println("bool {kidl.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else {
-            println("void {kidl.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
+            println("bool {kidl.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
             println("\tswitch (function) {{");
         }
         in_module = true;
         module.walk_exports(DISPATCH);
         in_module = false;
-        if is_dynamic {
-            println("\treturn false;");
-        } else {
+        if !is_dynamic {
             println("\t}}");
         }
+        println("\treturn false;");
         println("}}");
         println("");
     } else {
@@ -230,11 +229,7 @@ on module.function(context, function) {
             println("\t\t\tK__clean_{overload.return_type}(stack, x);");
             println("\t\t}}");
         }
-        if is_dynamic {
-            println("\t\treturn true;");
-        } else {
-            println("\t\tbreak;");
-        }
+        println("\t\treturn true;");
         println("\t}}");
         println("");
     }
@@ -254,11 +249,7 @@ on module.property(context, property) {
         print("\t\tpush_{property.type}(stack, ");
         write_binding(property.read_binding, [], "void");
         println(");");
-        if is_dynamic {
-            println("\t\treturn true;");
-        } else {
-            println("\t\tbreak;");
-        }
+        println("\t\treturn true;");
         println("\t}}");
     }
     if property.write_binding.invoke_id != 0 {
@@ -269,11 +260,7 @@ on module.property(context, property) {
         write_binding(property.write_binding, [property.type], "void");
         println(";");
         println("\t\tkalos_stack_cleanup(state, 1);");
-        if is_dynamic {
-            println("\t\treturn true;");
-        } else {
-            println("\t\tbreak;");
-        }
+        println("\t\treturn true;");
         println("\t}}");
     }
 }

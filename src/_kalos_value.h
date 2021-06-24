@@ -16,7 +16,7 @@ typedef kalos_value (*kalos_iternext)(kalos_state* state, kalos_object_ref* obje
 typedef void (*kalos_object_free)(kalos_state* state, kalos_object_ref* object);
 
 typedef bool (*kalos_dispatch_name_fn)(kalos_run_state* state, const char* module, const char* name, int param_count, kalos_stack* stack, bool retval);
-typedef void (*kalos_dispatch_fn)(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval);
+typedef bool (*kalos_dispatch_fn)(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval);
 typedef void (*kalos_idl_dispatch_fn)(kalos_run_state* state, kalos_value* idl);
 typedef bool (*kalos_object_dispatch_name_fn)(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack);
 typedef bool (*kalos_object_dispatch_fn)(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack);
