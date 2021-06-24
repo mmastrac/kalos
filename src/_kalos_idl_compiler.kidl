@@ -47,8 +47,6 @@ idl {
 
         object property_obj {
             prop name: string { read = kalos_idl_property_name; }
-            prop read_id: number { read = kalos_idl_property_read_id2; }
-            prop write_id: number { read = kalos_idl_property_write_id2; }
             prop type: string { read = kalos_idl_property_type2; }
             prop read_binding: object { read = kalos_idl_property_read_binding; }
             prop write_binding: object { read = kalos_idl_property_write_binding; }
@@ -68,6 +66,7 @@ idl {
         object binding_obj {
             prop type: string { read = kalos_idl_binding_type; }
             prop value: string { read = kalos_idl_binding_value; }
+            prop invoke_id: number { read = c "IDL_OBJECT(kalos_binding)->invoke_id"; }
         }
     }
 }

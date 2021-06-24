@@ -242,9 +242,9 @@ on module.property(context, property) {
     if in_object {
         maybe_object = ", object";
     }
-    if property.read_id != 0 {
-        println("\t// id={property.read_id} name={property.name} binding={property.read_binding.type} {property.read_binding.value}");
-        write_matcher(property.read_id, property.name, 0);
+    if property.read_binding.invoke_id != 0 {
+        println("\t// id={property.read_binding.invoke_id} name={property.name} binding={property.read_binding.type} {property.read_binding.value}");
+        write_matcher(property.read_binding.invoke_id, property.name, 0);
         print("\t\tpush_{property.type}(stack, ");
         write_binding(property.read_binding, [], "void");
         println(");");
@@ -255,9 +255,9 @@ on module.property(context, property) {
         }
         println("\t}}");
     }
-    if property.write_id != 0 {
-        println("\t// id={property.write_id} name={property.name} binding={property.write_binding.type} {property.write_binding.value}");
-        write_matcher(property.write_id, property.name, 1);
+    if property.write_binding.invoke_id != 0 {
+        println("\t// id={property.write_binding.invoke_id} name={property.name} binding={property.write_binding.type} {property.write_binding.value}");
+        write_matcher(property.write_binding.invoke_id, property.name, 1);
         println("\t\tconst int arg_count = 1;");
         print("\t\t");
         write_binding(property.write_binding, [property.type], "void");
