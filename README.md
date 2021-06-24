@@ -30,7 +30,7 @@ on app.init {
  * Tiny VM with low requirements
  * Allocation-free parser for parsing script on-device
  * Binary script format for pre- or external compilation in memory-constrained applications
- * Comprehensive control structures: `if`/`else`, `for` over iterators, `loop`, `break`/`continues`
+ * Comprehensive control structures: `if`/`else`, `for` over iterators, `loop`, `break`/`continue`
  * IDL-based bindings to your code
  * Basic list support
  * String interpolation
