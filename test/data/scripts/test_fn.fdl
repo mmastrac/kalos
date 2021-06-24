@@ -1,0 +1,9 @@
+fn callable(n) {
+    return n * 10;
+}
+
+on init {
+    print(callable(1));
+    print(callable(2));
+    print(callable(3));
+}

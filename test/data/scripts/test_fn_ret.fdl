@@ -1,0 +1,15 @@
+import test;
+
+fn callable_ret(n) {
+    return n * 10;
+}
+
+fn callable_noret(n) {
+    test.make_a();
+}
+
+on init {
+    print(callable_ret(1));
+    callable_ret(2);
+    callable_noret(3);
+}

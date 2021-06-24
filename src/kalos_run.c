@@ -344,16 +344,12 @@ kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch,
     return (kalos_run_state*)state;
 }
 
-void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
+void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section_header kalos_far* header, bool keep_ret) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    const kalos_section_header kalos_far* header;
     int original_stack_index = state->stack->stack_index;
     int original_pc = state->pc;
+    state->pc = pc;
     kalos_value* original_locals = state->locals;
-    state->pc = kalos_find_section(state->script, handler_address, &header);
-    if (state->pc == 0) {
-        goto done;
-    }
     state->locals = &state->stack->stack[original_stack_index];
     state->stack->stack_index += header->locals_size;
     size_t script_size = ((const kalos_script_header kalos_far*)state->script)->length;
@@ -412,6 +408,16 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
                 kalos_value next = iterator->value.object->iternext((kalos_state*)state, &iterator->value.object, &done);
                 push_bool(state->stack, done);
                 kalos_value_move_to((kalos_state*)state, &next, push_raw(state->stack));
+                break;
+            }
+            case KALOS_OP_GOSUB:
+            case KALOS_OP_GOSUB_NORET: {
+                kalos_int param_count = pop(state->stack)->value.number;
+                kalos_int pc = pop(state->stack)->value.number;
+                state->stack->stack_index -= param_count;
+                const kalos_section_header kalos_far* header = (const kalos_section_header kalos_far*)&state->script[pc];
+                pc += sizeof(kalos_section_header);
+                kalos_trigger_pc(state_, pc, header, op == KALOS_OP_GOSUB);
                 break;
             }
             case KALOS_OP_CALL_NORET:
@@ -614,11 +620,19 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
         }
     }
 
-    done:
-    for (int i = original_stack_index; i < state->stack->stack_index; i++) {
-        kalos_clear((kalos_state*)state, &state->stack->stack[i]);
+    done: {
+        kalos_value ret = {0};
+        if (keep_ret) {
+            ret = kalos_value_clone((kalos_state*)state, pop(state->stack));
+        }
+        for (int i = original_stack_index; i < state->stack->stack_index; i++) {
+            kalos_clear((kalos_state*)state, &state->stack->stack[i]);
+        }
+        state->stack->stack_index = original_stack_index;
+        if (ret.type != KALOS_VALUE_NONE) {
+            *push_raw(state->stack) = ret;
+        }
     }
-    state->stack->stack_index = original_stack_index;
     state->pc = original_pc;
     state->locals = original_locals;
 }
@@ -630,4 +644,14 @@ void kalos_run_free(kalos_run_state* state_) {
     }
     state->free(state->stack);
     state->free(state);
+}
+
+void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
+    kalos_state_internal* state = (kalos_state_internal*)state_;
+    const kalos_section_header kalos_far* header;
+    kalos_int pc = kalos_find_section(state->script, handler_address, &header);
+    if (pc == 0) {
+        return;
+    }
+    kalos_trigger_pc(state_, pc, header, false);
 }
