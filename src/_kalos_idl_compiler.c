@@ -2,7 +2,6 @@
 #include "kalos_parse.h"
 #include "kalos_run.h"
 #include "_kalos_idl_compiler.h"
-#include "_kalos_idl_parse.h"
 #include "_kalos_lex.h"
 
 #define ITERATE(name, list, sublist) {\
