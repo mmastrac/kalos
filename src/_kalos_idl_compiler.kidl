@@ -50,8 +50,6 @@ idl {
             prop read_id: number { read = kalos_idl_property_read_id2; }
             prop write_id: number { read = kalos_idl_property_write_id2; }
             prop type: string { read = kalos_idl_property_type2; }
-            prop read_symbol: string { read = kalos_idl_property_read_symbol2; }
-            prop write_symbol: string { read = kalos_idl_property_write_symbol2; }
             prop read_binding: object { read = kalos_idl_property_read_binding; }
             prop write_binding: object { read = kalos_idl_property_write_binding; }
         }

@@ -91,7 +91,7 @@ bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* 
 		return true;
 	}
 
-	// id=2 name=prefix symbol=kalos_idl_module_prefix
+	// id=2 name=prefix binding=fn kalos_idl_module_prefix
 	if (K__name(0, "prefix")) {
 		push_string(stack, kalos_idl_module_prefix((void*)state));
 		return true;
@@ -136,12 +136,12 @@ void kalos_module_idl_module_trigger_object(kalos_run_state* state, K__pany a0, 
 
 //kalos_module_idl_module_object_module_obj_props
 bool kalos_module_idl_module_object_module_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=2 name=name symbol=kalos_idl_obj_module_name
+	// id=2 name=name binding=fn kalos_idl_obj_module_name
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_obj_module_name((void*)state, object));
 		return true;
 	}
-	// id=4 name=prefix symbol=kalos_idl_obj_module_prefix
+	// id=4 name=prefix binding=fn kalos_idl_obj_module_prefix
 	if (K__name(0, "prefix")) {
 		push_string(stack, kalos_idl_obj_module_prefix((void*)state, object));
 		return true;
@@ -155,37 +155,37 @@ kalos_object_dispatch kalos_module_idl_module_object_module_obj_props = {
 
 //kalos_module_idl_module_object_function_obj_props
 bool kalos_module_idl_module_object_function_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=6 name=id symbol=kalos_idl_function_id2
+	// id=6 name=id binding=fn kalos_idl_function_id2
 	if (K__name(0, "id")) {
 		push_number(stack, kalos_idl_function_id2((void*)state, object));
 		return true;
 	}
-	// id=8 name=return_type symbol=kalos_idl_function_return_type2
+	// id=8 name=return_type binding=fn kalos_idl_function_return_type2
 	if (K__name(0, "return_type")) {
 		push_string(stack, kalos_idl_function_return_type2((void*)state, object));
 		return true;
 	}
-	// id=2 name=name symbol=kalos_idl_export_name2
+	// id=2 name=name binding=fn kalos_idl_export_name2
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_export_name2((void*)state, object));
 		return true;
 	}
-	// id=10 name=args symbol=kalos_idl_function_args2
+	// id=10 name=args binding=fn kalos_idl_function_args2
 	if (K__name(0, "args")) {
 		push_object(stack, kalos_idl_function_args2((void*)state, object));
 		return true;
 	}
-	// id=12 name=arg_count symbol=kalos_idl_function_arg_count2
+	// id=12 name=arg_count binding=fn kalos_idl_function_arg_count2
 	if (K__name(0, "arg_count")) {
 		push_number(stack, kalos_idl_function_arg_count2((void*)state, object));
 		return true;
 	}
-	// id=14 name=varargs symbol=kalos_idl_function_varargs2
+	// id=14 name=varargs binding=fn kalos_idl_function_varargs2
 	if (K__name(0, "varargs")) {
 		push_string(stack, kalos_idl_function_varargs2((void*)state, object));
 		return true;
 	}
-	// id=16 name=binding symbol=kalos_idl_function_binding
+	// id=16 name=binding binding=fn kalos_idl_function_binding
 	if (K__name(0, "binding")) {
 		push_object(stack, kalos_idl_function_binding((void*)state, object));
 		return true;
@@ -199,42 +199,32 @@ kalos_object_dispatch kalos_module_idl_module_object_function_obj_props = {
 
 //kalos_module_idl_module_object_property_obj_props
 bool kalos_module_idl_module_object_property_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=2 name=name symbol=kalos_idl_property_name
+	// id=2 name=name binding=fn kalos_idl_property_name
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_property_name((void*)state, object));
 		return true;
 	}
-	// id=18 name=read_id symbol=kalos_idl_property_read_id2
+	// id=18 name=read_id binding=fn kalos_idl_property_read_id2
 	if (K__name(0, "read_id")) {
 		push_number(stack, kalos_idl_property_read_id2((void*)state, object));
 		return true;
 	}
-	// id=20 name=write_id symbol=kalos_idl_property_write_id2
+	// id=20 name=write_id binding=fn kalos_idl_property_write_id2
 	if (K__name(0, "write_id")) {
 		push_number(stack, kalos_idl_property_write_id2((void*)state, object));
 		return true;
 	}
-	// id=22 name=type symbol=kalos_idl_property_type2
+	// id=22 name=type binding=fn kalos_idl_property_type2
 	if (K__name(0, "type")) {
 		push_string(stack, kalos_idl_property_type2((void*)state, object));
 		return true;
 	}
-	// id=24 name=read_symbol symbol=kalos_idl_property_read_symbol2
-	if (K__name(0, "read_symbol")) {
-		push_string(stack, kalos_idl_property_read_symbol2((void*)state, object));
-		return true;
-	}
-	// id=26 name=write_symbol symbol=kalos_idl_property_write_symbol2
-	if (K__name(0, "write_symbol")) {
-		push_string(stack, kalos_idl_property_write_symbol2((void*)state, object));
-		return true;
-	}
-	// id=28 name=read_binding symbol=kalos_idl_property_read_binding
+	// id=24 name=read_binding binding=fn kalos_idl_property_read_binding
 	if (K__name(0, "read_binding")) {
 		push_object(stack, kalos_idl_property_read_binding((void*)state, object));
 		return true;
 	}
-	// id=30 name=write_binding symbol=kalos_idl_property_write_binding
+	// id=26 name=write_binding binding=fn kalos_idl_property_write_binding
 	if (K__name(0, "write_binding")) {
 		push_object(stack, kalos_idl_property_write_binding((void*)state, object));
 		return true;
@@ -248,22 +238,22 @@ kalos_object_dispatch kalos_module_idl_module_object_property_obj_props = {
 
 //kalos_module_idl_module_object_handler_obj_props
 bool kalos_module_idl_module_object_handler_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=2 name=name symbol=kalos_idl_export_name2
+	// id=2 name=name binding=fn kalos_idl_export_name2
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_export_name2((void*)state, object));
 		return true;
 	}
-	// id=32 name=module_index symbol=kalos_idl_handler_module_index2
+	// id=28 name=module_index binding=fn kalos_idl_handler_module_index2
 	if (K__name(0, "module_index")) {
 		push_number(stack, kalos_idl_handler_module_index2((void*)state, object));
 		return true;
 	}
-	// id=34 name=handler_index symbol=kalos_idl_handler_index2
+	// id=30 name=handler_index binding=fn kalos_idl_handler_index2
 	if (K__name(0, "handler_index")) {
 		push_number(stack, kalos_idl_handler_index2((void*)state, object));
 		return true;
 	}
-	// id=10 name=args symbol=kalos_idl_handler_args
+	// id=10 name=args binding=fn kalos_idl_handler_args
 	if (K__name(0, "args")) {
 		push_object(stack, kalos_idl_handler_args((void*)state, object));
 		return true;
@@ -277,7 +267,7 @@ kalos_object_dispatch kalos_module_idl_module_object_handler_obj_props = {
 
 //kalos_module_idl_module_object_object_obj_props
 bool kalos_module_idl_module_object_object_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=2 name=name symbol=kalos_idl_export_name2
+	// id=2 name=name binding=fn kalos_idl_export_name2
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_export_name2((void*)state, object));
 		return true;
@@ -291,12 +281,12 @@ kalos_object_dispatch kalos_module_idl_module_object_object_obj_props = {
 
 //kalos_module_idl_module_object_binding_obj_props
 bool kalos_module_idl_module_object_binding_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=22 name=type symbol=kalos_idl_binding_type
+	// id=22 name=type binding=fn kalos_idl_binding_type
 	if (K__name(0, "type")) {
 		push_string(stack, kalos_idl_binding_type((void*)state, object));
 		return true;
 	}
-	// id=36 name=value symbol=kalos_idl_binding_value
+	// id=32 name=value binding=fn kalos_idl_binding_value
 	if (K__name(0, "value")) {
 		push_string(stack, kalos_idl_binding_value((void*)state, object));
 		return true;
@@ -329,12 +319,12 @@ bool kalos_module_idl_module_dynamic_dispatch(kalos_run_state* state, const char
 		return true;
 	}
 
-	// id=3 name=name symbol=kalos_idl_module_name
+	// id=3 name=name binding=fn kalos_idl_module_name
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_module_name((void*)state));
 		return true;
 	}
-	// id=4 name=prefix symbol=kalos_idl_module_prefix
+	// id=4 name=prefix binding=fn kalos_idl_module_prefix
 	if (K__name(0, "prefix")) {
 		push_string(stack, kalos_idl_module_prefix((void*)state));
 		return true;

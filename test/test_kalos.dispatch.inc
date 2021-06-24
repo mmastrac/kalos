@@ -66,17 +66,17 @@ void kalos_module_dispatch_test_test_trigger_self_trigger(kalos_run_state* state
 //kalos_module_dispatch_test_test_object_a_props
 bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
 	switch (function) {
-	// id=2 name=a symbol=test_read_a
+	// id=2 name=a binding=fn test_read_a
 	case 2: {
 		push_string(stack, test_read_a((void*)state, object));
 		break;
 	}
-	// id=4 name=c symbol=test_read_c
+	// id=4 name=c binding=fn test_read_c
 	case 4: {
 		push_number(stack, test_read_c((void*)state, object));
 		break;
 	}
-	// id=5 name=c symbol=test_write_c
+	// id=5 name=c binding=fn test_write_c
 	case 5: {
 		const int arg_count = 1;
 		test_write_c((void*)state, object, K__arg_number(K__arg(arg_count, 1)));
@@ -95,17 +95,17 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props = {
 //kalos_module_dispatch_test_test_object_b_props
 bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
 	switch (function) {
-	// id=2 name=a symbol=test_read_a
+	// id=2 name=a binding=fn test_read_a
 	case 2: {
 		push_string(stack, test_read_a((void*)state, object));
 		break;
 	}
-	// id=6 name=b symbol=test_read_b
+	// id=6 name=b binding=fn test_read_b
 	case 6: {
 		push_string(stack, test_read_b((void*)state, object));
 		break;
 	}
-	// id=4 name=c symbol=test_read_c2
+	// id=4 name=c binding=fn test_read_c2
 	case 4: {
 		push_number(stack, test_read_c2((void*)state, object));
 		break;
@@ -121,24 +121,24 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 
 void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
 	switch (function) {
-	// id=1 name=read_write symbol=test_read_write_read
+	// id=1 name=read_write binding=fn test_read_write_read
 	case 1: {
 		push_number(stack, test_read_write_read((void*)state));
 		break;
 	}
-	// id=2 name=read_write symbol=test_read_write_write
+	// id=2 name=read_write binding=fn test_read_write_write
 	case 2: {
 		const int arg_count = 1;
 		test_read_write_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
 		break;
 	}
-	// id=3 name=read_only symbol=test_read_only_read
+	// id=3 name=read_only binding=fn test_read_only_read
 	case 3: {
 		push_number(stack, test_read_only_read((void*)state));
 		break;
 	}
-	// id=4 name=write_only symbol=test_write_only_write
+	// id=4 name=write_only binding=fn test_write_only_write
 	case 4: {
 		const int arg_count = 1;
 		test_write_only_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
