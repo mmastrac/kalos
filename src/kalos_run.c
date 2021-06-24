@@ -346,7 +346,7 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
     }
     state->locals = &state->stack->stack[original_stack_index];
     state->stack->stack_index += header->locals_size;
-    size_t script_size = kalos_buffer_size(*state->script);
+    size_t script_size = ((kalos_script_header*)state->script->buffer)->length;
     for (;;) {
         if (state->pc >= script_size) {
             state->error(0, "Internal error");

@@ -1,0 +1,14 @@
+idl {
+    module avr {
+        fn delay10() = c "_delay_ms(10)";
+        fn delay250() = c "_delay_ms(250)";
+        fn delay500() = c "_delay_ms(500)";
+        fn delay1000() = c "_delay_ms(1000)";
+        fn set_output(n: number) = c "DDRB |= _BV(@0)";
+        fn set_input(n: number) = c "DDRB &= ~_BV(@0)";
+        fn pin_high(n: number) = c "PORTB |= _BV(@0)";
+        fn pin_low(n: number) = c "PORTB &= ~_BV(@0)";
+
+        handler main;
+    }
+}

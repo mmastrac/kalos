@@ -1,0 +1,11 @@
+import avr;
+
+on avr.main {
+    avr.set_output(5);
+    loop {
+        avr.pin_high(5);
+        avr.delay250();
+        avr.pin_low(5);
+        avr.delay250();
+    }
+}

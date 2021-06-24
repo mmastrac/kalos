@@ -30,7 +30,9 @@ void test_log(const char* msg, ...);
 void log_printf(const char* msg, ...);
 #ifdef DEBUG
 #define ASSERT(x) { if (!(x)) { printf("%s", "ASSERTION FAILED: " #x "\n"); } }
+#ifndef LOG
 #define LOG(...) log_printf(__VA_ARGS__)
+#endif
 #else
 #define ASSERT(x) if (sizeof(x)) {}
 #define LOG(...)

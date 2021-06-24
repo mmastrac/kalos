@@ -113,7 +113,7 @@ static kalos_string repl_str(kalos_state* state, kalos_string s, const char *fro
 	ptrdiff_t *pos_cache_tmp, *pos_cache = NULL;
 	#endif
 	size_t cache_sz = 0;
-	ssize_t cpylen, orglen, retlen, tolen, fromlen = strlen(from);
+	size_t cpylen, orglen, retlen, tolen, fromlen = strlen(from);
 
 	/* Find all matches and cache their positions. */
 	while ((pstr2 = strstr(pstr, from)) != NULL) {
@@ -143,7 +143,7 @@ static kalos_string repl_str(kalos_state* state, kalos_string s, const char *fro
 
 	/* Allocate memory for the post-replacement string. */
     tolen = strlen(to);
-    retlen = orglen + (tolen - fromlen) * (ssize_t)count;
+    retlen = orglen + ((int)tolen - (int)fromlen) * (int)count;
     w = kalos_string_allocate_writable_size(state, retlen);
 	ret = kalos_string_writable_c(state, w);
 	if (ret == NULL) {
