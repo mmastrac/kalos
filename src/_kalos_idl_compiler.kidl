@@ -10,7 +10,6 @@ idl {
         # Old handlers
         handler close;
         handler open(dynamic: bool);
-        handler object_property;
     }
 
     module kidl {
