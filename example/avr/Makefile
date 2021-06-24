@@ -13,9 +13,11 @@ clean:
 CFLAGS=-Os -DF_CPU=16000000UL -DLOG= -ffunction-sections -mmcu=atmega328p -Wl,-gc-sections 
 
 $(SRCDIR)/avr_dispatch.inc: $(OUTDIR)/compiler $(SRCDIR)/avr.kidl
+	@mkdir -p $(AVROUTDIR)
 	$(OUTDIR)/compiler dispatch $(SRCDIR)/avr.kidl $(SRCDIR)/avr_dispatch.inc
 
 $(SRCDIR)/avr_script.inc: $(OUTDIR)/compiler $(SRCDIR)/avr.kidl $(SRCDIR)/avr.kalos
+	@mkdir -p $(AVROUTDIR)
 	$(OUTDIR)/compiler compile $(SRCDIR)/avr.kidl $(SRCDIR)/avr.kalos $(AVROUTDIR)/avr_script.bin
 	xxd -i < $(AVROUTDIR)/avr_script.bin > $(SRCDIR)/avr_script.inc
 

@@ -4,7 +4,7 @@
 #include <kalos_run.h>
 #include "avr_dispatch.inc"
 
-const uint8_t SCRIPT[] PROGMEM = {
+const uint8_t __flash SCRIPT[] = {
 #include "avr_script.inc"
 };
 
