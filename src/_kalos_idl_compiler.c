@@ -367,7 +367,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
         return false;
     }
     kalos_parse_options options = {0};
-    kalos_buffer script = kalos_buffer_alloc(state, 8192);
+    kalos_buffer script = kalos_buffer_alloc(state, 10*1024);
     kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, script.buffer);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
