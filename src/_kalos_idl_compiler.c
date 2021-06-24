@@ -203,12 +203,24 @@ char* function_type_to_string(kalos_function_type type) {
     return "";
 }
 
+kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_overload_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
+
 static void iter_function_arg(kalos_state* state, void* context, uint16_t index, kalos_value* value) {
     kalos_int* record = context;
     kalos_arg* arg = kalos_module_get_list_item(script_modules, *record);
     *record = arg->arg_list.next;
     value->type = KALOS_VALUE_STRING;
     value->value.string = kalos_string_allocate(state, function_type_to_string(arg->type));
+}
+
+static void iter_function_overload(kalos_state* state, void* context, uint16_t index, kalos_value* value) {
+    kalos_int* record = context;
+    kalos_function* fn = kalos_module_get_list_item(script_modules, *record);
+    *record = fn->fn_overload_list.next;
+    value->type = KALOS_VALUE_OBJECT;
+    value->value.object = kalos_allocate_prop_object(state, fn, &kalos_module_idl_module_object_overload_obj_props);
 }
 
 #define IDL_STRING(x) kalos_string_allocate((void*)state, kalos_module_get_string(script_modules, x))
@@ -226,10 +238,26 @@ static kalos_object_ref kalos_idl_function_args(kalos_state* state, kalos_object
 }
 static kalos_int kalos_idl_function_arg_count(kalos_state* state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
 static kalos_string kalos_idl_function_varargs(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
-kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
 static kalos_object_ref kalos_idl_function_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &script_current_function->binding, &kalos_module_idl_module_object_binding_obj_props ); }
-static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
+static kalos_object_ref kalos_idl_function_overloads(kalos_state* state, kalos_object_ref* o) {
+    kalos_int* index;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_overload, sizeof(kalos_int), (void**)&index, script_current_export->entry.function_overload_list.count);
+    *index = script_current_export->entry.function_overload_list.head;
+    return obj;
+}
 
+static kalos_string kalos_idl_overload_return_type(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, function_type_to_string(IDL_OBJECT(kalos_function)->return_type)); }
+static kalos_object_ref kalos_idl_overload_args(kalos_state* state, kalos_object_ref* object) {
+    kalos_int* index;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, IDL_OBJECT(kalos_function)->arg_list.count);
+    *index = IDL_OBJECT(kalos_function)->arg_list.head;
+    return obj;
+}
+static kalos_int kalos_idl_overload_arg_count(kalos_state* state, kalos_object_ref* object) { return IDL_OBJECT(kalos_function)->arg_list.count; }
+static kalos_string kalos_idl_overload_varargs(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, function_type_to_string(IDL_OBJECT(kalos_function)->vararg_type)); }
+static kalos_object_ref kalos_idl_overload_binding(kalos_state* state, kalos_object_ref* object) { return kalos_allocate_prop_object(state, &IDL_OBJECT(kalos_function)->binding, &kalos_module_idl_module_object_binding_obj_props ); }
+
+static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 static kalos_string kalos_idl_property_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
 static kalos_string kalos_idl_property_type(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 static kalos_object_ref kalos_idl_property_read_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &prop()->read, &kalos_module_idl_module_object_binding_obj_props ); }
@@ -278,8 +306,6 @@ void kalos_idl_walk_exports(kalos_run_state* run_state, kalos_value* script_cont
 }
 
 void kalos_module_idl_module_trigger_property(kalos_run_state* state, kalos_value* a0, kalos_object_ref* a1);
-
-kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
 
 void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* script_context, kalos_object_ref* object) {
     kalos_state* state = kalos_state_from_run_state(run_state);

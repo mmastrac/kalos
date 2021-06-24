@@ -534,18 +534,22 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
     }
     int param_count = 0;
     TRY(param_count = parse_list_of_args(parse_state, KALOS_TOKEN_PAREN_OPEN, KALOS_TOKEN_PAREN_CLOSE));
-    // TODO: Assuming one and only one overload!
     kalos_function* overload = kalos_module_get_list_item(parse_state->all_modules, fn->entry.function_overload_list.head);
-    if (overload->vararg_type != FUNCTION_TYPE_VOID) {
-        if (param_count < overload->arg_list.count) {
-            THROW(ERROR_UNEXPECTED_PARAMETERS);
+    while (overload) {
+        if (overload->vararg_type != FUNCTION_TYPE_VOID) {
+            if (param_count >= overload->arg_list.count) {
+                TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, param_count - overload->arg_list.count));
+                goto found;
+            }
+        } else {
+            if (param_count == overload->arg_list.count) {
+                goto found;
+            }
         }
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, param_count - overload->arg_list.count));
-    } else {
-        if (param_count != overload->arg_list.count) {
-            THROW(ERROR_UNEXPECTED_PARAMETERS);
-        }
+        overload = overload->fn_overload_list.next ? kalos_module_get_list_item(parse_state->all_modules, overload->fn_overload_list.next) : NULL; 
     }
+    THROW(ERROR_UNEXPECTED_PARAMETERS);
+    found: ;
     struct pending_op op = {0};
     op.op = KALOS_OP_CALL;
     op.data[0] = module_index;
@@ -668,7 +672,7 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     TRY(parse_fixup_offset(parse_state, break_fixup, parse_state->output_script_index));
 
     parse_state->loop_break = saved_break;
-    parse_state->loop_continue = saved_break;
+    parse_state->loop_continue = saved_continue;
 
     TRY_EXIT;
 }

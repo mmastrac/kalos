@@ -1,0 +1,9 @@
+on init {
+    var x;
+    var y;
+    for x in [1,2,3] {
+        for y in [10,20,30] {
+            print(x * y + "\n");
+        }
+    }
+}

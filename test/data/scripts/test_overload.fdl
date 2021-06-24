@@ -1,0 +1,7 @@
+import test;
+
+on init {
+    print(test.overloaded(0));
+    print(test.overloaded(0, 0));
+    print(test.overloaded(0, 0, 0));
+}

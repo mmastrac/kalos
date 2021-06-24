@@ -222,6 +222,36 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
+	// id=10 name=overloaded arg_count=2 binding=c 2
+	case 10: {
+		LOG("Invoke %s", "overloaded");
+		const int arg_count = 2;
+		kalos_stack_setup_2(state, K__t_any, K__t_any);
+		K__number x = (2);
+		kalos_stack_cleanup(state, arg_count);
+		if (retval) {
+			push_number(stack, x);
+		} else {
+			K__clean_number(stack, x);
+		}
+		break;
+	}
+
+	// id=11 name=overloaded arg_count=3 binding=c 3
+	case 11: {
+		LOG("Invoke %s", "overloaded");
+		const int arg_count = 3;
+		kalos_stack_setup_3(state, K__t_any, K__t_any, K__t_any);
+		K__number x = (3);
+		kalos_stack_cleanup(state, arg_count);
+		if (retval) {
+			push_number(stack, x);
+		} else {
+			K__clean_number(stack, x);
+		}
+		break;
+	}
+
 	// id=12 name=trigger_self arg_count=2 binding=fn kalos_module_dispatch_test_test_trigger_self_trigger
 	case 12: {
 		LOG("Invoke %s", "trigger_self");
