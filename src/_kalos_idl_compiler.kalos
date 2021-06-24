@@ -200,8 +200,8 @@ on module.function(context, function) {
         return;
     }
     var arg;
-    println("\t// id={function.id} name={function.name} arg_count={function.arg_count} binding={function.binding.type} {function.binding.value}");
-    write_matcher(function.id, function.name, function.arg_count);
+    println("\t// id={function.binding.invoke_id} name={function.name} arg_count={function.arg_count} binding={function.binding.type} {function.binding.value}");
+    write_matcher(function.binding.invoke_id, function.name, function.arg_count);
     println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
     if function.varargs == "void" {
         println("\t\tconst int arg_count = {function.arg_count};");
