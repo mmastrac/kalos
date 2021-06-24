@@ -44,6 +44,16 @@ void kalos_value_error(kalos_state* state) {
 #define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state); } }
 #define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack->stack_index - 1 < size) { kalos_internal_error((kalos_state*)state); } }
 
+/**
+ * Implement a memcpy that supports far pointers and unaligned loads. Modern compilers
+ * should detect this pattern and replace with the correct intrinsic for the given case.
+ */
+static void far_memcpy(const void* near_ptr, const uint8_t kalos_far* far_ptr, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        ((uint8_t*)near_ptr)[i] = ((const uint8_t kalos_far*)far_ptr)[i];
+    }
+}
+
 static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalos_int b) {
     if (op == KALOS_OP_DIVIDE && b == 0) {
         return 0;
@@ -270,7 +280,7 @@ static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_o
 
 static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
-    memcpy(&int_value, &state->script[state->pc], sizeof(kalos_int));
+    far_memcpy(&int_value, &state->script[state->pc], sizeof(int_value));
     state->pc += sizeof(kalos_int);
     return int_value;
 }
@@ -336,7 +346,7 @@ kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch,
 
 void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
-    kalos_section_header* header;
+    const kalos_section_header kalos_far* header;
     int original_stack_index = state->stack->stack_index;
     int original_pc = state->pc;
     kalos_value* original_locals = state->locals;
@@ -346,7 +356,7 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
     }
     state->locals = &state->stack->stack[original_stack_index];
     state->stack->stack_index += header->locals_size;
-    size_t script_size = ((kalos_script_header*)state->script)->length;
+    size_t script_size = ((const kalos_script_header kalos_far*)state->script)->length;
     for (;;) {
         if (state->pc >= script_size) {
             state->error(0, "Internal error");

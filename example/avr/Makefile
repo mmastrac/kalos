@@ -10,7 +10,7 @@ all: $(AVROUTDIR)/avr-example
 clean:
 	rm -rf $(AVROUTDIR)
 
-CFLAGS=-Os -DF_CPU=16000000UL -DLOG= -ffunction-sections -mmcu=atmega328p -Wl,-gc-sections 
+CFLAGS=-g -Os -DF_CPU=16000000UL -DLOG= -mmcu=atmega328p -ffunction-sections -Wl,-gc-sections 
 
 $(SRCDIR)/avr_dispatch.inc: $(OUTDIR)/compiler $(SRCDIR)/avr.kidl
 	@mkdir -p $(AVROUTDIR)
