@@ -143,7 +143,11 @@ static kalos_string repl_str(kalos_state* state, kalos_string s, const char *fro
 
 	/* Allocate memory for the post-replacement string. */
     tolen = strlen(to);
-    retlen = orglen + ((int)tolen - (int)fromlen) * (int)count;
+    if (tolen > fromlen) {
+        retlen = orglen + (tolen - fromlen) * count;
+    } else {
+        retlen = orglen - (fromlen - tolen) * count;
+    }
     w = kalos_string_allocate_writable_size(state, retlen);
 	ret = kalos_string_writable_c(state, w);
 	if (ret == NULL) {
