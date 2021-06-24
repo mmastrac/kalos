@@ -21,6 +21,13 @@ size_t kalos_buffer_size(kalos_buffer buffer) {
     return header->size;
 }
 
+void kalos_buffer_resize(kalos_buffer* buffer, size_t size) {
+    kalos_buffer_header* header = PTR_BYTE_OFFSET_NEG(buffer->buffer, sizeof(kalos_buffer_header));
+    header = header->state->realloc(header, size + sizeof(kalos_buffer_header));
+    header->size = size;
+    buffer->buffer = PTR_BYTE_OFFSET(header, sizeof(kalos_buffer_header));
+}
+
 void kalos_buffer_free(kalos_buffer buffer) {
     if (buffer.buffer) {
         kalos_buffer_header* header = PTR_BYTE_OFFSET_NEG(buffer.buffer, sizeof(kalos_buffer_header));

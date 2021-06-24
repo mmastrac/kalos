@@ -24,6 +24,10 @@ typedef struct kalos_parse_result {
      * The line on which the error occurred.
      */
     int line;
+    /**
+     * The size of the script.
+     */
+    size_t size;
 } kalos_parse_result;
 
 /**

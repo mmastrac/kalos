@@ -142,6 +142,7 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
         printf("ERROR on line %d: %s\n", res.line, res.error);
         exit(1);
     }
+    kalos_buffer_resize(&script, res.size);
     write_file(output, script.buffer, kalos_buffer_size(script));
     return 0;
 }

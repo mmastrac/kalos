@@ -1296,6 +1296,7 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     header->length = parse_state->output_script_index;
     kalos_parse_result res = {0};
     res.success = true;
+    res.size = header->length;
     return res;
 
     TRY_EXIT;

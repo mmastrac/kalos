@@ -10,6 +10,8 @@
 
 #ifdef __WATCOMC__
 #define kalos_far __far
+#elif __AVR__
+#define kalos_far __flash
 #else
 #define kalos_far 
 #endif
@@ -104,6 +106,11 @@ kalos_buffer kalos_buffer_alloc(kalos_state* state, size_t size);
  * Get the intrinsic size of a Kalos buffer.
  */
 size_t kalos_buffer_size(kalos_buffer buffer);
+
+/**
+ * Resize a buffer's intrinsic size.
+ */
+void kalos_buffer_resize(kalos_buffer* buffer, size_t size);
 
 /**
  * Free a Kalos buffer.
