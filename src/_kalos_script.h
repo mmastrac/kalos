@@ -15,7 +15,8 @@ typedef enum kalos_op {
 
 extern const char* kalos_op_strings[KALOS_OP_MAX + 1];
 
-typedef kalos_buffer kalos_script;
+typedef uint8_t kalos_far* kalos_script;
+typedef const uint8_t kalos_far* const_kalos_script;
 
 #pragma pack(push, 1)
 typedef struct kalos_script_header {
@@ -31,8 +32,8 @@ typedef struct kalos_section_header {
 } kalos_section_header;
 #pragma pack(pop)
 
-void kalos_dump(kalos_script* script, char* buffer);
-typedef bool (*kalos_walk_fn)(void* context, kalos_script* script, kalos_section_header* header, uint16_t pc, uint16_t length);
-void kalos_walk(kalos_script* script, void* context, kalos_walk_fn fn);
-uint16_t kalos_find_section(kalos_script* script, kalos_export_address handler_address, kalos_section_header** header);
-kalos_module_header* kalos_find_idl(kalos_script* script);
+void kalos_dump(const_kalos_script script, char* buffer);
+typedef bool (*kalos_walk_fn)(void* context, const_kalos_script script, kalos_section_header* header, uint16_t pc, uint16_t length);
+void kalos_walk(const_kalos_script script, void* context, kalos_walk_fn fn);
+uint16_t kalos_find_section(const_kalos_script script, kalos_export_address handler_address, kalos_section_header** header);
+kalos_module_header* kalos_find_idl(const_kalos_script script);

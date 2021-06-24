@@ -1224,10 +1224,10 @@ void parse_idl_block(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script) {
+kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script script) {
     struct parse_state parse_state_data = {0};
     parse_state_data.options = options;
-    parse_state_data.output_script = script->buffer;
+    parse_state_data.output_script = script;
     if (modules.buffer) {
         parse_state_data.all_modules = modules;
         parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");

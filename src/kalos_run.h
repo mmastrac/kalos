@@ -12,7 +12,7 @@
 /**
  * Initialize the Kalos virtual machine.
  */
-kalos_run_state* kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_state* state);
+kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch, kalos_state* state);
 /**
  * Trigger a kalos export. Usually not called by anything but the generated IDL code.
  */

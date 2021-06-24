@@ -16,7 +16,7 @@ static const int8_t kalos_op_output_size[] = {
 
 typedef struct kalos_state_internal {
     KALOS_RUN_ENVIRONMENT;
-    kalos_script* script;
+    const_kalos_script script;
     kalos_dispatch* dispatch;
     kalos_value globals[KALOS_VAR_SLOT_SIZE];
     kalos_value* locals;
@@ -262,7 +262,7 @@ static inline void op_drop(kalos_state* state, kalos_op op, kalos_value* value) 
 
 static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_op op) {
     kalos_state* state = (kalos_state*)internal_state;
-    kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script->buffer[internal_state->pc]);
+    kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script[internal_state->pc]);
     LOG("push: %s", kalos_string_c(state, string));
     internal_state->pc += kalos_string_length(state, string) + 1;
     return string;
@@ -270,7 +270,7 @@ static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_o
 
 static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
-    memcpy(&int_value, &state->script->buffer[state->pc], sizeof(kalos_int));
+    memcpy(&int_value, &state->script[state->pc], sizeof(kalos_int));
     state->pc += sizeof(kalos_int);
     return int_value;
 }
@@ -285,7 +285,7 @@ static kalos_int op_push_bool(kalos_state* state, kalos_op op) {
 
 static kalos_string op_format(kalos_state_internal* internal_state, kalos_op op, kalos_value* v) {
     kalos_state* state = (kalos_state*)internal_state;
-    kalos_string_format* format = (kalos_string_format*)&internal_state->script->buffer[internal_state->pc];
+    kalos_string_format* format = (kalos_string_format*)&internal_state->script[internal_state->pc];
     internal_state->pc += sizeof(kalos_string_format);
     if (v->type == KALOS_VALUE_NUMBER) {
         return kalos_string_format_int(state, v->value.number, format);
@@ -315,7 +315,7 @@ static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int s
     return kalos_value_clone((kalos_state*)state, &storage[slot]);
 }
 
-kalos_run_state* kalos_init(kalos_script* script, kalos_dispatch* dispatch, kalos_state* state_provided) {
+kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch, kalos_state* state_provided) {
     kalos_state_internal* state = state_provided->alloc(sizeof(kalos_state_internal));
     if (!state) {
         if (state_provided->error) {
@@ -346,13 +346,13 @@ void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address
     }
     state->locals = &state->stack->stack[original_stack_index];
     state->stack->stack_index += header->locals_size;
-    size_t script_size = ((kalos_script_header*)state->script->buffer)->length;
+    size_t script_size = ((kalos_script_header*)state->script)->length;
     for (;;) {
         if (state->pc >= script_size) {
             state->error(0, "Internal error");
             goto done;
         }
-        kalos_op op = state->script->buffer[state->pc++];
+        kalos_op op = state->script[state->pc++];
         kalos_value *v1, *v2;
         if (op >= KALOS_OP_MAX || state->stack->stack_index < 0) {
             state->error(0, "Internal error");

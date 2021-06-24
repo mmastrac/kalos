@@ -145,8 +145,8 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
 kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_parse_options options = {0};
     kalos_module_parsed parsed = {0};
-    kalos_script idl = kalos_buffer_alloc(state, 10 * 1024);
-    kalos_parse_result result = kalos_parse(s, parsed, options, &idl);
+    kalos_buffer idl = kalos_buffer_alloc(state, 10 * 1024);
+    kalos_parse_result result = kalos_parse(s, parsed, options, idl.buffer);
     if (result.error) {
         kalos_buffer_free(idl);
         return parsed;
@@ -157,7 +157,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_state idl_parser_state = *state;
     kalos_buffer idl_buffer = kalos_buffer_alloc(state, 10 * 1024);    
     idl_parser_state.context = &idl_buffer;
-    kalos_run_state* run_state = kalos_init(&idl, &dispatch, &idl_parser_state);
+    kalos_run_state* run_state = kalos_init((const_kalos_script)idl.buffer, &dispatch, &idl_parser_state);
     kalos_trigger(run_state, KALOS_IDL_HANDLER_ADDRESS);
     kalos_run_free(run_state);
     kalos_buffer_free(idl);
@@ -361,8 +361,8 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
         return false;
     }
     kalos_parse_options options = {0};
-    kalos_script script = kalos_buffer_alloc(state, 8192);
-    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, &script);
+    kalos_buffer script = kalos_buffer_alloc(state, 8192);
+    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, script.buffer);
     if (result.error) {
         printf("ERROR: %s\n", result.error);
         return false;
@@ -371,7 +371,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
     script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
-    kalos_run_state* run_state = kalos_init(&script, &dispatch, state);
+    kalos_run_state* run_state = kalos_init((const_kalos_script)script.buffer, &dispatch, state);
     kalos_module_idl_trigger_open(run_state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
     kalos_module_idl_trigger_close(run_state);
     kalos_run_free(run_state);

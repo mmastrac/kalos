@@ -116,10 +116,10 @@ kalos_module_parsed parse_modules_for_test() {
 
 kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytecode_file, kalos_buffer bytecode) {
     const int PARSE_BUFFER_SIZE = 32 * 1024;
-    kalos_script script = kalos_buffer_alloc(&test_env, PARSE_BUFFER_SIZE);
+    kalos_buffer script = kalos_buffer_alloc(&test_env, PARSE_BUFFER_SIZE);
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_parse_result res = kalos_parse((const char*)script_text.buffer, parsed_modules, options, &script);
+    kalos_parse_result res = kalos_parse((const char*)script_text.buffer, parsed_modules, options, (kalos_script)script.buffer);
     kalos_buffer_free(parsed_modules);
     if (res.error) {
         // Don't check bytecode if we failed to parse
@@ -131,7 +131,7 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytec
 
     char* dump_buffer = malloc(PARSE_BUFFER_SIZE);
     memset(dump_buffer, 0, PARSE_BUFFER_SIZE);
-    kalos_dump(&script, dump_buffer);
+    kalos_dump((kalos_script)script.buffer, dump_buffer);
 
     if (strcmp(dump_buffer, (const char*)bytecode.buffer) != 0) {
         printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer);
@@ -280,14 +280,14 @@ void run_test(const char* name) {
     kalos_buffer buffer = read_buffer(make_test_filename(name, "fdl"));
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_script script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
-    kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, &script);
+    kalos_buffer script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
+    kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, (kalos_script)script.buffer);
     kalos_buffer_free(parsed_modules);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 
     kalos_dispatch dispatch = {0};
     dispatch.modules = kalos_module_dispatch_test_dispatch;
-    kalos_run_state* state = kalos_init(&script, &dispatch, &test_env);
+    kalos_run_state* state = kalos_init((const_kalos_script)script.buffer, &dispatch, &test_env);
     kalos_module_dispatch_test_trigger_init(state);
     kalos_string s = kalos_string_allocate((kalos_state*)state, "hello world");
     kalos_module_dispatch_test_test_trigger_with_args(state, &s);

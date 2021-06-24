@@ -43,5 +43,5 @@ typedef struct kalos_parse_options {
 /**
  * Parse a script using the given modules and options.
  */
-kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_script* script);
+kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_script script);
 
