@@ -207,12 +207,12 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
-	// id=9 name=overloaded_add arg_count=2 binding=c 111
+	// id=9 name=overloaded arg_count=1 binding=c 1
 	case 9: {
-		LOG("Invoke %s", "overloaded_add");
-		const int arg_count = 2;
-		kalos_stack_setup_2(state, K__t_number, K__t_number);
-		K__number x = (111);
+		LOG("Invoke %s", "overloaded");
+		const int arg_count = 1;
+		kalos_stack_setup_1(state, K__t_any);
+		K__number x = (1);
 		kalos_stack_cleanup(state, arg_count);
 		if (retval) {
 			push_number(stack, x);
@@ -222,23 +222,8 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
-	// id=10 name=overloaded_add arg_count=2 binding=c 222
-	case 10: {
-		LOG("Invoke %s", "overloaded_add");
-		const int arg_count = 2;
-		kalos_stack_setup_2(state, K__t_string, K__t_string);
-		K__number x = (222);
-		kalos_stack_cleanup(state, arg_count);
-		if (retval) {
-			push_number(stack, x);
-		} else {
-			K__clean_number(stack, x);
-		}
-		break;
-	}
-
-	// id=11 name=trigger_self arg_count=2 binding=fn kalos_module_dispatch_test_test_trigger_self_trigger
-	case 11: {
+	// id=12 name=trigger_self arg_count=2 binding=fn kalos_module_dispatch_test_test_trigger_self_trigger
+	case 12: {
 		LOG("Invoke %s", "trigger_self");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_string, K__t_object);
@@ -247,8 +232,8 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
-	// id=12 name=raw_c arg_count=2 binding=c @0*10+@1
-	case 12: {
+	// id=13 name=raw_c arg_count=2 binding=c @0*10+@1
+	case 13: {
 		LOG("Invoke %s", "raw_c");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_number, K__t_number);
@@ -262,8 +247,8 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
-	// id=13 name=make_a arg_count=0 binding=fn test_make_a
-	case 13: {
+	// id=14 name=make_a arg_count=0 binding=fn test_make_a
+	case 14: {
 		LOG("Invoke %s", "make_a");
 		const int arg_count = 0;
 		kalos_stack_setup_0(state);
@@ -277,8 +262,8 @@ void kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		break;
 	}
 
-	// id=14 name=make_b arg_count=0 binding=fn test_make_b
-	case 14: {
+	// id=15 name=make_b arg_count=0 binding=fn test_make_b
+	case 15: {
 		LOG("Invoke %s", "make_b");
 		const int arg_count = 0;
 		kalos_stack_setup_0(state);

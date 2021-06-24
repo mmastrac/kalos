@@ -19,8 +19,11 @@ idl {
         fn sum_numbers_2(a: number, b: number, n: number...): number = test_kalos_sum_numbers_2;
         fn concat(s1: string, s2: string, s3: string, s4: string,
             s5: string, s6: string, s7: string, s8: string): string = test_kalos_concat;
-        fn overloaded_add(n1: number, n2: number): number = c "111";
-        fn overloaded_add(s1: string, s2: string): number = c "222";
+        fn overloaded {
+            (n: any): number = c "1";
+            (n: any, n2: any): number = c "2";
+            (n: any, n2: any, n3: any): number = c "3";
+        }
 
         handler with_args(s: string);
         handler self_trigger(s: string, o: object);
