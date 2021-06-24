@@ -5,9 +5,9 @@
 static bool kalos_dump_section(void* context, kalos_script* script, kalos_section_header* header, uint16_t offset, uint16_t length) {
     char** out = context;
     char* s = *out;
-    if (bcmp(&header->handler_address, &KALOS_GLOBAL_HANDLER_ADDRESS, sizeof(KALOS_GLOBAL_HANDLER_ADDRESS)) == 0) {
+    if (memcmp(&header->handler_address, &KALOS_GLOBAL_HANDLER_ADDRESS, sizeof(KALOS_GLOBAL_HANDLER_ADDRESS)) == 0) {
         s += sprintf(s, "<global> locals=%d\n", header->locals_size);
-    } else if (bcmp(&header->handler_address, &KALOS_IDL_HANDLER_ADDRESS, sizeof(KALOS_IDL_HANDLER_ADDRESS)) == 0) {
+    } else if (memcmp(&header->handler_address, &KALOS_IDL_HANDLER_ADDRESS, sizeof(KALOS_IDL_HANDLER_ADDRESS)) == 0) {
         s += sprintf(s, "<idl> locals=%d\n", header->locals_size);
     } else {
         s += sprintf(s, "%04x:%04x locals=%d\n", header->handler_address.module_index, header->handler_address.export_index, header->locals_size);
@@ -122,7 +122,7 @@ struct kalos_walk_find_section {
 #pragma warning 303 9
 static bool kalos_find_section_walk(void* context_, kalos_script* script, kalos_section_header* header, uint16_t pc, uint16_t length) {
     struct kalos_walk_find_section* context = (struct kalos_walk_find_section*)context_;
-    if (bcmp(&header->handler_address, &context->handler_address, sizeof(header->handler_address)) == 0) {
+    if (memcmp(&header->handler_address, &context->handler_address, sizeof(header->handler_address)) == 0) {
         context->pc = pc;
         context->header = header;
         return false;

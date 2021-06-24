@@ -1,9 +1,7 @@
 #pragma once
 
-#include <memory.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #ifdef __WATCOMC__
 #pragma off (unreferenced)
