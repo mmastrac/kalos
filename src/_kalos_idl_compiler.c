@@ -26,6 +26,10 @@
 #define IDL_LIST_OBJECT(sublist, index) IDL_LIST_VALUE(sublist, index).value.object
 #define IDL_LIST_VALUE(sublist, index) release(state, sublist->getindex(state, &sublist, (index)))
 
+/**
+ * Eagerly release the reference as we don't need to keep this around and we know the list
+ * has it ref'd.
+ */
 static inline kalos_value release(kalos_state* state, kalos_value v) {
     kalos_value vcopy = v;
     kalos_clear(state, &v);
