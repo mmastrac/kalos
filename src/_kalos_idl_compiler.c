@@ -216,22 +216,22 @@ static void iter_function_arg(kalos_state* state, void* context, uint16_t index,
 
 static kalos_string kalos_idl_module_prefix(kalos_state* state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
 
-static kalos_string kalos_idl_export_name2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
-static kalos_string kalos_idl_function_return_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
-static kalos_object_ref kalos_idl_function_args2(kalos_state* state, kalos_object_ref* o) {
+static kalos_string kalos_idl_export_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
+static kalos_string kalos_idl_function_return_type(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
+static kalos_object_ref kalos_idl_function_args(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_function->arg_list.count);
     *index = script_current_function->arg_list.head;
     return obj;
 }
-static kalos_int kalos_idl_function_arg_count2(kalos_state* state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
-static kalos_string kalos_idl_function_varargs2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
+static kalos_int kalos_idl_function_arg_count(kalos_state* state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
+static kalos_string kalos_idl_function_varargs(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
 kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
 static kalos_object_ref kalos_idl_function_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &script_current_function->binding, &kalos_module_idl_module_object_binding_obj_props ); }
 static kalos_property* prop() { return script_current_property ? &script_current_property->property : &script_current_export->entry.property; }
 
 static kalos_string kalos_idl_property_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_property ? script_current_property->name_index : script_current_export->name_index)); }
-static kalos_string kalos_idl_property_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
+static kalos_string kalos_idl_property_type(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(prop()->type)); }
 static kalos_object_ref kalos_idl_property_read_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &prop()->read, &kalos_module_idl_module_object_binding_obj_props ); }
 static kalos_object_ref kalos_idl_property_write_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &prop()->write, &kalos_module_idl_module_object_binding_obj_props ); }
 
@@ -241,8 +241,8 @@ static kalos_object_ref kalos_idl_handler_args(kalos_state* state, kalos_object_
     *index = script_current_export->entry.handler.arg_list.head;
     return obj;
 }
-static kalos_int kalos_idl_handler_index2(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
-static kalos_int kalos_idl_handler_module_index2(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
+static kalos_int kalos_idl_handler_index(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
+static kalos_int kalos_idl_handler_module_index(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
 
 static kalos_string kalos_idl_binding_type(kalos_state* state, kalos_object_ref* o) { return ((kalos_binding*)(*o)->context)->c_index ? kalos_string_allocate(state, "c") : kalos_string_allocate(state, "fn"); }
 static kalos_string kalos_idl_binding_value(kalos_state* state, kalos_object_ref* o) { return ((kalos_binding*)(*o)->context)->c_index ? IDL_STRING(((kalos_binding*)(*o)->context)->c_index) : IDL_STRING(((kalos_binding*)(*o)->context)->symbol_index); }

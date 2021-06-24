@@ -32,30 +32,30 @@ idl {
         }
 
         object function_obj {
-            prop return_type: string { read = kalos_idl_function_return_type2; }
-            prop name: string { read = kalos_idl_export_name2; }
-            prop args: object { read = kalos_idl_function_args2; }
-            prop arg_count: number { read = kalos_idl_function_arg_count2; }
-            prop varargs: string { read = kalos_idl_function_varargs2; }
+            prop return_type: string { read = kalos_idl_function_return_type; }
+            prop name: string { read = kalos_idl_export_name; }
+            prop args: object { read = kalos_idl_function_args; }
+            prop arg_count: number { read = kalos_idl_function_arg_count; }
+            prop varargs: string { read = kalos_idl_function_varargs; }
             prop binding: object { read = kalos_idl_function_binding; }
         }
 
         object property_obj {
             prop name: string { read = kalos_idl_property_name; }
-            prop type: string { read = kalos_idl_property_type2; }
+            prop type: string { read = kalos_idl_property_type; }
             prop read_binding: object { read = kalos_idl_property_read_binding; }
             prop write_binding: object { read = kalos_idl_property_write_binding; }
         }
 
         object handler_obj {
-            prop name: string { read = kalos_idl_export_name2; }
-            prop module_index: number { read = kalos_idl_handler_module_index2; }
-            prop handler_index: number { read = kalos_idl_handler_index2; }
+            prop name: string { read = kalos_idl_export_name; }
+            prop module_index: number { read = kalos_idl_handler_module_index; }
+            prop handler_index: number { read = kalos_idl_handler_index; }
             prop args: object { read = kalos_idl_handler_args; }
         }
 
         object object_obj {
-            prop name: string { read = kalos_idl_export_name2; }
+            prop name: string { read = kalos_idl_export_name; }
         }
 
         object binding_obj {
