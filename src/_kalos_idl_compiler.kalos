@@ -195,39 +195,39 @@ on module.object(context, object) {
     println("");
 }
 
-on module.function(context, function_collection) {
+on module.function(context, function) {
     if context != DISPATCH {
         return;
     }
-    var function;
+    var overload;
     var arg;
-    for function in function_collection.overloads {
-        println("\t// id={function.binding.invoke_id} name={function_collection.name} arg_count={function.arg_count} binding={function.binding.type} {function.binding.value}");
-        write_matcher(function.binding.invoke_id, function_collection.name, function.arg_count);
-        println("\t\tLOG(\"Invoke %s\", \"{function_collection.name}\");");
-        if function.varargs == "void" {
-            println("\t\tconst int arg_count = {function.arg_count};");
+    for overload in function.overloads {
+        println("\t// id={overload.binding.invoke_id} name={function.name} arg_count={overload.arg_count} binding={overload.binding.type} {overload.binding.value}");
+        write_matcher(overload.binding.invoke_id, function.name, overload.arg_count);
+        println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
+        if overload.varargs == "void" {
+            println("\t\tconst int arg_count = {overload.arg_count};");
         } else {
             println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
-            println("\t\tconst int arg_count = {function.arg_count + 1} + vararg_count;");
+            println("\t\tconst int arg_count = {overload.arg_count + 1} + vararg_count;");
         }
-        print("\t\tkalos_stack_setup_{function.arg_count}(state");
-        for arg in function.args {
+        print("\t\tkalos_stack_setup_{overload.arg_count}(state");
+        for arg in overload.args {
             print(", K__t_{arg}");
         }
         println(");");
         print("\t\t");
-        if function.return_type != "void" {
-            print("K__{function.return_type} x = ");
+        if overload.return_type != "void" {
+            print("K__{overload.return_type} x = ");
         }
-        write_binding(function.binding, function.args, function.varargs);
+        write_binding(overload.binding, overload.args, overload.varargs);
         println(";");
         println("\t\tkalos_stack_cleanup(state, arg_count);");
-        if function.return_type != "void" {
+        if overload.return_type != "void" {
             println("\t\tif (retval) {{");
-            println("\t\t\tpush_{function.return_type}(stack, x);");
+            println("\t\t\tpush_{overload.return_type}(stack, x);");
             println("\t\t}} else {{");
-            println("\t\t\tK__clean_{function.return_type}(stack, x);");
+            println("\t\t\tK__clean_{overload.return_type}(stack, x);");
             println("\t\t}}");
         }
         if is_dynamic {

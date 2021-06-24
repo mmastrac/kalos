@@ -32,13 +32,8 @@ idl {
         }
 
         object function_obj {
-            prop return_type: string { read = kalos_idl_function_return_type; }
             prop name: string { read = kalos_idl_export_name; }
             prop overloads: object { read = kalos_idl_function_overloads; }
-            prop args: object { read = kalos_idl_function_args; }
-            prop arg_count: number { read = kalos_idl_function_arg_count; }
-            prop varargs: string { read = kalos_idl_function_varargs; }
-            prop binding: object { read = kalos_idl_function_binding; }
         }
 
         object overload_obj {

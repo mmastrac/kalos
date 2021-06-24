@@ -145,39 +145,14 @@ kalos_object_dispatch kalos_module_idl_module_object_module_obj_props = {
 
 //kalos_module_idl_module_object_function_obj_props
 bool kalos_module_idl_module_object_function_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=4 name=return_type binding=fn kalos_idl_function_return_type
-	if (K__name(0, "return_type")) {
-		push_string(stack, kalos_idl_function_return_type((void*)state, object));
-		return true;
-	}
 	// id=2 name=name binding=fn kalos_idl_export_name
 	if (K__name(0, "name")) {
 		push_string(stack, kalos_idl_export_name((void*)state, object));
 		return true;
 	}
-	// id=6 name=overloads binding=fn kalos_idl_function_overloads
+	// id=4 name=overloads binding=fn kalos_idl_function_overloads
 	if (K__name(0, "overloads")) {
 		push_object(stack, kalos_idl_function_overloads((void*)state, object));
-		return true;
-	}
-	// id=8 name=args binding=fn kalos_idl_function_args
-	if (K__name(0, "args")) {
-		push_object(stack, kalos_idl_function_args((void*)state, object));
-		return true;
-	}
-	// id=10 name=arg_count binding=fn kalos_idl_function_arg_count
-	if (K__name(0, "arg_count")) {
-		push_number(stack, kalos_idl_function_arg_count((void*)state, object));
-		return true;
-	}
-	// id=12 name=varargs binding=fn kalos_idl_function_varargs
-	if (K__name(0, "varargs")) {
-		push_string(stack, kalos_idl_function_varargs((void*)state, object));
-		return true;
-	}
-	// id=14 name=binding binding=fn kalos_idl_function_binding
-	if (K__name(0, "binding")) {
-		push_object(stack, kalos_idl_function_binding((void*)state, object));
 		return true;
 	}
 	return false;
@@ -189,7 +164,7 @@ kalos_object_dispatch kalos_module_idl_module_object_function_obj_props = {
 
 //kalos_module_idl_module_object_overload_obj_props
 bool kalos_module_idl_module_object_overload_obj_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
-	// id=4 name=return_type binding=fn kalos_idl_overload_return_type
+	// id=6 name=return_type binding=fn kalos_idl_overload_return_type
 	if (K__name(0, "return_type")) {
 		push_string(stack, kalos_idl_overload_return_type((void*)state, object));
 		return true;

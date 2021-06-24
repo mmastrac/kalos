@@ -169,7 +169,6 @@ static kalos_module_parsed script_modules;
 static kalos_module_header* script_current_header;
 static kalos_module* script_current_module;
 static kalos_export* script_current_export;
-static kalos_function* script_current_function;
 static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state* state, kalos_string* string) {
@@ -229,16 +228,6 @@ static void iter_function_overload(kalos_state* state, void* context, uint16_t i
 static kalos_string kalos_idl_module_prefix(kalos_state* state) { return kalos_string_allocate(state, script_current_header->prefix_index ? kalos_module_get_string(script_modules, script_current_header->prefix_index) : "kalos_idl_"); }
 
 static kalos_string kalos_idl_export_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
-static kalos_string kalos_idl_function_return_type(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
-static kalos_object_ref kalos_idl_function_args(kalos_state* state, kalos_object_ref* o) {
-    kalos_int* index;
-    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_function->arg_list.count);
-    *index = script_current_function->arg_list.head;
-    return obj;
-}
-static kalos_int kalos_idl_function_arg_count(kalos_state* state, kalos_object_ref* o) { return script_current_function->arg_list.count; }
-static kalos_string kalos_idl_function_varargs(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->vararg_type)); }
-static kalos_object_ref kalos_idl_function_binding(kalos_state* state, kalos_object_ref* o) { return kalos_allocate_prop_object(state, &script_current_function->binding, &kalos_module_idl_module_object_binding_obj_props ); }
 static kalos_object_ref kalos_idl_function_overloads(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_overload, sizeof(kalos_int), (void**)&index, script_current_export->entry.function_overload_list.count);
@@ -338,9 +327,7 @@ bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     switch (export->type) {
         case KALOS_EXPORT_TYPE_FUNCTION:
             obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_function_obj_props);
-            script_current_function = kalos_module_get_list_item(parsed, export->entry.function_overload_list.head);
             kalos_module_idl_module_trigger_function(context->state, &ctx, &obj);
-            script_current_function = NULL;
             break;
         case KALOS_EXPORT_TYPE_PROPERTY:
             obj = kalos_allocate_prop_object(state, NULL, &kalos_module_idl_module_object_property_obj_props);
