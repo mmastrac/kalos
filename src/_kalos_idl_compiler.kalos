@@ -163,7 +163,7 @@ on module.function(context, function) {
         return;
     }
     var arg;
-    println("\t// id={function.id} name={function.name} arg_count={function.arg_count} symbol={function.realname}");
+    println("\t// id={function.id} name={function.name} arg_count={function.arg_count} binding={function.binding.type} {function.binding.value}");
     if is_dynamic {
         println("\tif (K__name({function.arg_count}, \"{function.name}\")) {{");
     } else {

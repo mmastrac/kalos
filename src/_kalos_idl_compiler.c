@@ -221,8 +221,6 @@ static kalos_string kalos_idl_obj_module_prefix(kalos_state* state, kalos_object
 static kalos_string kalos_idl_export_name2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 static kalos_int kalos_idl_function_id2(kalos_state* state, kalos_object_ref* o) { return script_current_function->binding.invoke_id; }
 static kalos_string kalos_idl_function_return_type2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, function_type_to_string(script_current_function->return_type)); }
-static kalos_string kalos_idl_function_realname2(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->binding.symbol_index)); }
-static kalos_string kalos_idl_function_c(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_function->binding.c_index)); }
 static kalos_object_ref kalos_idl_function_args2(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
     kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_function->arg_list.count);

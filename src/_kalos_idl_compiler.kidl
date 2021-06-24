@@ -39,8 +39,6 @@ idl {
             prop id: number { read = kalos_idl_function_id2; }
             prop return_type: string { read = kalos_idl_function_return_type2; }
             prop name: string { read = kalos_idl_export_name2; }
-            prop realname: string { read = kalos_idl_function_realname2; }
-            prop c: string { read = kalos_idl_function_c; }
             prop args: object { read = kalos_idl_function_args2; }
             prop arg_count: number { read = kalos_idl_function_arg_count2; }
             prop varargs: string { read = kalos_idl_function_varargs2; }
