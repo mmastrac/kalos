@@ -186,15 +186,15 @@ on module.function(context, function) {
         print("K__{function.return_type} x = ");
     }
     var index = 0;
-    if function.c {
-        var c = function.c;
+    if function.binding.type == "c" {
+        var c = function.binding.value;
         for arg in function.args {
             c = replace(c, "@" + index, "(K__arg_{arg}(K__arg(arg_count, {index+1})))");
             index += 1;
         }
         println("{c};");
     } else {
-        print("{function.realname}((void*)state");
+        print("{function.binding.value}((void*)state");
         for arg in function.args {
             print(", K__arg_{arg}(K__arg(arg_count, {index+1}))");
             index += 1;

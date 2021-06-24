@@ -15,15 +15,15 @@ idl {
 
     module kidl {
         fn walk_modules(context: any) = kalos_idl_walk_modules;
-        prop prefix: string { read =  kalos_idl_module_prefix; }
+        prop prefix: string { read = kalos_idl_module_prefix; }
     }
 
     module module {
         fn walk_exports(context: any) = kalos_idl_walk_exports;
         fn walk_object_properties(context: any, object: object) = kalos_idl_walk_object_properties;
 
-        prop name: string { read =  kalos_idl_module_name; }
-        prop prefix: string { read =  kalos_idl_module_prefix; }
+        prop name: string { read = kalos_idl_module_name; }
+        prop prefix: string { read = kalos_idl_module_prefix; }
         handler begin(context: any, module: object);
         handler function(context: any, function: object);
         handler handler(context: any, handler: object);
@@ -31,39 +31,45 @@ idl {
         handler object(context: any, property: object);
 
         object module_obj {
-            prop name: string { read =  kalos_idl_obj_module_name; }
-            prop prefix: string { read =  kalos_idl_obj_module_prefix; }
+            prop name: string { read = kalos_idl_obj_module_name; }
+            prop prefix: string { read = kalos_idl_obj_module_prefix; }
         }
 
         object function_obj {
-            prop id: number { read =  kalos_idl_function_id2; }
-            prop return_type: string { read =  kalos_idl_function_return_type2; }
-            prop name: string { read =  kalos_idl_export_name2; }
-            prop realname: string { read =  kalos_idl_function_realname2; }
-            prop c: string { read =  kalos_idl_function_c; }
-            prop args: object { read =  kalos_idl_function_args2; }
-            prop arg_count: number { read =  kalos_idl_function_arg_count2; }
-            prop varargs: string { read =  kalos_idl_function_varargs2; }
+            prop id: number { read = kalos_idl_function_id2; }
+            prop return_type: string { read = kalos_idl_function_return_type2; }
+            prop name: string { read = kalos_idl_export_name2; }
+            prop realname: string { read = kalos_idl_function_realname2; }
+            prop c: string { read = kalos_idl_function_c; }
+            prop args: object { read = kalos_idl_function_args2; }
+            prop arg_count: number { read = kalos_idl_function_arg_count2; }
+            prop varargs: string { read = kalos_idl_function_varargs2; }
+            prop binding: object { read = kalos_idl_function_binding; }
         }
 
         object property_obj {
-            prop name: string { read =  kalos_idl_property_name; }
-            prop read_id: number { read =  kalos_idl_property_read_id2; }
-            prop write_id: number { read =  kalos_idl_property_write_id2; }
-            prop type: string { read =  kalos_idl_property_type2; }
-            prop read_symbol: string { read =  kalos_idl_property_read_symbol2; }
-            prop write_symbol: string { read =  kalos_idl_property_write_symbol2; }
+            prop name: string { read = kalos_idl_property_name; }
+            prop read_id: number { read = kalos_idl_property_read_id2; }
+            prop write_id: number { read = kalos_idl_property_write_id2; }
+            prop type: string { read = kalos_idl_property_type2; }
+            prop read_symbol: string { read = kalos_idl_property_read_symbol2; }
+            prop write_symbol: string { read = kalos_idl_property_write_symbol2; }
         }
 
         object handler_obj {
-            prop name: string { read =  kalos_idl_export_name2; }
-            prop module_index: number { read =  kalos_idl_handler_module_index2; }
-            prop handler_index: number { read =  kalos_idl_handler_index2; }
-            prop args: object { read =  kalos_idl_handler_args; }
+            prop name: string { read = kalos_idl_export_name2; }
+            prop module_index: number { read = kalos_idl_handler_module_index2; }
+            prop handler_index: number { read = kalos_idl_handler_index2; }
+            prop args: object { read = kalos_idl_handler_args; }
         }
 
         object object_obj {
-            prop name: string { read =  kalos_idl_export_name2; }
+            prop name: string { read = kalos_idl_export_name2; }
+        }
+
+        object binding_obj {
+            prop type: string { read = kalos_idl_binding_type; }
+            prop value: string { read = kalos_idl_binding_value; }
         }
     }
 }
