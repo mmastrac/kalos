@@ -204,26 +204,27 @@ on module.function(context, function) {
             println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
             println("\t\tconst int arg_count = {overload.arg_count + 1} + vararg_count;");
         }
-        print("\t\tkalos_stack_setup_{overload.arg_count}(state");
+        print("\t\tif (kalos_stack_setup_{overload.arg_count}(state");
         for arg in overload.args {
             print(", K__t_{arg}");
         }
-        println(");");
-        print("\t\t");
+        println(")) {{");
+        print("\t\t\t");
         if overload.return_type != "void" {
             print("K__{overload.return_type} x = ");
         }
         write_binding(overload.binding, overload.args, overload.varargs);
         println(";");
-        println("\t\tkalos_stack_cleanup(state, arg_count);");
+        println("\t\t\tkalos_stack_cleanup(state, arg_count);");
         if overload.return_type != "void" {
-            println("\t\tif (retval) {{");
-            println("\t\t\tpush_{overload.return_type}(stack, x);");
-            println("\t\t}} else {{");
-            println("\t\t\tK__clean_{overload.return_type}(stack, x);");
-            println("\t\t}}");
+            println("\t\t\tif (retval) {{");
+            println("\t\t\t\tpush_{overload.return_type}(stack, x);");
+            println("\t\t\t}} else {{");
+            println("\t\t\t\tK__clean_{overload.return_type}(stack, x);");
+            println("\t\t\t}}");
         }
-        println("\t\treturn true;");
+        println("\t\t\treturn true;");
+        println("\t\t}}");
         println("\t}}");
         println("");
     }
