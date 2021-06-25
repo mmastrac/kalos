@@ -32,7 +32,7 @@ on init {
 }
 ```
 
-## Control structures
+### Control structures
 
 The most basic control structures in Kalos are `if` and `loop`. Unlike most C-like languages,
 Kalos does not require parenthesis in `if` statements:
@@ -60,7 +60,7 @@ loop {
 }
 ```
 
-## Iterators and for loops
+### Iterators and for loops
 
 In addition to the generic `loop`, Kalos provides a `for` that allows for iteration over various iterable
 objects.
@@ -96,10 +96,11 @@ for i in range(0, 20) {
 }
 ```
 
-## Expressions
+### Expressions
 
 Expressions in Kalos make use of the common operators you see in other C-like languages. The precedence, or
-the "order of operations" in Kalos is designed to be more human-friendly as you find in languages like Python.
+the "order of operations" in Kalos is designed to be more human-friendly as you might find in languages like
+Python.
 
 | Operators | Notes |
 |-----------|-------|
@@ -118,3 +119,99 @@ the "order of operations" in Kalos is designed to be more human-friendly as you 
 | `\|\|` | Logical OR |
 | `+=`, `-=`, ... | Assignment operators: any binary operator is supported |
 
+In Kalos, the logical AND and OR have the lowest precedence, allowing you to perform bit tests
+without paretheses (although they are still recommended for readability):
+
+```
+# Equivalent to: (bitmask & flag1) || (bitmask & flag2)
+if bitmask & flag1 || bitmask & flag2 {
+    # ...
+}
+```
+
+### Functions
+
+Kalos supports both "binding" and "internal" functions, which use `on` and `fn` respectively. Internal
+functions are useful to de-duplicate logic between multiple handlers.
+
+```
+fn create_output(id, name) {
+    return "{id}: {name}";
+}
+
+on app.keyup {
+    println(create_output(123, "foo"));
+}
+
+on app.keydown {
+    println(create_output(456, "bar"));
+}
+```
+
+## Integration
+
+Kalos is integrated into your application using bindings declared in a `kidl` file. The KIDL describes the
+modules, functions, objects and properties that your module provides.
+
+The KIDL consists of a top-level `idl` block which contains nested, named `module` blocks. Kalos supports the
+addition of functions to the root (aka builtin) namespace by creating a module named `builtin`.
+
+### Dispatch generator
+
+Kalos ships with a cross-platform KIDL compiler that you can use to optionally compile your KIDL to a binary format for
+more efficient embedding, and to compile dispatch glue code to allow for bidirectional communication with the
+embedded scripts.
+
+Pre-compilation of scripts and KIDL is optional, but at this time the dispatch glue is required for integration.
+
+### Handlers
+
+Handlers are the main way for host applications to communicate with scripts. A handler is defined in a module using
+the `handler` keyword. Any parameters that the handler receives may be specified here as well and must match those
+in the script receiving the event.
+
+```
+idl {
+    module app {
+        handler keyup(key: number);
+        handler keydown(key: number);
+    }
+}
+```
+
+The script embedded in the application would handle these events using the `on` keyword:
+
+```
+on app.keyup(key: number) {
+    # ...
+}
+```
+
+When generating the bindings, Kalos will create a trigger method for each `handler` that the host app 
+can call with the appropriate parameters.
+
+```
+void kalos_module_app_trigger_app_keyup(kalos_run_state* state, kalos_int number);
+
+// ...
+int last_key = readkey();
+kalos_module_app_trigger_app_keydown(state, last_key);
+while (keydown()) {}
+kalos_module_app_trigger_app_keyup(state, last_key);
+```
+
+### Module functions
+
+TODO
+
+### Module properties
+
+TODO
+
+### Bindings
+
+TODO
+
+### Objects
+
+TODO
