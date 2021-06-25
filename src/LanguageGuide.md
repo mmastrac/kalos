@@ -35,7 +35,7 @@ on init {
 ### Control structures
 
 The most basic control structures in Kalos are `if` and `loop`. Unlike most C-like languages,
-Kalos does not require parenthesis in `if` statements:
+Kalos does not require parentheses in `if` statements:
 
 ```C
 if condition {
@@ -104,7 +104,7 @@ Python.
 
 | Operators | Notes |
 |-----------|-------|
-| `()`      | Parenthetized expressions |
+| `()`      | Parenthesized expressions |
 | `x[index]`, `x(...)`, `x.attr` | Indexing expressions, function calls, object attributes |
 | Unary `+`, `-`, `!`, `~` | Unary operators: posivate, negate, logical NOT, bitwise NOT |
 | `*`, `/`, `%` | Multiplication, division, modulus |
