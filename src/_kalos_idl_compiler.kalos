@@ -8,6 +8,13 @@ var dispatch = "";
 var dynamic_dispatch = "";
 var current_module;
 
+# Why so many weird macros?
+
+# The IDL compiler makes use of macros to assist with self-hosting development. It can be
+# painful to update the dispatch-generating code at the same time as changes are being made
+# to the dispatch interface. Macros de-couple the generated code somewhat from the interface
+# and allow much simpler hand-edits to be made for bootstrapping purposes.
+
 const FORWARD = "forward";  # Forward declaration phase
 const IMPL = "impl";        # Implementation phase
 const HANDLE = "handler";
