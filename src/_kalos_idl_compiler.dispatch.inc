@@ -46,7 +46,7 @@ bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const cha
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/"println")) {
 		LOG("Invoke %s", "println");
 		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, K__t_string)) {
+		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			kalos_idl_compiler_println((void*)state, K__arg_string(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
@@ -57,7 +57,7 @@ bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const cha
 	if (K__match(/*id=*/2, /*args=*/1, /*name=*/"print")) {
 		LOG("Invoke %s", "print");
 		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, K__t_string)) {
+		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			kalos_idl_compiler_print((void*)state, K__arg_string(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
@@ -68,7 +68,7 @@ bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const cha
 	if (K__match(/*id=*/3, /*args=*/1, /*name=*/"log")) {
 		LOG("Invoke %s", "log");
 		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, K__t_string)) {
+		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			kalos_idl_compiler_log((void*)state, K__arg_string(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
@@ -83,7 +83,7 @@ bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* 
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/"walk_modules")) {
 		LOG("Invoke %s", "walk_modules");
 		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, K__t_any)) {
+		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			kalos_idl_walk_modules((void*)state, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
@@ -301,7 +301,7 @@ bool kalos_module_idl_module_dynamic_dispatch(kalos_run_state* state, const char
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/"walk_exports")) {
 		LOG("Invoke %s", "walk_exports");
 		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, K__t_any)) {
+		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			kalos_idl_walk_exports((void*)state, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
@@ -312,7 +312,7 @@ bool kalos_module_idl_module_dynamic_dispatch(kalos_run_state* state, const char
 	if (K__match(/*id=*/2, /*args=*/2, /*name=*/"walk_object_properties")) {
 		LOG("Invoke %s", "walk_object_properties");
 		const int arg_count = 2;
-		if (kalos_stack_setup_2(state, K__t_any, K__t_object)) {
+		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_object)) {
 			kalos_idl_walk_object_properties((void*)state, K__arg_any(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;

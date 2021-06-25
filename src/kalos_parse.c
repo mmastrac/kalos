@@ -554,7 +554,7 @@ static struct pending_op parse_function_call_export(struct parse_state* parse_st
     op.op = KALOS_OP_CALL;
     op.data[0] = module_index;
     op.data[1] = overload->binding.invoke_id;
-    op.data[2] = param_count;
+    op.data[2] = overload->arg_list.count;
     if (parse_state->dispatch_name) {
         op.sdata[0] = kalos_module_get_string(parse_state->all_modules, kalos_module_get_module(parse_state->all_modules, module_index)->name_index);
         op.sdata[1] = kalos_module_get_string(parse_state->all_modules, fn->name_index);
@@ -1222,7 +1222,7 @@ void parse_idl_fn(struct parse_state* parse_state) {
     TRY(parse_idl_args(parse_state));
     TRY(parse_idl_type(parse_state));
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
-    TRY(parse_idl_binding(parse_state, ++parse_state->function_invoke_id));
+    TRY(parse_idl_binding(parse_state, parse_state->function_invoke_id));
     TRY(parse_make_list(parse_state, 3));
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     TRY_EXIT;
@@ -1259,6 +1259,7 @@ void parse_idl_block(struct parse_state* parse_state) {
                 TRY(parse_push_token(parse_state));
                 if (token == KALOS_TOKEN_FN) {
                     TRY(peek = lex_peek(parse_state));
+                    parse_state->function_invoke_id++;
                     if (peek == KALOS_TOKEN_BRA_OPEN) {
                         int overload_count = 0;
                         TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));

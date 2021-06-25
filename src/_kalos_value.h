@@ -111,7 +111,7 @@ inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vara
 }
 
 #define KALOS_VALUE_ANY (999)
-#define KALOS_CHECK_STACK_REF(N) state->stack->stack[state->stack->stack_index-N]
+#define KALOS_CHECK_STACK_REF(N) state->stack->stack[state->stack->stack_index-arg_count+N]
 #define KALOS_CHECK_1__                    (type0 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(0).type == type0)
 #define KALOS_CHECK_2__ KALOS_CHECK_1__ && (type1 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(1).type == type1)
 #define KALOS_CHECK_3__ KALOS_CHECK_2__ && (type2 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(2).type == type2)
@@ -122,15 +122,15 @@ inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vara
 #define KALOS_CHECK_8__ KALOS_CHECK_7__ && (type7 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(7).type == type7)
 #define KALOS_CHECK__(N) return KALOS_CHECK_##N##__
 
-inline static bool kalos_stack_setup_0(kalos_run_state* state) { return true; }
-inline static bool kalos_stack_setup_1(kalos_run_state* state, kalos_value_type type0) { KALOS_CHECK__(1); }
-inline static bool kalos_stack_setup_2(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1) { KALOS_CHECK__(2); }
-bool kalos_stack_setup_3(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2);
-bool kalos_stack_setup_4(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3);
-bool kalos_stack_setup_5(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4);
-bool kalos_stack_setup_6(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5);
-bool kalos_stack_setup_7(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6);
-bool kalos_stack_setup_8(kalos_run_state* state, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6, kalos_value_type type7);
+inline static bool kalos_stack_setup_0(kalos_run_state* state, int arg_count) { return true; }
+inline static bool kalos_stack_setup_1(kalos_run_state* state, int arg_count, kalos_value_type type0) { KALOS_CHECK__(1); }
+inline static bool kalos_stack_setup_2(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1) { KALOS_CHECK__(2); }
+bool kalos_stack_setup_3(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2);
+bool kalos_stack_setup_4(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3);
+bool kalos_stack_setup_5(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4);
+bool kalos_stack_setup_6(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5);
+bool kalos_stack_setup_7(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6);
+bool kalos_stack_setup_8(kalos_run_state* state, int arg_count, kalos_value_type type0, kalos_value_type type1, kalos_value_type type2, kalos_value_type type3, kalos_value_type type4, kalos_value_type type5, kalos_value_type type6, kalos_value_type type7);
 
 static inline void kalos_stack_cleanup(kalos_run_state* state, int count) {
     state->stack->stack_index -= count;

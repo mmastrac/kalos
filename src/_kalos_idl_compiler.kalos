@@ -84,7 +84,7 @@ on open(dynamic) {
     if is_dynamic {
         println("#define K__match(id, n, s) (param_count == n && strcmp(name, s) == 0)");
     } else {
-        println("#define K__match(id, n, s) (function == id)");
+        println("#define K__match(id, n, s) (param_count == n && function == id)");
     }
     println("");
     kidl.walk_modules(FORWARD);
@@ -204,7 +204,7 @@ on module.function(context, function) {
             println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
             println("\t\tconst int arg_count = {overload.arg_count + 1} + vararg_count;");
         }
-        print("\t\tif (kalos_stack_setup_{overload.arg_count}(state");
+        print("\t\tif (kalos_stack_setup_{overload.arg_count}(state, arg_count");
         for arg in overload.args {
             print(", K__t_{arg}");
         }

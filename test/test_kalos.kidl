@@ -20,6 +20,7 @@ idl {
         fn concat(s1: string, s2: string, s3: string, s4: string,
             s5: string, s6: string, s7: string, s8: string): string = test_kalos_concat;
         fn overloaded {
+            (n: string): number = c "100";
             (n: any): number = c "1";
             (n: any, n2: any): number = c "2";
             (n: any, n2: any, n3: any): number = c "3";
