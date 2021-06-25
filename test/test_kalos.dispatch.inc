@@ -84,9 +84,8 @@ bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_run_state* state, k
 		kalos_stack_cleanup(state, 1);
 		return true;
 	}
-	default: return false;
 	}
-	return true;
+	return false;
 }
 
 kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props = {
@@ -111,9 +110,8 @@ bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_run_state* state, k
 		push_number(stack, test_read_c2((void*)state, object));
 		return true;
 	}
-	default: return false;
 	}
-	return true;
+	return false;
 }
 
 kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {

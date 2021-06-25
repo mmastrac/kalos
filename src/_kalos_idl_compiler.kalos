@@ -175,13 +175,10 @@ on module.object(context, object) {
     in_object = true;
     module.walk_object_properties(OBJECT, object);
     in_object = false;
-    if is_dynamic {
-        println("\treturn false;");
-    } else {
-        println("\tdefault: return false;");
+    if !is_dynamic {
         println("\t}}");
-        println("\treturn true;");
     }
+    println("\treturn false;");
     println("}}");
     println("");
     println("kalos_object_dispatch {kidl.prefix}{current_module.name}_object_{object.name}_props = {{");
