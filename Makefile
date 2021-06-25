@@ -52,8 +52,11 @@ HOST_CFLAGS=-std=c99 \
 
 all: $(OUTDIR)/compiler
 
+# TODO: This is a bit dumb: we sleep for a second and then touch the output targets. Would be
+# great to figure out a Makefile incantation so that these files are never re-made (maybe a warning?)
 nore2c:
 	$(call color,"TOUCH","host",(re2c targets))
+	@sleep 1
 	@touch $(SRCDIR)/kalos_string_format.c
 	@touch $(SRCDIR)/kalos_lex.c
 
