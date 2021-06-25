@@ -13,7 +13,7 @@ in the script.
 Most applications will provide a built-in init function like so, and trigger it immediately after
 the application launches and is ready for interaction:
 
-```
+```C
 on init {
     println("Hello, world!");
 }
@@ -21,7 +21,7 @@ on init {
 
 As with most other languages, Kalos supports local and global variables and constants:
 
-```
+```C
 var global = "hello";
 const global_const = "world";
 
@@ -37,7 +37,7 @@ on init {
 The most basic control structures in Kalos are `if` and `loop`. Unlike most C-like languages,
 Kalos does not require parenthesis in `if` statements:
 
-```
+```C
 if condition {
     println("true!");
 } else {
@@ -48,7 +48,7 @@ if condition {
 Kalos does not provide conditional loops, but instead a generic `loop` function along with `break`
 and `continue` statements to terminate the loop:
 
-```
+```C
 loop {
     if readkey() == key.ESCAPE {
         break;
@@ -67,19 +67,19 @@ objects.
 
 Kalos provides a number of built-in iterable objects including lists, ranges and string splitters.
 
-```
+```C
 for x in [1, 2, 3] {
     # ...
 }
 ```
 
-```
+```C
 for s in split("a,b,c", ",") {
     # ...
 }
 ```
 
-```
+```C
 for i in range(0, 20) {
     # ...
 }
@@ -88,7 +88,7 @@ for i in range(0, 20) {
 All control structures in Kalos can be nested, and any looping structures support `break` and `continue`
 as you would expect:
 
-```
+```C
 for i in range(0, 20) {
     if i == 10 && !flag {
         break;
@@ -134,7 +134,7 @@ if bitmask & flag1 || bitmask & flag2 {
 Kalos supports both "binding" and "internal" functions, which use `on` and `fn` respectively. Internal
 functions are useful to de-duplicate logic between multiple handlers.
 
-```
+```C
 fn create_output(id, name) {
     return "{id}: {name}";
 }
@@ -170,7 +170,7 @@ Handlers are the main way for host applications to communicate with scripts. A h
 the `handler` keyword. Any parameters that the handler receives may be specified here as well and must match those
 in the script receiving the event.
 
-```
+```C
 idl {
     module app {
         handler keyup(key: number);
@@ -181,7 +181,7 @@ idl {
 
 The script embedded in the application would handle these events using the `on` keyword:
 
-```
+```C
 on app.keyup(key: number) {
     # ...
 }
@@ -190,7 +190,7 @@ on app.keyup(key: number) {
 When generating the bindings, Kalos will create a trigger method for each `handler` that the host app 
 can call with the appropriate parameters.
 
-```
+```C
 void kalos_module_app_trigger_app_keyup(kalos_run_state* state, kalos_int number);
 
 // ...
