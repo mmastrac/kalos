@@ -28,10 +28,11 @@ on app.init {
 ## Features 
 
  * Tiny VM with low requirements
- * Allocation-free parser for parsing script on-device
+ * Minimal C requirements: any C99-like compiler (`avr-gcc` and `openwatcom` are both supported)
+ * Allocation-free parser for parsing scripts on-device
  * Binary script format for pre- or external compilation in memory-constrained applications
  * Comprehensive control structures: `if`/`else`, `for` over iterators, `loop`, `break`/`continue`
- * IDL-based bindings to your code
+ * IDL-based bindings to your code with dispatch code generator
  * Basic list support
  * String interpolation
 
