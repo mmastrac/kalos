@@ -111,10 +111,10 @@ the "order of operations" in Kalos is designed to be more human-friendly as you 
 | `<<`, `>>` | Left and right shift |
 | `&` | Bitwise AND |
 | `^` | Bitwise XOR |
-| `|` | Bitwise OR |
+| `\|` | Bitwise OR |
 | `<`, `>`, `<=`, `>=` | Less than, greater than, less than or equal, greater than or equal |
 | `==`, `!=` | Equal, not equal |
 | `&&` | Logical AND |
-| `||` | Logical OR |
+| `\|\|` | Logical OR |
 | `+=`, `-=`, ... | Assignment operators: any binary operator is supported |
 
