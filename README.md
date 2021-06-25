@@ -21,7 +21,7 @@ on app.init {
     for x in range(0, window.WIDTH / 4) {
         app.drawline(x * 4, 0, x * 4, window.HEIGHT, color.LIGHTBLUE);
     }
-    app.messagebox("Hello, world!");
+    app.messagebox("Message from {app.title}", "Hello, world!");
 }
 ```
 
