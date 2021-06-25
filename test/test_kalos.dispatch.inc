@@ -28,6 +28,7 @@
 #define K__arg_bool(x)   (x)->value.number
 #define K__arg_object(x) &((x)->value.object)
 #define K__arg_any(x)    (x)
+#define K__match(id, n, s) (function == id)
 
 // id=0000:0001 name=init
 void kalos_module_dispatch_test_trigger_init(kalos_run_state* state) {
@@ -35,9 +36,8 @@ void kalos_module_dispatch_test_trigger_init(kalos_run_state* state) {
 }
 
 bool kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
-	switch (function) {
 	// id=1 name=print arg_count=0 binding=fn test_print
-	case 1: {
+	if (K__match(/*id=*/1, /*args=*/0, /*name=*/"print")) {
 		LOG("Invoke %s", "print");
 		const int vararg_count = kalos_stack_vararg_count(stack);
 		const int arg_count = 1 + vararg_count;
@@ -47,7 +47,6 @@ bool kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, in
 		return true;
 	}
 
-	}
 	return false;
 }
 
@@ -66,24 +65,22 @@ void kalos_module_dispatch_test_test_trigger_self_trigger(kalos_run_state* state
 
 //kalos_module_dispatch_test_test_object_a_props
 bool kalos_module_dispatch_test_test_object_a_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
-	switch (function) {
 	// id=2 name=a binding=fn test_read_a
-	case 2: {
+	if (K__match(/*id=*/2, /*args=*/0, /*name=*/"a")) {
 		push_string(stack, test_read_a((void*)state, object));
 		return true;
 	}
 	// id=4 name=c binding=fn test_read_c
-	case 4: {
+	if (K__match(/*id=*/4, /*args=*/0, /*name=*/"c")) {
 		push_number(stack, test_read_c((void*)state, object));
 		return true;
 	}
 	// id=5 name=c binding=fn test_write_c
-	case 5: {
+	if (K__match(/*id=*/5, /*args=*/1, /*name=*/"c")) {
 		const int arg_count = 1;
 		test_write_c((void*)state, object, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
 		return true;
-	}
 	}
 	return false;
 }
@@ -94,22 +91,20 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_a_props = {
 
 //kalos_module_dispatch_test_test_object_b_props
 bool kalos_module_dispatch_test_test_object_b_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
-	switch (function) {
 	// id=2 name=a binding=fn test_read_a
-	case 2: {
+	if (K__match(/*id=*/2, /*args=*/0, /*name=*/"a")) {
 		push_string(stack, test_read_a((void*)state, object));
 		return true;
 	}
 	// id=6 name=b binding=fn test_read_b
-	case 6: {
+	if (K__match(/*id=*/6, /*args=*/0, /*name=*/"b")) {
 		push_string(stack, test_read_b((void*)state, object));
 		return true;
 	}
 	// id=4 name=c binding=fn test_read_c2
-	case 4: {
+	if (K__match(/*id=*/4, /*args=*/0, /*name=*/"c")) {
 		push_number(stack, test_read_c2((void*)state, object));
 		return true;
-	}
 	}
 	return false;
 }
@@ -119,33 +114,32 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 };
 
 bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
-	switch (function) {
 	// id=1 name=read_write binding=fn test_read_write_read
-	case 1: {
+	if (K__match(/*id=*/1, /*args=*/0, /*name=*/"read_write")) {
 		push_number(stack, test_read_write_read((void*)state));
 		return true;
 	}
 	// id=2 name=read_write binding=fn test_read_write_write
-	case 2: {
+	if (K__match(/*id=*/2, /*args=*/1, /*name=*/"read_write")) {
 		const int arg_count = 1;
 		test_read_write_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
 		return true;
 	}
 	// id=3 name=read_only binding=fn test_read_only_read
-	case 3: {
+	if (K__match(/*id=*/3, /*args=*/0, /*name=*/"read_only")) {
 		push_number(stack, test_read_only_read((void*)state));
 		return true;
 	}
 	// id=4 name=write_only binding=fn test_write_only_write
-	case 4: {
+	if (K__match(/*id=*/4, /*args=*/1, /*name=*/"write_only")) {
 		const int arg_count = 1;
 		test_write_only_write((void*)state, K__arg_number(K__arg(arg_count, 1)));
 		kalos_stack_cleanup(state, 1);
 		return true;
 	}
 	// id=5 name=add_one arg_count=1 binding=c @0 + 1
-	case 5: {
+	if (K__match(/*id=*/5, /*args=*/1, /*name=*/"add_one")) {
 		LOG("Invoke %s", "add_one");
 		const int arg_count = 1;
 		kalos_stack_setup_1(state, K__t_number);
@@ -160,7 +154,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=6 name=sum_numbers arg_count=0 binding=fn test_kalos_sum_numbers
-	case 6: {
+	if (K__match(/*id=*/6, /*args=*/0, /*name=*/"sum_numbers")) {
 		LOG("Invoke %s", "sum_numbers");
 		const int vararg_count = kalos_stack_vararg_count(stack);
 		const int arg_count = 1 + vararg_count;
@@ -176,7 +170,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=7 name=sum_numbers_2 arg_count=2 binding=fn test_kalos_sum_numbers_2
-	case 7: {
+	if (K__match(/*id=*/7, /*args=*/2, /*name=*/"sum_numbers_2")) {
 		LOG("Invoke %s", "sum_numbers_2");
 		const int vararg_count = kalos_stack_vararg_count(stack);
 		const int arg_count = 3 + vararg_count;
@@ -192,7 +186,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=8 name=concat arg_count=8 binding=fn test_kalos_concat
-	case 8: {
+	if (K__match(/*id=*/8, /*args=*/8, /*name=*/"concat")) {
 		LOG("Invoke %s", "concat");
 		const int arg_count = 8;
 		kalos_stack_setup_8(state, K__t_string, K__t_string, K__t_string, K__t_string, K__t_string, K__t_string, K__t_string, K__t_string);
@@ -207,7 +201,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=9 name=overloaded arg_count=1 binding=c 1
-	case 9: {
+	if (K__match(/*id=*/9, /*args=*/1, /*name=*/"overloaded")) {
 		LOG("Invoke %s", "overloaded");
 		const int arg_count = 1;
 		kalos_stack_setup_1(state, K__t_any);
@@ -222,7 +216,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=10 name=overloaded arg_count=2 binding=c 2
-	case 10: {
+	if (K__match(/*id=*/10, /*args=*/2, /*name=*/"overloaded")) {
 		LOG("Invoke %s", "overloaded");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_any, K__t_any);
@@ -237,7 +231,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=11 name=overloaded arg_count=3 binding=c 3
-	case 11: {
+	if (K__match(/*id=*/11, /*args=*/3, /*name=*/"overloaded")) {
 		LOG("Invoke %s", "overloaded");
 		const int arg_count = 3;
 		kalos_stack_setup_3(state, K__t_any, K__t_any, K__t_any);
@@ -252,7 +246,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=12 name=trigger_self arg_count=2 binding=fn kalos_module_dispatch_test_test_trigger_self_trigger
-	case 12: {
+	if (K__match(/*id=*/12, /*args=*/2, /*name=*/"trigger_self")) {
 		LOG("Invoke %s", "trigger_self");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_string, K__t_object);
@@ -262,7 +256,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=13 name=raw_c arg_count=2 binding=c @0*10+@1
-	case 13: {
+	if (K__match(/*id=*/13, /*args=*/2, /*name=*/"raw_c")) {
 		LOG("Invoke %s", "raw_c");
 		const int arg_count = 2;
 		kalos_stack_setup_2(state, K__t_number, K__t_number);
@@ -277,7 +271,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=14 name=make_a arg_count=0 binding=fn test_make_a
-	case 14: {
+	if (K__match(/*id=*/14, /*args=*/0, /*name=*/"make_a")) {
 		LOG("Invoke %s", "make_a");
 		const int arg_count = 0;
 		kalos_stack_setup_0(state);
@@ -292,7 +286,7 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	}
 
 	// id=15 name=make_b arg_count=0 binding=fn test_make_b
-	case 15: {
+	if (K__match(/*id=*/15, /*args=*/0, /*name=*/"make_b")) {
 		LOG("Invoke %s", "make_b");
 		const int arg_count = 0;
 		kalos_stack_setup_0(state);
@@ -306,7 +300,6 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 		return true;
 	}
 
-	}
 	return false;
 }
 

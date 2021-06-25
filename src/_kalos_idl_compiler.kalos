@@ -22,11 +22,7 @@ const TYPES = [
 ];
 
 fn write_matcher(id, name, arg_count) {
-    if is_dynamic {
-        println("\tif (K__name({arg_count}, \"{name}\")) {{");
-    } else {
-        println("\tcase {id}: {{");
-    }
+    println("\tif (K__match(/*id=*/{id}, /*args=*/{arg_count}, /*name=*/\"{name}\")) {{");
 }
 
 fn write_binding(binding, arg_types, vararg_type) {
@@ -79,7 +75,9 @@ on open(dynamic) {
     println("#define K__arg_object(x) &((x)->value.object)");
     println("#define K__arg_any(x)    (x)");
     if is_dynamic {
-        println("#define K__name(n, s) (param_count == n && strcmp(name, s) == 0)");
+        println("#define K__match(id, n, s) (param_count == n && strcmp(name, s) == 0)");
+    } else {
+        println("#define K__match(id, n, s) (function == id)");
     }
     println("");
     kidl.walk_modules(FORWARD);
@@ -117,14 +115,10 @@ on module.begin(context, m) {
             println("bool {kidl.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else {
             println("bool {kidl.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
-            println("\tswitch (function) {{");
         }
         in_module = true;
         module.walk_exports(DISPATCH);
         in_module = false;
-        if !is_dynamic {
-            println("\t}}");
-        }
         println("\treturn false;");
         println("}}");
         println("");
@@ -170,14 +164,10 @@ on module.object(context, object) {
         println("bool {kidl.prefix}{current_module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {{");
     } else {
         println("bool {kidl.prefix}{current_module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
-        println("\tswitch (function) {{");
     }
     in_object = true;
     module.walk_object_properties(OBJECT, object);
     in_object = false;
-    if !is_dynamic {
-        println("\t}}");
-    }
     println("\treturn false;");
     println("}}");
     println("");
