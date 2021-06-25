@@ -102,6 +102,7 @@ typedef struct kalos_module {
 } kalos_module;
 
 #define KALOS_MODULE_FLAG_DISPATCH_NAME 1
+#define KALOS_MODULE_FLAG_DISPATCH_INTERNAL 2
 
 typedef struct kalos_module_header {
     kalos_int version;
@@ -163,7 +164,7 @@ BUILDER_HANDLE(property_address);
 kalos_module_builder kalos_module_create_builder(kalos_state* state, uint8_t* buffer, size_t size);
 void kalos_module_free_builder(kalos_state* state, kalos_module_builder builder);
 
-void kalos_module_create_idl(kalos_module_builder, kalos_module_string prefix, bool dispatch_name, kalos_module_list modules, kalos_module_list prop_list);
+void kalos_module_create_idl(kalos_module_builder, kalos_module_string prefix, kalos_int flags, kalos_module_list modules, kalos_module_list prop_list);
 kalos_module_module kalos_module_create_module(kalos_module_builder, kalos_int index, kalos_module_string name, kalos_module_list exports);
 kalos_module_string kalos_module_create_string(kalos_module_builder, const char* s);
 kalos_module_list kalos_module_create_list(kalos_module_builder);

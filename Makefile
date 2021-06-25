@@ -68,7 +68,7 @@ clean:
 	$(call color,"CLEAN","all",$(OUTDIR))
 	@rm -rf $(OUTDIR)
 
-$(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+$(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) $(SRCDIR)/*.inc
 	$(call color,"CC","host",$<)
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) -c $< -o $@
@@ -108,6 +108,10 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 gen-test: $(OUTDIR)/compiler
 	$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc
 	mv $(OUTDIR)/test_kalos.dispatch.inc test/
+
+gen-dispatch: $(OUTDIR)/compiler
+	$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc
+	mv $(OUTDIR)/_kalos_ops.dispatch.inc src/
 
 gen-compiler: $(OUTDIR)/compiler
 	rm -rf $(GENDIR)/compiler || true

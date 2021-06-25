@@ -203,6 +203,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "write"    { return KALOS_TOKEN_WRITE; }
         <init> "dispatch" { return KALOS_TOKEN_DISPATCH; }
         <init> "name"     { return KALOS_TOKEN_NAME; }
+        <init> "internal" { return KALOS_TOKEN_INTERNAL; }
         <init> "prefix"   { return KALOS_TOKEN_PREFIX; }
         <init> "c"        { return KALOS_TOKEN_C; }
         <init> "object"   { return KALOS_TOKEN_OBJECT; }

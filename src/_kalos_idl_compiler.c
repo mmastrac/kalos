@@ -59,7 +59,7 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
     kalos_buffer* idl_buffer = (kalos_buffer*)run_state->context;
     kalos_module_builder builder = kalos_module_create_builder(state, idl_buffer->buffer, kalos_buffer_size(*idl_buffer));
     kalos_module_string prefix_index = kalos_module_create_string(builder, "");
-    bool dispatch_name = false;
+    kalos_int flags = 0;
     kalos_module_list modules = kalos_module_create_list(builder);
     kalos_module_list prop_list = kalos_module_create_list(builder);
     ITERATE_TYPE(idl, *idl, sublist, type) {
@@ -67,7 +67,11 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
             prefix_index = IDL_LIST_STRING(sublist, 1);
         }
         ITERATE_CASE(KALOS_TOKEN_DISPATCH): {
-            dispatch_name = true;
+            if (IDL_LIST_NUMBER(sublist, 1) == KALOS_TOKEN_NAME) {
+                flags = KALOS_MODULE_FLAG_DISPATCH_NAME;
+            } else if (IDL_LIST_NUMBER(sublist, 1) == KALOS_TOKEN_INTERNAL) {
+                flags = KALOS_MODULE_FLAG_DISPATCH_INTERNAL;
+            }
         }
         ITERATE_CASE(KALOS_TOKEN_MODULE): {
             kalos_module_list exports = kalos_module_create_list(builder);
@@ -138,7 +142,7 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
         }
     } ITERATE_TYPE_END;
 
-    kalos_module_create_idl(builder, prefix_index, dispatch_name, modules, prop_list);
+    kalos_module_create_idl(builder, prefix_index, flags, modules, prop_list);
     kalos_module_free_builder(state, builder);
 }
 
@@ -384,7 +388,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
     kalos_dispatch dispatch = {0};
     dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
     kalos_run_state* run_state = kalos_init((const_kalos_script)script.buffer, &dispatch, state);
-    kalos_module_idl_trigger_open(run_state, (kalos_module_get_header(parsed_module)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0);
+    kalos_module_idl_trigger_open(run_state, kalos_module_get_header(parsed_module)->flags);
     kalos_module_idl_trigger_close(run_state);
     kalos_run_free(run_state);
     return true;

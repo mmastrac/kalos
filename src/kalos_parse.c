@@ -403,6 +403,8 @@ static kalos_token wordify(struct parse_state* parse_state) {
         wordified = "dispatch"; break;
     case KALOS_TOKEN_NAME:
         wordified = "name"; break;
+    case KALOS_TOKEN_INTERNAL:
+        wordified = "internal"; break;
     case KALOS_TOKEN_PREFIX:
         wordified = "prefix"; break;
     case KALOS_TOKEN_C:
@@ -1322,9 +1324,13 @@ void parse_idl_block(struct parse_state* parse_state) {
             TRY(parse_make_list(parse_state, 2));
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
         } else if (token == KALOS_TOKEN_DISPATCH) {
-            TRY(parse_push_string(parse_state, "name"));
+            TRY(peek = lex_peek(parse_state));
+            if (peek != KALOS_TOKEN_NAME && peek != KALOS_TOKEN_INTERNAL) {
+                THROW(ERROR_UNEXPECTED_TOKEN);
+            }
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, peek));
+            TRY(parse_assert_token(parse_state, peek));
             TRY(parse_make_list(parse_state, 2));
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_NAME));
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
         } else {
             THROW(ERROR_UNEXPECTED_TOKEN);

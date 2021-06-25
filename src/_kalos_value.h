@@ -112,15 +112,19 @@ inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vara
 
 #define KALOS_VALUE_ANY (999)
 #define KALOS_CHECK_STACK_REF(N) state->stack->stack[state->stack->stack_index-arg_count+N]
-#define KALOS_CHECK_1__                    (type0 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(0).type == type0)
-#define KALOS_CHECK_2__ KALOS_CHECK_1__ && (type1 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(1).type == type1)
-#define KALOS_CHECK_3__ KALOS_CHECK_2__ && (type2 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(2).type == type2)
-#define KALOS_CHECK_4__ KALOS_CHECK_3__ && (type3 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(3).type == type3)
-#define KALOS_CHECK_5__ KALOS_CHECK_4__ && (type4 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(4).type == type4)
-#define KALOS_CHECK_6__ KALOS_CHECK_5__ && (type5 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(5).type == type5)
-#define KALOS_CHECK_7__ KALOS_CHECK_6__ && (type6 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(6).type == type6)
-#define KALOS_CHECK_8__ KALOS_CHECK_7__ && (type7 == KALOS_VALUE_ANY || KALOS_CHECK_STACK_REF(7).type == type7)
+#define KALOS_CHECK_1__                    is_same_type(type0, KALOS_CHECK_STACK_REF(0).type)
+#define KALOS_CHECK_2__ KALOS_CHECK_1__ && is_same_type(type1, KALOS_CHECK_STACK_REF(1).type)
+#define KALOS_CHECK_3__ KALOS_CHECK_2__ && is_same_type(type2, KALOS_CHECK_STACK_REF(2).type)
+#define KALOS_CHECK_4__ KALOS_CHECK_3__ && is_same_type(type3, KALOS_CHECK_STACK_REF(3).type)
+#define KALOS_CHECK_5__ KALOS_CHECK_4__ && is_same_type(type4, KALOS_CHECK_STACK_REF(4).type)
+#define KALOS_CHECK_6__ KALOS_CHECK_5__ && is_same_type(type5, KALOS_CHECK_STACK_REF(5).type)
+#define KALOS_CHECK_7__ KALOS_CHECK_6__ && is_same_type(type6, KALOS_CHECK_STACK_REF(6).type)
+#define KALOS_CHECK_8__ KALOS_CHECK_7__ && is_same_type(type7, KALOS_CHECK_STACK_REF(7).type)
 #define KALOS_CHECK__(N) return KALOS_CHECK_##N##__
+
+inline static bool is_same_type(kalos_value_type t1, kalos_value_type t2) {
+    return t1 == KALOS_VALUE_ANY || t1 == t2 || (t1 == KALOS_VALUE_NUMBER && t2 == KALOS_VALUE_BOOL);
+}
 
 inline static bool kalos_stack_setup_0(kalos_run_state* state, int arg_count) { return true; }
 inline static bool kalos_stack_setup_1(kalos_run_state* state, int arg_count, kalos_value_type type0) { KALOS_CHECK__(1); }
@@ -222,6 +226,10 @@ static inline kalos_value* peek(kalos_stack* stack, int offset) {
 
 static inline kalos_value* push_raw(kalos_stack* stack) {
     return &stack->stack[stack->stack_index++];
+}
+
+static inline void push_any(kalos_stack* stack, kalos_value v) {
+    stack->stack[stack->stack_index++] = v;
 }
 
 static inline void kalos_load_arg_any(kalos_run_state* state, kalos_int index, kalos_value* arg) {

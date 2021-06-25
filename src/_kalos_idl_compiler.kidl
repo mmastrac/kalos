@@ -9,7 +9,7 @@ idl {
 
         # Old handlers
         handler close;
-        handler open(dynamic: bool);
+        handler open(flags: number);
     }
 
     module kidl {

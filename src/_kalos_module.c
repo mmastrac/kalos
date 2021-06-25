@@ -137,12 +137,12 @@ void kalos_module_free_builder(kalos_state* state, kalos_module_builder builder_
     kalos_mem_free(state, builder);
 }
 
-void kalos_module_create_idl(kalos_module_builder builder_, kalos_module_string prefix, bool dispatch_name, kalos_module_list modules, kalos_module_list prop_list) {
+void kalos_module_create_idl(kalos_module_builder builder_, kalos_module_string prefix, kalos_int flags, kalos_module_list modules, kalos_module_list prop_list) {
     struct kalos_module_builder_internal* builder = builder_;
     kalos_module_header* header = (kalos_module_header*)builder->kalos_module_buffer;
     memset(header, 0, sizeof(*header));
     header->module_list = modules;
-    header->flags = dispatch_name ? KALOS_MODULE_FLAG_DISPATCH_NAME : 0;
+    header->flags = flags;
     header->prefix_index = prefix.string_index;
     header->prop_list = prop_list;
 }
