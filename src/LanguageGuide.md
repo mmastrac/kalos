@@ -95,3 +95,26 @@ for i in range(0, 20) {
     }
 }
 ```
+
+## Expressions
+
+Expressions in Kalos make use of the common operators you see in other C-like languages. The precedence, or
+the "order of operations" in Kalos is designed to be more human-friendly as you find in languages like Python.
+
+| Operators | Notes |
+|-----------|-------|
+| `()`      | Parenthetized expressions |
+| `x[index]`, `x(...)`, `x.attr` | Indexing expressions, function calls, object attributes |
+| Unary `+`, `-`, `!`, `~` | Unary operators: posivate, negate, logical NOT, bitwise NOT |
+| `*`, `/`, `%` | Multiplication, division, modulus |
+| `+`, `-` | Plus, minus |
+| `<<`, `>>` | Left and right shift |
+| `&` | Bitwise AND |
+| `^` | Bitwise XOR |
+| `|` | Bitwise OR |
+| `<`, `>`, `<=`, `>=` | Less than, greater than, less than or equal, greater than or equal |
+| `==`, `!=` | Equal, not equal |
+| `&&` | Logical AND |
+| `||` | Logical OR |
+| `+=`, `-=`, ... | Assignment operators: any binary operator is supported |
+
