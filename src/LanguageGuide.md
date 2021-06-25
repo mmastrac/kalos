@@ -122,7 +122,7 @@ Python.
 In Kalos, the logical AND and OR have the lowest precedence, allowing you to perform bit tests
 without paretheses (although they are still recommended for readability):
 
-```
+```C
 # Equivalent to: (bitmask & flag1) || (bitmask & flag2)
 if bitmask & flag1 || bitmask & flag2 {
     # ...
