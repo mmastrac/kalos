@@ -89,7 +89,11 @@ on open(flags) {
     }
     println("");
     for type in TYPES {
-        define_args("K__final_", "(stack, x)", type[0], "if (retval) {{ push_{type[0]}(stack, x); }} else {{ {type[4]}; }}");
+        if is_internal {
+            define_args("K__final_", "(stack, x)", type[0], "push_{type[0]}(stack, x);");
+        } else {
+            define_args("K__final_", "(stack, x)", type[0], "if (retval) {{ push_{type[0]}(stack, x); }} else {{ {type[4]}; }}");
+        }
     }
     define_args("K__arg",  "(n, x)", "",    "peek(stack, (n)-(x))");
     define_args("K__arg_", "(x)",    "string", "&((x)->value.string)");
@@ -139,7 +143,7 @@ on module.begin(context, m) {
             dynamic_dispatch += "\tif (strcmp(module, \"{m.name}\") == 0) {{ return {kidl.prefix}{m.name}_dynamic_dispatch(state, name, param_count, stack, retval); }}\n";
             println("bool {kidl.prefix}{m.name}_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {{");
         } else if is_internal {
-            println("static inline bool {kidl.prefix}{m.name}(kalos_run_state* state, kalos_op op, kalos_stack* stack, bool retval) {{");
+            println("static inline bool {kidl.prefix}{m.name}(kalos_run_state* state, kalos_op op, kalos_stack* stack) {{");
         } else {
             println("bool {kidl.prefix}{m.name}(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {{");
         }

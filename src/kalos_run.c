@@ -371,7 +371,7 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);
-        if (kalos_run_dispatch_ops(state_, op, state->stack, true)) {
+        if (kalos_run_dispatch_ops(state_, op, state->stack)) {
             continue;
         }
         int stack_index = state->stack->stack_index;

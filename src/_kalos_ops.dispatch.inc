@@ -17,11 +17,11 @@
 #define K__t_object     KALOS_VALUE_OBJECT
 #define K__t_any        KALOS_VALUE_ANY
 
-#define K__final_string(stack, x) if (retval) { push_string(stack, x); } else { kalos_string_release((kalos_state*)state, x);; }
-#define K__final_number(stack, x) if (retval) { push_number(stack, x); } else { ;; }
-#define K__final_bool(stack, x)   if (retval) { push_bool(stack, x); } else { ;; }
-#define K__final_object(stack, x) if (retval) { push_object(stack, x); } else { kalos_object_release((kalos_state*)state, &x);; }
-#define K__final_any(stack, x)    if (retval) { push_any(stack, x); } else { kalos_clear((kalos_state*)state, &x);; }
+#define K__final_string(stack, x) push_string(stack, x);
+#define K__final_number(stack, x) push_number(stack, x);
+#define K__final_bool(stack, x)   push_bool(stack, x);
+#define K__final_object(stack, x) push_object(stack, x);
+#define K__final_any(stack, x)    push_any(stack, x);
 #define K__arg(n, x)              peek(stack, (n)-(x))
 #define K__arg_string(x)          &((x)->value.string)
 #define K__arg_number(x)          (x)->value.number
@@ -30,7 +30,7 @@
 #define K__arg_any(x)             (x)
 #define K__match(id, n, s)        (op == KALOS_OP_##s)
 
-static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, kalos_stack* stack, bool retval) {
+static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, kalos_stack* stack) {
 	// id=1 name=DROP arg_count=1 binding=fn op_drop
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/DROP)) {
 		LOG("Invoke %s", "DROP");
