@@ -1,0 +1,9 @@
+idl {
+    module builtin {
+        fn print(s: string) = dos_print;
+        fn println(s: string) = dos_println;
+    }
+    module dos {
+        handler main;
+    }
+}

@@ -1,0 +1,5 @@
+import dos;
+
+on dos.main {
+    println("Hello, world!");
+}
