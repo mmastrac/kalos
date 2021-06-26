@@ -36,19 +36,9 @@ void kalos_value_error(kalos_state* state) {
 #define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state); } }
 #define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack->stack_index - 1 < size) { kalos_internal_error((kalos_state*)state); } }
 
-/**
- * Implement a memcpy that supports far pointers and unaligned loads. Modern compilers
- * should detect this pattern and replace with the correct intrinsic for the given case.
- */
-static void far_memcpy(const void* near_ptr, const uint8_t kalos_far* far_ptr, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        ((uint8_t*)near_ptr)[i] = ((const uint8_t kalos_far*)far_ptr)[i];
-    }
-}
-
 static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
-    far_memcpy(&int_value, &state->script[state->pc], sizeof(int_value));
+    script_memcpy(&int_value, &state->script[state->pc], sizeof(int_value));
     state->pc += sizeof(kalos_int);
     return int_value;
 }
@@ -317,13 +307,6 @@ static void op_idl(kalos_state_internal* state, kalos_op op, kalos_object_ref* i
     v.type = KALOS_VALUE_OBJECT;
     v.value.object = *idl;
     state->dispatch->idl((kalos_run_state*)state, &v);
-}
-
-static void op_getprop(kalos_run_state* state, kalos_op op, kalos_object_ref* object_, kalos_int prop) {
-    kalos_object_ref object = *object_;
-    if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state, &object, prop, 0, state->stack)) {
-        kalos_value_error((kalos_state*)state);
-    }
 }
 
 static kalos_value op_getindex(kalos_run_state* state, kalos_op op, kalos_object_ref* object_, kalos_int index) {

@@ -62,7 +62,7 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
             }
             case KALOS_OP_FORMAT: {
                 kalos_string_format string_format;
-                memcpy(&string_format, &script[offset], sizeof(string_format));
+                script_memcpy(&string_format, &script[offset], sizeof(string_format));
                 offset += sizeof(kalos_string_format);
                 *s++ = ' ';
                 *s++ = '"';

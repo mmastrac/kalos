@@ -123,7 +123,7 @@ struct parse_state {
     kalos_lex_state lex_state;
     kalos_parse_options options;
     bool dispatch_name;
-    uint8_t* output_script;
+    uint8_t kalos_far* output_script;
     uint16_t* script_offset;
     uint16_t function_invoke_id;
     int output_script_index;
@@ -280,9 +280,8 @@ static void parse_make_list(struct parse_state* parse_state, kalos_int size) {
 
 static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op) {
     TRY(parse_push_op_1(parse_state, op, 0));
-    int offset = parse_state->output_script_index - 2;
     TRY_EXIT;
-    return offset;
+    return parse_state->output_script_index - 2;
 }
 
 static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc) {

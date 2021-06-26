@@ -155,9 +155,8 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
         kalos_buffer_free(idl);
         return parsed;
     }
-    kalos_dispatch dispatch = {
-        .idl = kalos_idl_callback
-    };
+    kalos_dispatch dispatch;
+    dispatch.idl = kalos_idl_callback;
     kalos_state idl_parser_state = *state;
     kalos_buffer idl_buffer = kalos_buffer_alloc(state, 10 * 1024);    
     idl_parser_state.context = &idl_buffer;

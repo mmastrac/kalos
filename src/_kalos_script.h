@@ -37,3 +37,13 @@ typedef bool (*kalos_walk_fn)(void* context, const_kalos_script script, const ka
 void kalos_walk(const_kalos_script script, void* context, kalos_walk_fn fn);
 uint16_t kalos_find_section(const_kalos_script script, kalos_export_address handler_address, const kalos_section_header kalos_far** header);
 kalos_module_header* kalos_find_idl(const_kalos_script script);
+
+/**
+ * Implement a memcpy that supports far pointers and unaligned loads. Modern compilers
+ * should detect this pattern and replace with the correct intrinsic for the given case.
+ */
+static inline void script_memcpy(const void* near_ptr, const uint8_t kalos_far* far_ptr, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        ((uint8_t*)near_ptr)[i] = ((const uint8_t kalos_far*)far_ptr)[i];
+    }
+}
