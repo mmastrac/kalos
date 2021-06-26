@@ -36,7 +36,7 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
                 s += sprintf(s, " %04x", value); \
                 break; \
             }
-            #define KALOS_OP(op, b, c, args) KALOS_OP_CASE##args(op)
+            #define KALOS_OP(op, args) KALOS_OP_CASE##args(op)
             #include "_kalos_constants.inc"
             case KALOS_OP_PUSH_STRING: {
                 int len = strlen((char *)&script[offset]);

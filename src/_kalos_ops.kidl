@@ -2,7 +2,8 @@ idl {
     prefix "kalos_run_dispatch_";
     dispatch internal;
     module ops {
-        fn DROP(x: any): void = c "";
+        fn END = op_end;
+        fn DROP(x: any) = c "";
         fn PUSH_INTEGER(): number = op_push_integer;
         fn PUSH_STRING(): string = op_push_string;
         fn PUSH_TRUE(): bool = c "1";

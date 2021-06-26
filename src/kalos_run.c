@@ -4,15 +4,7 @@
 #include "kalos_run.h"
 
 #define KALOS_VAR_SLOT_SIZE 16
-
-static const int8_t kalos_op_input_size[] = {
-#define KALOS_OP(x, in, out, args) in, 
-#include "_kalos_constants.inc"
-};
-static const int8_t kalos_op_output_size[] = {
-#define KALOS_OP(x, in, out, args) out, 
-#include "_kalos_constants.inc"
-};
+#define PC_DONE 0xffff
 
 typedef struct kalos_state_internal {
     KALOS_RUN_ENVIRONMENT;
@@ -341,6 +333,10 @@ static kalos_value op_getindex(kalos_run_state* state, kalos_op op, kalos_object
     return object->getindex((kalos_state*)state, &object, index);
 }
 
+static void op_end(kalos_state_internal* state, kalos_op op) {
+    state->pc = PC_DONE;
+}
+
 kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch, kalos_state* state_provided) {
     kalos_state_internal* state = state_provided->alloc(sizeof(kalos_state_internal));
     if (!state) {
@@ -371,7 +367,7 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
     state->locals = &state->stack->stack[original_stack_index];
     state->stack->stack_index += header->locals_size;
     size_t script_size = ((const kalos_script_header kalos_far*)state->script)->length;
-    for (;;) {
+    while (state->pc != PC_DONE) {
         if (state->pc >= script_size) {
             state->error(0, "Internal error");
             goto done;
@@ -387,19 +383,7 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             continue;
         }
         int stack_index = state->stack->stack_index;
-        if (op != KALOS_OP_DROP && op != KALOS_OP_PUSH_INTEGER && op != KALOS_OP_PUSH_STRING
-            && op != KALOS_OP_PUSH_TRUE && op != KALOS_OP_PUSH_FALSE) {
-            if (kalos_op_input_size[op] != -1) {
-                ENSURE_STACK(kalos_op_input_size[op]);
-                if (kalos_op_output_size[op] != -1 && kalos_op_output_size[op] > kalos_op_input_size[op]) {
-                    ENSURE_STACK_SPACE(kalos_op_output_size[op] - kalos_op_input_size[op]);
-                }
-                state->stack->stack_index -= kalos_op_input_size[op];
-            }
-        }
         switch (op) {
-            case KALOS_OP_END:
-                goto done;
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
@@ -409,7 +393,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 break;
             }
             case KALOS_OP_ITERATOR_NEXT: {
-                state->stack->stack_index++; // push the iterator back on the stack
                 kalos_value* iterator = peek(state->stack, 0);
                 bool done;
                 if (iterator->type != KALOS_VALUE_OBJECT) {
@@ -496,12 +479,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             default:
                 kalos_internal_error((kalos_state*)state); // impossible
                 break;
-        }
-
-        // Confirm stack is correct
-        if (kalos_op_input_size[op] != -1 && kalos_op_output_size[op] != -1) {
-            int diff = state->stack->stack_index - stack_index;
-            ASSERT(diff == kalos_op_output_size[op] - kalos_op_input_size[op]);
         }
     }
 
