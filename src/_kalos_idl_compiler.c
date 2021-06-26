@@ -360,11 +360,9 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 }
 
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
-    // TODO: Watcom takes forever to compile if these aren't static
     const char IDL_COMPILER_SCRIPT[] = {
         #include "_kalos_idl_compiler.kalos.inc"
     };
-
     const char IDL_COMPILER_IDL[] = {
         #include "_kalos_idl_compiler.kidl.inc"
     };
