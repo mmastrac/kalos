@@ -26,11 +26,11 @@ CFLAGS=-c -march=i86 -Wall -Werror -std=c99 \
 	-mcmodel=$(WATCOM_MODEL) -O3 -frerun-optimizer -floop-optimize -funroll-loops -fno-stack-check
 
 WATCOM=docker run --rm \
-                -v $(ROOTDIR)/src:/src \
-                -v $(SRCDIR):/src2 \
-                -v $(DOSOUTDIR):/obj \
-                -v $(OUTDIR):/out \
-                mmastrac/openwatcom:2021-05-01
+	-v $(ROOTDIR)/src:/src/ \
+	-v $(DOSOUTDIR):/obj/ \
+	-v $(OUTDIR):/out/ \
+	-v $(SRCDIR):/src2/ \
+	mmastrac/openwatcom:2021-05-01
 CC=$(WATCOM) owcc
 
 $(SRCDIR)/dos_dispatch.inc: $(OUTDIR)/compiler $(SRCDIR)/dos.kidl
