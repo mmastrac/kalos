@@ -63,7 +63,7 @@ struct kalos_value {
     kalos_value_union value;
 };
 
-#define KALOS_STACK_SIZE 64
+#define KALOS_STACK_SIZE 96
 
 typedef void (*stack_error)(const char* message);
 

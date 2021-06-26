@@ -98,5 +98,10 @@ idl {
         fn SUBTRACT(n: number, n2: number): number = op_number_op;
         fn DIVIDE(n: number, n2: number): number = op_number_op;
         fn MODULUS(n: number, n2: number): number = op_number_op;
+
+        fn IDL(o: object) = op_idl;
+        fn GETINDEX(o: object, n: number): any = op_getindex;
+        fn GOSUB(params: any...) = op_gosub;
+        fn GOSUB_NORET(params: any...) = op_gosub;
     }
 }

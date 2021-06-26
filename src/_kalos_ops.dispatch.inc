@@ -795,6 +795,53 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
+	// id=50 name=IDL arg_count=1 binding=fn op_idl
+	if (K__match(/*id=*/50, /*args=*/1, /*name=*/IDL)) {
+		LOG("Invoke %s", "IDL");
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			op_idl((void*)state, op, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	// id=51 name=GETINDEX arg_count=2 binding=fn op_getindex
+	if (K__match(/*id=*/51, /*args=*/2, /*name=*/GETINDEX)) {
+		LOG("Invoke %s", "GETINDEX");
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_object, K__t_number)) {
+			K__any x = op_getindex((void*)state, op, K__arg_object(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_any(stack, x);
+			return true;
+		}
+	}
+
+	// id=52 name=GOSUB arg_count=0 binding=fn op_gosub
+	if (K__match(/*id=*/52, /*args=*/0, /*name=*/GOSUB)) {
+		LOG("Invoke %s", "GOSUB");
+		const int vararg_count = kalos_stack_vararg_count(stack);
+		const int arg_count = 1 + vararg_count;
+		if (kalos_stack_setup_0(state, arg_count)) {
+			op_gosub((void*)state, op, vararg_count, kalos_stack_vararg_start(stack, vararg_count));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	// id=53 name=GOSUB_NORET arg_count=0 binding=fn op_gosub
+	if (K__match(/*id=*/53, /*args=*/0, /*name=*/GOSUB_NORET)) {
+		LOG("Invoke %s", "GOSUB_NORET");
+		const int vararg_count = kalos_stack_vararg_count(stack);
+		const int arg_count = 1 + vararg_count;
+		if (kalos_stack_setup_0(state, arg_count)) {
+			op_gosub((void*)state, op, vararg_count, kalos_stack_vararg_start(stack, vararg_count));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
 	return false;
 }
 

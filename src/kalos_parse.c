@@ -512,8 +512,8 @@ static struct pending_op parse_function_call_local(struct parse_state* parse_sta
     TRY_EXIT;
     struct pending_op op = {0};
     op.op = KALOS_OP_GOSUB;
-    op.data[0] = fn->fn_state.pc;
-    op.data[1] = fn->fn_state.param_count;
+    op.data[0] = fn->fn_state.param_count;
+    op.data[1] = fn->fn_state.pc;
     return op;
 }
 
@@ -700,8 +700,7 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
         }
     } else if (pending->op == KALOS_OP_GOSUB || pending->op == KALOS_OP_GOSUB_NORET) {
         TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[1]));
-        TRY(parse_push_op(parse_state, pending->op));
+        TRY(parse_push_op_1(parse_state, pending->op, pending->data[1]));
     } else if (pending->op == KALOS_OP_GETPROP || pending->op == KALOS_OP_SETPROP) {
         if (parse_state->dispatch_name) {
             TRY(parse_push_string(parse_state, pending->sdata[0]));

@@ -54,6 +54,13 @@ static void far_memcpy(const void* near_ptr, const uint8_t kalos_far* far_ptr, s
     }
 }
 
+static kalos_int read_inline_integer(kalos_state_internal* state) {
+    kalos_int int_value;
+    far_memcpy(&int_value, &state->script[state->pc], sizeof(int_value));
+    state->pc += sizeof(kalos_int);
+    return int_value;
+}
+
 static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalos_int b) {
     if (op == KALOS_OP_DIVIDE && b == 0) {
         return 0;
@@ -164,6 +171,18 @@ static void op_goto_if(kalos_state_internal* state, kalos_op op, kalos_int flag,
     if (flag) {
         state->pc = pc;
     }
+}
+
+void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section_header kalos_far* header, bool keep_ret);
+
+static void op_gosub(kalos_state_internal* state, kalos_op op, kalos_int param_count, kalos_value* v) {
+    kalos_int pc = read_inline_integer(state);
+    // Save and restore the stack to where the subroutine expects it to be
+    state->stack->stack_index -= param_count + 1;
+    const kalos_section_header kalos_far* header = (const kalos_section_header kalos_far*)&state->script[pc];
+    pc += sizeof(kalos_section_header);
+    kalos_trigger_pc((kalos_run_state*)state, pc, header, op == KALOS_OP_GOSUB);
+    state->stack->stack_index += param_count + 1;
 }
 
 static kalos_int op_unary_number(kalos_state* state, kalos_op op, kalos_int v) {
@@ -278,13 +297,6 @@ static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_o
     return string;
 }
 
-static kalos_int read_inline_integer(kalos_state_internal* state) {
-    kalos_int int_value;
-    far_memcpy(&int_value, &state->script[state->pc], sizeof(int_value));
-    state->pc += sizeof(kalos_int);
-    return int_value;
-}
-
 static kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
     return read_inline_integer(state);
 }
@@ -327,6 +339,35 @@ static kalos_value op_load(kalos_state_internal* state, kalos_op op, kalos_int s
 
 static kalos_object_ref op_make_list(kalos_state_internal* state, kalos_op op, kalos_int count, kalos_value* v) {
     return kalos_allocate_list((kalos_state*)state, count, v);
+}
+
+static void op_idl(kalos_state_internal* state, kalos_op op, kalos_object_ref* idl) {
+    kalos_string s = (*idl)->tostring((kalos_state*)state, idl);
+    LOG("%s", kalos_string_c((kalos_state*)state, s));
+    kalos_string_release((kalos_state*)state, s);
+    if (!state->dispatch->idl) {
+        kalos_value_error((kalos_state*)state);
+        return;
+    }
+    kalos_value v;
+    v.type = KALOS_VALUE_OBJECT;
+    v.value.object = *idl;
+    state->dispatch->idl((kalos_run_state*)state, &v);
+}
+
+static void op_getprop(kalos_run_state* state, kalos_op op, kalos_object_ref* object_, kalos_int prop) {
+    kalos_object_ref object = *object_;
+    if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state, &object, prop, 0, state->stack)) {
+        kalos_value_error((kalos_state*)state);
+    }
+}
+
+static kalos_value op_getindex(kalos_run_state* state, kalos_op op, kalos_object_ref* object_, kalos_int index) {
+    kalos_object_ref object = *object_;
+    if (!object->getindex) {
+        kalos_value_error((kalos_state*)state);
+    }
+    return object->getindex((kalos_state*)state, &object, index);
 }
 
 kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch, kalos_state* state_provided) {
@@ -391,19 +432,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
                 break;
-            case KALOS_OP_IDL: {
-                kalos_value v = kalos_value_move((kalos_state*)state, peek(state->stack, -1));
-                kalos_string s = v.value.object->tostring((kalos_state*)state, &v.value.object);
-                LOG("%s", kalos_string_c((kalos_state*)state, s));
-                kalos_string_release((kalos_state*)state, s);
-                if (!state->dispatch->idl) {
-                    kalos_value_error((kalos_state*)state);
-                    return;
-                }
-                state->dispatch->idl(state_, &v);
-                kalos_clear((kalos_state*)state, &v);
-                break;
-            }
             case KALOS_OP_DUP: {
                 kalos_value* v = peek(state->stack, 0);
                 kalos_value_clone_to((kalos_state*)state, v, push_raw(state->stack));
@@ -420,16 +448,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 kalos_value next = iterator->value.object->iternext((kalos_state*)state, &iterator->value.object, &done);
                 push_bool(state->stack, done);
                 kalos_value_move_to((kalos_state*)state, &next, push_raw(state->stack));
-                break;
-            }
-            case KALOS_OP_GOSUB:
-            case KALOS_OP_GOSUB_NORET: {
-                kalos_int param_count = pop(state->stack)->value.number;
-                kalos_int pc = pop(state->stack)->value.number;
-                state->stack->stack_index -= param_count;
-                const kalos_section_header kalos_far* header = (const kalos_section_header kalos_far*)&state->script[pc];
-                pc += sizeof(kalos_section_header);
-                kalos_trigger_pc(state_, pc, header, op == KALOS_OP_GOSUB);
                 break;
             }
             case KALOS_OP_CALL_NORET:
@@ -501,17 +519,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                     kalos_value_error((kalos_state*)state);
                     break;
                 }
-                kalos_object_release((kalos_state*)state, &object);
-                break;
-            }
-            case KALOS_OP_GETINDEX: {
-                int index = pop(state->stack)->value.number;
-                kalos_object_ref object = pop(state->stack)->value.object;
-                if (!object->getindex) {
-                    kalos_value_error((kalos_state*)state);
-                    break;
-                }
-                *push_raw(state->stack) = object->getindex((kalos_state*)state, &object, index);
                 kalos_object_release((kalos_state*)state, &object);
                 break;
             }
