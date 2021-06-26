@@ -327,12 +327,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=25 name=EQUAL arg_count=2 binding=fn op_number_op
+	// id=25 name=EQUAL arg_count=2 binding=c @0==@1
 	if (K__match(/*id=*/25, /*args=*/2, /*name=*/EQUAL)) {
 		LOG("Invoke %s", "EQUAL");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))==(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -363,12 +363,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=26 name=NOT_EQUAL arg_count=2 binding=fn op_number_op
+	// id=26 name=NOT_EQUAL arg_count=2 binding=c @0!=@1
 	if (K__match(/*id=*/26, /*args=*/2, /*name=*/NOT_EQUAL)) {
 		LOG("Invoke %s", "NOT_EQUAL");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))!=(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -399,12 +399,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=27 name=GT arg_count=2 binding=fn op_number_op
+	// id=27 name=GT arg_count=2 binding=c @0>@1
 	if (K__match(/*id=*/27, /*args=*/2, /*name=*/GT)) {
 		LOG("Invoke %s", "GT");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))>(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -423,12 +423,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=28 name=GTE arg_count=2 binding=fn op_number_op
+	// id=28 name=GTE arg_count=2 binding=c @0>=@1
 	if (K__match(/*id=*/28, /*args=*/2, /*name=*/GTE)) {
 		LOG("Invoke %s", "GTE");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))>=(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -447,12 +447,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=29 name=LT arg_count=2 binding=fn op_number_op
+	// id=29 name=LT arg_count=2 binding=c @0<@1
 	if (K__match(/*id=*/29, /*args=*/2, /*name=*/LT)) {
 		LOG("Invoke %s", "LT");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))<(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -471,12 +471,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=30 name=LTE arg_count=2 binding=fn op_number_op
+	// id=30 name=LTE arg_count=2 binding=c @0<=@1
 	if (K__match(/*id=*/30, /*args=*/2, /*name=*/LTE)) {
 		LOG("Invoke %s", "LTE");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_number(K__arg(arg_count, 1)))<=(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -507,12 +507,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=32 name=ADD arg_count=2 binding=fn op_number_op
+	// id=32 name=ADD arg_count=2 binding=c @0+@1
 	if (K__match(/*id=*/32, /*args=*/2, /*name=*/ADD)) {
 		LOG("Invoke %s", "ADD");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))+(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
@@ -543,12 +543,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=33 name=MULTIPLY arg_count=2 binding=fn op_number_op
+	// id=33 name=MULTIPLY arg_count=2 binding=c @0*@1
 	if (K__match(/*id=*/33, /*args=*/2, /*name=*/MULTIPLY)) {
 		LOG("Invoke %s", "MULTIPLY");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))*(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
@@ -627,12 +627,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=38 name=LOGICAL_AND arg_count=2 binding=fn op_number_op
+	// id=38 name=LOGICAL_AND arg_count=2 binding=c @0&&@1
 	if (K__match(/*id=*/38, /*args=*/2, /*name=*/LOGICAL_AND)) {
 		LOG("Invoke %s", "LOGICAL_AND");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_bool, K__t_bool)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_bool(K__arg(arg_count, 1)), K__arg_bool(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_bool(K__arg(arg_count, 1)))&&(K__arg_bool(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -651,12 +651,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=39 name=LOGICAL_OR arg_count=2 binding=fn op_number_op
+	// id=39 name=LOGICAL_OR arg_count=2 binding=c @0||@1
 	if (K__match(/*id=*/39, /*args=*/2, /*name=*/LOGICAL_OR)) {
 		LOG("Invoke %s", "LOGICAL_OR");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_bool, K__t_bool)) {
-			K__bool x = op_number_op((void*)state, op, K__arg_bool(K__arg(arg_count, 1)), K__arg_bool(K__arg(arg_count, 2)));
+			K__bool x = ((K__arg_bool(K__arg(arg_count, 1)))||(K__arg_bool(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -675,120 +675,120 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=40 name=MINIMUM arg_count=2 binding=fn op_number_op
+	// id=40 name=MINIMUM arg_count=2 binding=c min(@0, @1)
 	if (K__match(/*id=*/40, /*args=*/2, /*name=*/MINIMUM)) {
 		LOG("Invoke %s", "MINIMUM");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = (min((K__arg_number(K__arg(arg_count, 1))), (K__arg_number(K__arg(arg_count, 2)))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=41 name=MAXIMUM arg_count=2 binding=fn op_number_op
+	// id=41 name=MAXIMUM arg_count=2 binding=c max(@0, @1)
 	if (K__match(/*id=*/41, /*args=*/2, /*name=*/MAXIMUM)) {
 		LOG("Invoke %s", "MAXIMUM");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = (max((K__arg_number(K__arg(arg_count, 1))), (K__arg_number(K__arg(arg_count, 2)))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=42 name=LEFT_SHIFT arg_count=2 binding=fn op_number_op
+	// id=42 name=LEFT_SHIFT arg_count=2 binding=c @0<<@1
 	if (K__match(/*id=*/42, /*args=*/2, /*name=*/LEFT_SHIFT)) {
 		LOG("Invoke %s", "LEFT_SHIFT");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))<<(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=43 name=RIGHT_SHIFT arg_count=2 binding=fn op_number_op
+	// id=43 name=RIGHT_SHIFT arg_count=2 binding=c @0>>@1
 	if (K__match(/*id=*/43, /*args=*/2, /*name=*/RIGHT_SHIFT)) {
 		LOG("Invoke %s", "RIGHT_SHIFT");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))>>(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=44 name=BIT_AND arg_count=2 binding=fn op_number_op
+	// id=44 name=BIT_AND arg_count=2 binding=c @0&@1
 	if (K__match(/*id=*/44, /*args=*/2, /*name=*/BIT_AND)) {
 		LOG("Invoke %s", "BIT_AND");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))&(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=45 name=BIT_OR arg_count=2 binding=fn op_number_op
+	// id=45 name=BIT_OR arg_count=2 binding=c @0|@1
 	if (K__match(/*id=*/45, /*args=*/2, /*name=*/BIT_OR)) {
 		LOG("Invoke %s", "BIT_OR");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))|(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=46 name=BIT_XOR arg_count=2 binding=fn op_number_op
+	// id=46 name=BIT_XOR arg_count=2 binding=c @0^@1
 	if (K__match(/*id=*/46, /*args=*/2, /*name=*/BIT_XOR)) {
 		LOG("Invoke %s", "BIT_XOR");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))^(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=47 name=SUBTRACT arg_count=2 binding=fn op_number_op
+	// id=47 name=SUBTRACT arg_count=2 binding=c @0-@1
 	if (K__match(/*id=*/47, /*args=*/2, /*name=*/SUBTRACT)) {
 		LOG("Invoke %s", "SUBTRACT");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))-(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=48 name=DIVIDE arg_count=2 binding=fn op_number_op
+	// id=48 name=DIVIDE arg_count=2 binding=c @0/@1
 	if (K__match(/*id=*/48, /*args=*/2, /*name=*/DIVIDE)) {
 		LOG("Invoke %s", "DIVIDE");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))/(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=49 name=MODULUS arg_count=2 binding=fn op_number_op
+	// id=49 name=MODULUS arg_count=2 binding=c @0%@1
 	if (K__match(/*id=*/49, /*args=*/2, /*name=*/MODULUS)) {
 		LOG("Invoke %s", "MODULUS");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			K__number x = ((K__arg_number(K__arg(arg_count, 1)))%(K__arg_number(K__arg(arg_count, 2))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;

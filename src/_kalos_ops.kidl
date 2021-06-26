@@ -36,40 +36,40 @@ idl {
         fn RANGE(n: number, n2: number): object = op_range;
 
         fn EQUAL {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0==@1";
             (s: string, s2: string): bool = op_compare_string;
             (x: any, x2: any): bool = op_compare_type;
         }
         fn NOT_EQUAL {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0!=@1";
             (s: string, s2: string): bool = op_compare_string;
             (x: any, x2: any): bool = op_compare_type;
         }
         fn GT {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0>@1";
             (s: string, s2: string): bool = op_compare_string;
         }
         fn GTE {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0>=@1";
             (s: string, s2: string): bool = op_compare_string;
         }
         fn LT {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0<@1";
             (s: string, s2: string): bool = op_compare_string;
         }
         fn LTE {
-            (n: number, n2: number): bool = op_number_op;
+            (n: number, n2: number): bool = c "@0<=@1";
             (s: string, s2: string): bool = op_compare_string;
         }
 
         fn REPLACE(s: string, s1: string, s2: string): string = op_replace;
         fn ADD {
-            (n: number, n2: number): number = op_number_op;
+            (n: number, n2: number): number = c "@0+@1";
             (s: string, s2: any): string = op_string_add;
             (s: any, s2: string): string = op_string_add2;
         }
         fn MULTIPLY {
-            (n: number, n2: number): number = op_number_op;
+            (n: number, n2: number): number = c "@0*@1";
             (s: string, n: number): string = op_string_multiply;
             (n: number, s: string): string = op_string_multiply2;
         }
@@ -80,24 +80,24 @@ idl {
         fn ABS(n: number): number = c "abs(@0)";
 
         fn LOGICAL_AND {
-            (b: bool, b2: bool): bool = op_number_op;
+            (b: bool, b2: bool): bool = c "@0&&@1";
             (x: any, x2: any): any = op_logical_op;
         }
         fn LOGICAL_OR {
-            (b: bool, b2: bool): bool = op_number_op;
+            (b: bool, b2: bool): bool = c "@0||@1";
             (x: any, x2: any): any = op_logical_op;
         }
 
-        fn MINIMUM(n: number, n2: number): number = op_number_op;
-        fn MAXIMUM(n: number, n2: number): number = op_number_op;
-        fn LEFT_SHIFT(n: number, n2: number): number = op_number_op;
-        fn RIGHT_SHIFT(n: number, n2: number): number = op_number_op;
-        fn BIT_AND(n: number, n2: number): number = op_number_op;
-        fn BIT_OR(n: number, n2: number): number = op_number_op;
-        fn BIT_XOR(n: number, n2: number): number = op_number_op;
-        fn SUBTRACT(n: number, n2: number): number = op_number_op;
-        fn DIVIDE(n: number, n2: number): number = op_number_op;
-        fn MODULUS(n: number, n2: number): number = op_number_op;
+        fn MINIMUM(n: number, n2: number): number = c "min(@0, @1)";
+        fn MAXIMUM(n: number, n2: number): number = c "max(@0, @1)";
+        fn LEFT_SHIFT(n: number, n2: number): number = c "@0<<@1";
+        fn RIGHT_SHIFT(n: number, n2: number): number = c "@0>>@1";
+        fn BIT_AND(n: number, n2: number): number = c "@0&@1";
+        fn BIT_OR(n: number, n2: number): number = c "@0|@1";
+        fn BIT_XOR(n: number, n2: number): number = c "@0^@1";
+        fn SUBTRACT(n: number, n2: number): number = c "@0-@1";
+        fn DIVIDE(n: number, n2: number): number = c "@0/@1";
+        fn MODULUS(n: number, n2: number): number = c "@0%@1";
 
         fn IDL(o: object) = op_idl;
         fn GETINDEX(o: object, n: number): any = op_getindex;
