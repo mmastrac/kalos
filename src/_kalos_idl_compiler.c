@@ -48,7 +48,6 @@ kalos_binding kalos_idl_binding(kalos_module_builder builder, kalos_state* state
 }
 
 kalos_property kalos_idl_property(kalos_module_builder builder, kalos_state* state, kalos_object_ref prop_list) {
-    kalos_module_string prop_name_index = IDL_LIST_STRING(prop_list, 1);
     kalos_binding read_binding = kalos_idl_binding(builder, state, IDL_LIST_OBJECT(prop_list, 3));
     kalos_binding write_binding = kalos_idl_binding(builder, state, IDL_LIST_OBJECT(prop_list, 4));
     return kalos_module_create_property(builder, IDL_LIST_NUMBER(prop_list, 2), read_binding, write_binding);
@@ -362,11 +361,11 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
     // TODO: Watcom takes forever to compile if these aren't static
-    static const char IDL_COMPILER_SCRIPT[] = {
+    const char IDL_COMPILER_SCRIPT[] = {
         #include "_kalos_idl_compiler.kalos.inc"
     };
 
-    static const char IDL_COMPILER_IDL[] = {
+    const char IDL_COMPILER_IDL[] = {
         #include "_kalos_idl_compiler.kidl.inc"
     };
     script_environment = state;

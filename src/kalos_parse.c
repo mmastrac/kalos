@@ -32,7 +32,6 @@ static kalos_builtin kalos_builtins[] = {
 
 static const char* ERROR_INVALID_TOKEN = "Invalid token";
 static const char* ERROR_UNEXPECTED_TOKEN = "Unexpected token";
-static const char* ERROR_UNEXPECTED_HANDLER = "Unexpected handler";
 static const char* ERROR_BREAK_CONTINUE_WITHOUT_LOOP = "Break or continue but no loop";
 static const char* ERROR_INTERNAL_ERROR = "Internal error";
 static const char* ERROR_UNKNOWN_VARIABLE = "Unknown variable";
@@ -45,12 +44,9 @@ static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
 static const char* ERROR_EXPECTED_MODULE = "Expected module";
-static const char* ERROR_EXPECTED_FUNCTION = "Expected function";
 static const char* ERROR_ILLEGAL_IN_THIS_CONTEXT = "Illegal in this context";
 static const char* ERROR_DUPLICATE_IMPORT = "Duplicate import";
 static const char* ERROR_UNEXPECTED_PARAMETERS = "Unexpected parameters";
-static const char* ERROR_PROPERTY_NOT_WRITABLE = "Property not writable";
-static const char* ERROR_PROPERTY_NOT_READABLE = "Property not readable";
 
 #define KALOS_VAR_SLOT_COUNT 32
 #define KALOS_VAR_MAX_LENGTH 16
@@ -609,7 +605,6 @@ static void parse_word_statement(struct parse_state* parse_state) {
 
 static void parse_word_expression(struct parse_state* parse_state) {
     struct pending_ops pending;
-    kalos_token peek;
     TRY(pending = parse_word_recursively(parse_state));
     TRY(parse_flush_pending_op(parse_state, &pending, false, true));
     TRY_EXIT;
@@ -896,7 +891,7 @@ static void parse_string_expression(struct parse_state* parse_state, kalos_token
 }
 
 static void parse_expression_part(struct parse_state* parse_state) {
-    kalos_token token, peek;
+    kalos_token token;
 
     TRY(token = lex(parse_state));
     if (token == KALOS_TOKEN_PLUS) {
@@ -1131,7 +1126,7 @@ void parse_idl_type(struct parse_state* parse_state) {
 }
 
 void parse_idl_args(struct parse_state* parse_state) {
-    kalos_token peek, token;
+    kalos_token peek;
     TRY(peek = lex_peek(parse_state));
     int args = 0;
     if (peek == KALOS_TOKEN_PAREN_OPEN) {

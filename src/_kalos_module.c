@@ -4,9 +4,6 @@
 
 void* kalos_module_get_list_item(kalos_module_parsed parsed, kalos_int offset) {
     ASSERT(offset > 0);
-    if (offset == 0) {
-        int x = 1;
-    }
     return PTR_BYTE_OFFSET(parsed.buffer, offset);
 }
 
@@ -41,7 +38,6 @@ kalos_module* kalos_module_get_module(kalos_module_parsed parsed, kalos_int modu
 
 kalos_export* kalos_module_find_export(kalos_module_parsed parsed, kalos_module* module, const char* name) {
     kalos_int export_offset = module->export_list.head;
-    uint16_t i = 0;
     while (export_offset) {
         kalos_export* e = kalos_module_get_list_item(parsed, export_offset);
         if (strcmp(kalos_module_get_string(parsed, e->name_index), name) == 0) {
