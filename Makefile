@@ -38,12 +38,12 @@ WATCOM_CFLAGS=-march=i86 -Wall -Werror -std=c99 \
 	-mcmodel=$(WATCOM_MODEL) -O3 -frerun-optimizer -floop-optimize -funroll-loops -fno-stack-check
 #TODO: re-add -fmacro-backtrace-limit=0
 TEST_CFLAGS=-std=c99 \
-	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-gnu-flexible-array-initializer -ftrapv \
+	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-overlength-strings -Wno-gnu-flexible-array-initializer -ftrapv \
 	-DIS_TEST -g -O0 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 HOST_CFLAGS=-std=c99 \
-	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-gnu-flexible-array-initializer -ftrapv \
+	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-overlength-strings -Wno-gnu-flexible-array-initializer -ftrapv \
 	-g -O0 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
@@ -117,10 +117,8 @@ gen-compiler: $(OUTDIR)/compiler
 	rm -rf $(GENDIR)/compiler || true
 	mkdir -p $(GENDIR)/compiler
 	cp -R $(SRCDIR)/* $(GENDIR)/compiler
-	xxd -i < src/_kalos_idl_compiler.kidl > $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
-	echo , 0 >> $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
-	xxd -i < src/_kalos_idl_compiler.kalos > $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
-	echo , 0 >> $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
+	$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
+	$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kalos $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
 	$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
 	$(OUTDIR)/bootstrap-compiler dispatch src/_kalos_idl_compiler.kidl src/_kalos_idl_compiler.dispatch.inc
 	cp $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc $(SRCDIR)

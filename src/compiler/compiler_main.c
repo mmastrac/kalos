@@ -170,10 +170,14 @@ int compile_stringify(const char* input, const char* output) {
     fprintf(out, "\"");
     for (int i = 0; i < n; i++) {
         uint8_t c = in.buffer[i];
-        if (c >= ' ' && c < 127) {
-            fprintf(out, "%c", c);
+        if (c == '\\') {
+            fprintf(out, "\\\\");
+        } else if (c == '"') {
+            fprintf(out, "\\\"");
         } else if (c == '\n') {
             fprintf(out, "\\n\"\n\"");
+        } else if (c >= ' ' && c < 127) {
+            fprintf(out, "%c", c);
         } else {
             fprintf(out, "\\x%02x", c);
         }
