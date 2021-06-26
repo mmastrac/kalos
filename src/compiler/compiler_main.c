@@ -91,8 +91,10 @@ int help(const char* message, const char* cmd) {
         "  %s [-v] compile idl-file source-file compiled-file\n"
         "  %s [-v] dump compiled-file\n"
         "  %s [-v] idl idl-source-file idl-file\n"
-        "  %s [-v] dispatch idl-source-file c-file\n",
-        cmd, cmd, cmd, cmd);
+        "  %s [-v] dispatch idl-source-file c-file\n"
+        "  %s [-v] hexify source-file c-file\n"
+        "  %s [-v] stringify source-file c-file\n",
+        cmd, cmd, cmd, cmd, cmd, cmd);
     return 1;
 }
 
@@ -144,6 +146,40 @@ int compile_script(int verbose, const char* idl, const char* input, const char* 
     }
     kalos_buffer_resize(&script, res.size);
     write_file(output, script.buffer, kalos_buffer_size(script));
+    return 0;
+}
+
+int compile_hexify(const char* input, const char* output) {
+    size_t n;
+    kalos_buffer in = read_file(input, &n);
+    FILE* out = fopen(output, "w");
+    for (int i = 0; i < n; i++) {
+        fprintf(out, "0x%02x,", in.buffer[i]);
+        if (i % 32 == 0) {
+            fprintf(out, "\n");
+        }
+    }
+    fclose(out);
+    return 0;
+}
+
+int compile_stringify(const char* input, const char* output) {
+    size_t n;
+    kalos_buffer in = read_file(input, &n);
+    FILE* out = fopen(output, "w");
+    fprintf(out, "\"");
+    for (int i = 0; i < n; i++) {
+        uint8_t c = in.buffer[i];
+        if (c >= ' ' && c < 127) {
+            fprintf(out, "%c", c);
+        } else if (c == '\n') {
+            fprintf(out, "\\n\"\n\"");
+        } else {
+            fprintf(out, "\\x%02x", c);
+        }
+    }
+    fprintf(out, "\"\n");
+    fclose(out);
     return 0;
 }
 
@@ -239,6 +275,20 @@ int main(int argc, const char** argv) {
         }
         const char* input = argv[idx++];
         return dump_script(verbose, input);
+    } else if (strcmp(mode, "hexify") == 0) {
+        if (argc - idx != 2) {
+            return help("not enough arguments to hexify", argv[0]);
+        }
+        const char* input = argv[idx++];
+        const char* output = argv[idx++];
+        return compile_hexify(input, output);
+    } else if (strcmp(mode, "stringify") == 0) {
+        if (argc - idx != 2) {
+            return help("not enough arguments to stringify", argv[0]);
+        }
+        const char* input = argv[idx++];
+        const char* output = argv[idx++];
+        return compile_stringify(input, output);
     } else {
         return help("invalid mode", argv[0]);
     }
