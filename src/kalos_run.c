@@ -379,9 +379,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);
-        if (kalos_run_dispatch_ops(state_, op, state->stack)) {
-            continue;
-        }
         int stack_index = state->stack->stack_index;
         switch (op) {
             case KALOS_OP_DEBUGGER: 
@@ -477,7 +474,10 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 break;
             }
             default:
-                kalos_internal_error((kalos_state*)state); // impossible
+                if (!kalos_run_dispatch_ops(state_, op, state->stack)) {
+                    kalos_internal_error((kalos_state*)state); // should be impossible
+                    return;
+                }
                 break;
         }
     }
