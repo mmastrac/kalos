@@ -23,7 +23,7 @@ idl {
         fn TO_STRING(x: any): string = op_to_string;
         fn TO_BOOL(x: any): bool = op_to_bool;
         fn LOGICAL_NOT {
-            (x: number): bool = op_unary_number;
+            (x: number): bool = c "!@0";
             (x: any): bool = op_to_bool;
         }
 
@@ -74,10 +74,10 @@ idl {
             (n: number, s: string): string = op_string_multiply2;
         }
 
-        fn NEGATE(n: number): number = op_unary_number;
-        fn POSIVATE(n: number): number = op_unary_number;
-        fn BITWISE_NOT(n: number): number = op_unary_number;
-        fn ABS(n: number): number = op_unary_number;
+        fn NEGATE(n: number): number = c "-@0";
+        fn POSIVATE(n: number): number = c "+@0";
+        fn BITWISE_NOT(n: number): number = c "~@0";
+        fn ABS(n: number): number = c "abs(@0)";
 
         fn LOGICAL_AND {
             (b: bool, b2: bool): bool = op_number_op;

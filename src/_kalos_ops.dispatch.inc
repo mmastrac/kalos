@@ -231,12 +231,12 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=18 name=LOGICAL_NOT arg_count=1 binding=fn op_unary_number
+	// id=18 name=LOGICAL_NOT arg_count=1 binding=c !@0
 	if (K__match(/*id=*/18, /*args=*/1, /*name=*/LOGICAL_NOT)) {
 		LOG("Invoke %s", "LOGICAL_NOT");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			K__bool x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+			K__bool x = (!(K__arg_number(K__arg(arg_count, 1))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_bool(stack, x);
 			return true;
@@ -579,48 +579,48 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=34 name=NEGATE arg_count=1 binding=fn op_unary_number
+	// id=34 name=NEGATE arg_count=1 binding=c -@0
 	if (K__match(/*id=*/34, /*args=*/1, /*name=*/NEGATE)) {
 		LOG("Invoke %s", "NEGATE");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+			K__number x = (-(K__arg_number(K__arg(arg_count, 1))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=35 name=POSIVATE arg_count=1 binding=fn op_unary_number
+	// id=35 name=POSIVATE arg_count=1 binding=c +@0
 	if (K__match(/*id=*/35, /*args=*/1, /*name=*/POSIVATE)) {
 		LOG("Invoke %s", "POSIVATE");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+			K__number x = (+(K__arg_number(K__arg(arg_count, 1))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=36 name=BITWISE_NOT arg_count=1 binding=fn op_unary_number
+	// id=36 name=BITWISE_NOT arg_count=1 binding=c ~@0
 	if (K__match(/*id=*/36, /*args=*/1, /*name=*/BITWISE_NOT)) {
 		LOG("Invoke %s", "BITWISE_NOT");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+			K__number x = (~(K__arg_number(K__arg(arg_count, 1))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=37 name=ABS arg_count=1 binding=fn op_unary_number
+	// id=37 name=ABS arg_count=1 binding=c abs(@0)
 	if (K__match(/*id=*/37, /*args=*/1, /*name=*/ABS)) {
 		LOG("Invoke %s", "ABS");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+			K__number x = (abs((K__arg_number(K__arg(arg_count, 1)))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;

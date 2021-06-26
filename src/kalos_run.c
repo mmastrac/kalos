@@ -185,17 +185,6 @@ static void op_gosub(kalos_state_internal* state, kalos_op op, kalos_int param_c
     state->stack->stack_index += param_count + 1;
 }
 
-static kalos_int op_unary_number(kalos_state* state, kalos_op op, kalos_int v) {
-    switch (op) {
-        case KALOS_OP_NEGATE: return -v;
-        case KALOS_OP_POSIVATE: return +v;
-        case KALOS_OP_BITWISE_NOT: return ~v;
-        case KALOS_OP_ABS: return abs(v);
-        case KALOS_OP_LOGICAL_NOT: return !v;
-        default: kalos_internal_error(state); return v; // impossible
-    }
-}
-
 struct kalos_range {
     kalos_int current;
     kalos_int start;
