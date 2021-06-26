@@ -19,7 +19,6 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define DEBUG 1
 #ifdef IS_TEST
 #include <assert.h>
 #define ASSERT(...) assert(__VA_ARGS__)
