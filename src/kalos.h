@@ -10,10 +10,14 @@
 
 #ifdef __WATCOMC__
 #define kalos_far __far
+#define KALOS_MAYBE_UNUSED_BEGIN _Pragma("off (unreferenced)")
+#define KALOS_MAYBE_UNUSED_END _Pragma("on (unreferenced)")
 #elif __AVR__
 #define kalos_far __flash
 #else
 #define kalos_far 
+#define KALOS_MAYBE_UNUSED_BEGIN
+#define KALOS_MAYBE_UNUSED_END
 #endif
 
 /**

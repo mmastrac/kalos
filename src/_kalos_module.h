@@ -127,8 +127,10 @@ typedef struct kalos_property_address {
 } kalos_property_address;
 #pragma pack(pop)
 
+KALOS_MAYBE_UNUSED_BEGIN
 static const kalos_export_address KALOS_GLOBAL_HANDLER_ADDRESS = { .module_index = -1, .export_index = -1 };
 static const kalos_export_address KALOS_IDL_HANDLER_ADDRESS = { .module_index = -1, .export_index = -2 };
+KALOS_MAYBE_UNUSED_END
 
 static inline kalos_export_address kalos_make_address(kalos_int module_index, kalos_int export_index) {
     struct kalos_export_address res = { module_index, export_index };
