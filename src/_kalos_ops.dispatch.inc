@@ -31,12 +31,12 @@
 #define K__match(id, n, s)        (op == KALOS_OP_##s)
 
 static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, kalos_stack* stack) {
-	// id=1 name=DROP arg_count=1 binding=fn op_drop
+	// id=1 name=DROP arg_count=1 binding=c 
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/DROP)) {
 		LOG("Invoke %s", "DROP");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
-			op_drop((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
+			;
 			kalos_stack_cleanup(state, arg_count);
 			return true;
 		}

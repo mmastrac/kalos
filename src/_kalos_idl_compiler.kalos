@@ -43,7 +43,9 @@ fn write_binding(binding, arg_types, vararg_type) {
             c = replace(c, "@" + index, "(K__arg_{arg}(K__arg(arg_count, {index+1})))");
             index += 1;
         }
-        print("({c})");
+        if (c) {
+            print("({c})");
+        }
     } else {
         print("{binding.value}((void*)state");
         if (in_object) {

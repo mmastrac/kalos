@@ -276,8 +276,6 @@ static kalos_object_ref op_iterator(kalos_state* state, kalos_op op, kalos_objec
     return (*iterable)->iterstart(state, iterable);
 }
 
-static inline void op_drop(kalos_state* state, kalos_op op, kalos_value* value) {}
-
 static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_op op) {
     kalos_state* state = (kalos_state*)internal_state;
     kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script[internal_state->pc]);
@@ -288,10 +286,6 @@ static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_o
 
 static kalos_int op_push_integer(kalos_state_internal* state, kalos_op op) {
     return read_inline_integer(state);
-}
-
-static kalos_int op_push_bool(kalos_state* state, kalos_op op) {
-    return op == KALOS_OP_PUSH_TRUE;
 }
 
 static kalos_string op_format(kalos_state_internal* internal_state, kalos_op op, kalos_value* v) {
