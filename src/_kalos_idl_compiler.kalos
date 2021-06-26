@@ -89,7 +89,7 @@ on open(flags) {
     }
     println("");
     for type in TYPES {
-        define_args("K__clean_", "(stack, x)", type[0], type[4]);
+        define_args("K__final_", "(stack, x)", type[0], "if (retval) {{ push_{type[0]}(stack, x); }} else {{ {type[4]}; }}");
     }
     define_args("K__arg",  "(n, x)", "",    "peek(stack, (n)-(x))");
     define_args("K__arg_", "(x)",    "string", "&((x)->value.string)");
@@ -237,11 +237,7 @@ on module.function(context, function) {
         println(";");
         println("\t\t\tkalos_stack_cleanup(state, arg_count);");
         if overload.return_type != "void" {
-            println("\t\t\tif (retval) {{");
-            println("\t\t\t\tpush_{overload.return_type}(stack, x);");
-            println("\t\t\t}} else {{");
-            println("\t\t\t\tK__clean_{overload.return_type}(stack, x);");
-            println("\t\t\t}}");
+            println("\t\t\tK__final_{overload.return_type}(stack, x);");
         }
         println("\t\t\treturn true;");
         println("\t\t}}");

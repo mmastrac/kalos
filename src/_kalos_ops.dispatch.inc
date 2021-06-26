@@ -17,11 +17,11 @@
 #define K__t_object     KALOS_VALUE_OBJECT
 #define K__t_any        KALOS_VALUE_ANY
 
-#define K__clean_string(stack, x) kalos_string_release((kalos_state*)state, x);
-#define K__clean_number(stack, x) ;
-#define K__clean_bool(stack, x)   ;
-#define K__clean_object(stack, x) kalos_object_release((kalos_state*)state, &x);
-#define K__clean_any(stack, x)    kalos_clear((kalos_state*)state, &x);
+#define K__final_string(stack, x) if (retval) { push_string(stack, x); } else { kalos_string_release((kalos_state*)state, x);; }
+#define K__final_number(stack, x) if (retval) { push_number(stack, x); } else { ;; }
+#define K__final_bool(stack, x)   if (retval) { push_bool(stack, x); } else { ;; }
+#define K__final_object(stack, x) if (retval) { push_object(stack, x); } else { kalos_object_release((kalos_state*)state, &x);; }
+#define K__final_any(stack, x)    if (retval) { push_any(stack, x); } else { kalos_clear((kalos_state*)state, &x);; }
 #define K__arg(n, x)              peek(stack, (n)-(x))
 #define K__arg_string(x)          &((x)->value.string)
 #define K__arg_number(x)          (x)->value.number
@@ -49,11 +49,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__number x = op_push_integer((void*)state, op);
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -65,11 +61,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__string x = op_push_string((void*)state, op);
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -81,11 +73,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__bool x = (1);
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -97,11 +85,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__bool x = (0);
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -114,11 +98,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__object x = op_make_list((void*)state, op, vararg_count, kalos_stack_vararg_start(stack, vararg_count));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_object(stack, x);
-			} else {
-				K__clean_object(stack, x);
-			}
+			K__final_object(stack, x);
 			return true;
 		}
 	}
@@ -152,11 +132,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__any x = op_load((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_any(stack, x);
-			} else {
-				K__clean_any(stack, x);
-			}
+			K__final_any(stack, x);
 			return true;
 		}
 	}
@@ -168,11 +144,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__any x = op_load((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_any(stack, x);
-			} else {
-				K__clean_any(stack, x);
-			}
+			K__final_any(stack, x);
 			return true;
 		}
 	}
@@ -206,11 +178,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			K__string x = op_format((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -222,11 +190,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			K__number x = op_string_number((void*)state, op, K__arg_string(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -238,11 +202,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			K__number x = op_string_number((void*)state, op, K__arg_string(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -254,11 +214,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			K__string x = op_to_string((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -270,11 +226,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			K__bool x = op_to_bool((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -286,11 +238,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__bool x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -302,11 +250,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			K__bool x = op_to_bool((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -318,11 +262,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {
 			K__number x = op_to_int((void*)state, op, K__arg_any(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -334,11 +274,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__string x = op_to_hex_or_char((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -350,11 +286,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__string x = op_to_hex_or_char((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -366,11 +298,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
 			K__object x = op_iterator((void*)state, op, K__arg_object(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_object(stack, x);
-			} else {
-				K__clean_object(stack, x);
-			}
+			K__final_object(stack, x);
 			return true;
 		}
 	}
@@ -382,11 +310,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__object x = op_split((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_object(stack, x);
-			} else {
-				K__clean_object(stack, x);
-			}
+			K__final_object(stack, x);
 			return true;
 		}
 	}
@@ -398,11 +322,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__object x = op_range((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_object(stack, x);
-			} else {
-				K__clean_object(stack, x);
-			}
+			K__final_object(stack, x);
 			return true;
 		}
 	}
@@ -414,11 +334,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -430,11 +346,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -446,11 +358,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_any)) {
 			K__bool x = op_compare_type((void*)state, op, K__arg_any(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -462,11 +370,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -478,11 +382,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -494,11 +394,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_any)) {
 			K__bool x = op_compare_type((void*)state, op, K__arg_any(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -510,11 +406,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -526,11 +418,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -542,11 +430,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -558,11 +442,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -574,11 +454,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -590,11 +466,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -606,11 +478,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -622,11 +490,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_string)) {
 			K__bool x = op_compare_string((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -638,11 +502,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_3(state, arg_count, K__t_string, K__t_string, K__t_string)) {
 			K__string x = op_replace((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)), K__arg_string(K__arg(arg_count, 3)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -654,11 +514,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -670,11 +526,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_any)) {
 			K__string x = op_string_add((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -686,11 +538,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_string)) {
 			K__string x = op_string_add2((void*)state, op, K__arg_any(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -702,11 +550,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -718,11 +562,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_number)) {
 			K__string x = op_string_multiply((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -734,11 +574,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_string)) {
 			K__string x = op_string_multiply2((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_string(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_string(stack, x);
-			} else {
-				K__clean_string(stack, x);
-			}
+			K__final_string(stack, x);
 			return true;
 		}
 	}
@@ -750,11 +586,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -766,11 +598,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -782,11 +610,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -798,11 +622,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
 			K__number x = op_unary_number((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -814,11 +634,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_bool, K__t_bool)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_bool(K__arg(arg_count, 1)), K__arg_bool(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -830,11 +646,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_any)) {
 			K__any x = op_logical_op((void*)state, op, K__arg_any(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_any(stack, x);
-			} else {
-				K__clean_any(stack, x);
-			}
+			K__final_any(stack, x);
 			return true;
 		}
 	}
@@ -846,11 +658,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_bool, K__t_bool)) {
 			K__bool x = op_number_op((void*)state, op, K__arg_bool(K__arg(arg_count, 1)), K__arg_bool(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_bool(stack, x);
-			} else {
-				K__clean_bool(stack, x);
-			}
+			K__final_bool(stack, x);
 			return true;
 		}
 	}
@@ -862,11 +670,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_any, K__t_any)) {
 			K__any x = op_logical_op((void*)state, op, K__arg_any(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_any(stack, x);
-			} else {
-				K__clean_any(stack, x);
-			}
+			K__final_any(stack, x);
 			return true;
 		}
 	}
@@ -878,11 +682,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -894,11 +694,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -910,11 +706,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -926,11 +718,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -942,11 +730,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -958,11 +742,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -974,11 +754,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -990,11 +766,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -1006,11 +778,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -1022,11 +790,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
 			K__number x = op_number_op((void*)state, op, K__arg_number(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
 			kalos_stack_cleanup(state, arg_count);
-			if (retval) {
-				push_number(stack, x);
-			} else {
-				K__clean_number(stack, x);
-			}
+			K__final_number(stack, x);
 			return true;
 		}
 	}
@@ -1049,11 +813,11 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 #undef K__t_bool
 #undef K__t_object
 #undef K__t_any
-#undef K__clean_string
-#undef K__clean_number
-#undef K__clean_bool
-#undef K__clean_object
-#undef K__clean_any
+#undef K__final_string
+#undef K__final_number
+#undef K__final_bool
+#undef K__final_object
+#undef K__final_any
 #undef K__arg
 #undef K__arg_string
 #undef K__arg_number

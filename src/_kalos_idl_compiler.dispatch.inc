@@ -17,11 +17,11 @@
 #define K__t_object     KALOS_VALUE_OBJECT
 #define K__t_any        KALOS_VALUE_ANY
 
-#define K__clean_string(stack, x) kalos_string_release((kalos_state*)state, x);
-#define K__clean_number(stack, x) ;
-#define K__clean_bool(stack, x)   ;
-#define K__clean_object(stack, x) kalos_object_release((kalos_state*)state, &x);
-#define K__clean_any(stack, x)    kalos_clear((kalos_state*)state, &x);
+#define K__final_string(stack, x) if (retval) { push_string(stack, x); } else { kalos_string_release((kalos_state*)state, x);; }
+#define K__final_number(stack, x) if (retval) { push_number(stack, x); } else { ;; }
+#define K__final_bool(stack, x)   if (retval) { push_bool(stack, x); } else { ;; }
+#define K__final_object(stack, x) if (retval) { push_object(stack, x); } else { kalos_object_release((kalos_state*)state, &x);; }
+#define K__final_any(stack, x)    if (retval) { push_any(stack, x); } else { kalos_clear((kalos_state*)state, &x);; }
 #define K__arg(n, x)              peek(stack, (n)-(x))
 #define K__arg_string(x)          &((x)->value.string)
 #define K__arg_number(x)          (x)->value.number
@@ -346,11 +346,11 @@ bool kalos_module_idl_dynamic_dispatch(kalos_run_state* state, const char* modul
 #undef K__t_bool
 #undef K__t_object
 #undef K__t_any
-#undef K__clean_string
-#undef K__clean_number
-#undef K__clean_bool
-#undef K__clean_object
-#undef K__clean_any
+#undef K__final_string
+#undef K__final_number
+#undef K__final_bool
+#undef K__final_object
+#undef K__final_any
 #undef K__arg
 #undef K__arg_string
 #undef K__arg_number
