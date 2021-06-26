@@ -771,24 +771,24 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=48 name=DIVIDE arg_count=2 binding=c @0/@1
+	// id=48 name=DIVIDE arg_count=2 binding=c @1==0?0:(@0/@1)
 	if (K__match(/*id=*/48, /*args=*/2, /*name=*/DIVIDE)) {
 		LOG("Invoke %s", "DIVIDE");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = ((K__arg_number(K__arg(arg_count, 1)))/(K__arg_number(K__arg(arg_count, 2))));
+			K__number x = ((K__arg_number(K__arg(arg_count, 2)))==0?0:((K__arg_number(K__arg(arg_count, 1)))/(K__arg_number(K__arg(arg_count, 2)))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;
 		}
 	}
 
-	// id=49 name=MODULUS arg_count=2 binding=c @0%@1
+	// id=49 name=MODULUS arg_count=2 binding=c @1==0?0:(@0%@1)
 	if (K__match(/*id=*/49, /*args=*/2, /*name=*/MODULUS)) {
 		LOG("Invoke %s", "MODULUS");
 		const int arg_count = 2;
 		if (kalos_stack_setup_2(state, arg_count, K__t_number, K__t_number)) {
-			K__number x = ((K__arg_number(K__arg(arg_count, 1)))%(K__arg_number(K__arg(arg_count, 2))));
+			K__number x = ((K__arg_number(K__arg(arg_count, 2)))==0?0:((K__arg_number(K__arg(arg_count, 1)))%(K__arg_number(K__arg(arg_count, 2)))));
 			kalos_stack_cleanup(state, arg_count);
 			K__final_number(stack, x);
 			return true;

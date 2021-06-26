@@ -96,8 +96,8 @@ idl {
         fn BIT_OR(n: number, n2: number): number = c "@0|@1";
         fn BIT_XOR(n: number, n2: number): number = c "@0^@1";
         fn SUBTRACT(n: number, n2: number): number = c "@0-@1";
-        fn DIVIDE(n: number, n2: number): number = c "@0/@1";
-        fn MODULUS(n: number, n2: number): number = c "@0%@1";
+        fn DIVIDE(n: number, n2: number): number = c "@1==0?0:(@0/@1)";
+        fn MODULUS(n: number, n2: number): number = c "@1==0?0:(@0%@1)";
 
         fn IDL(o: object) = op_idl;
         fn GETINDEX(o: object, n: number): any = op_getindex;
