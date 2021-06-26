@@ -61,23 +61,6 @@ static kalos_int read_inline_integer(kalos_state_internal* state) {
     return int_value;
 }
 
-static kalos_int op_number_op(kalos_state* state, kalos_op op, kalos_int a, kalos_int b) {
-    if (op == KALOS_OP_DIVIDE && b == 0) {
-        return 0;
-    }
-    #define KALOS_OP_C(x, operator) case KALOS_OP_##x: { return a operator b; }
-    switch (op) {
-        #include "_kalos_constants.inc"
-        case KALOS_OP_MINIMUM:
-            return min(a, b);
-        case KALOS_OP_MAXIMUM:
-            return max(a, b);
-        default:
-            kalos_internal_error(state); // impossible
-            return 0;
-    }
-}
-
 static kalos_value op_logical_op(kalos_state* state, kalos_op op, kalos_value* a, kalos_value* b) {
     kalos_value v = kalos_value_clone(state, a);
     kalos_coerce(state, &v, KALOS_VALUE_BOOL);
@@ -89,11 +72,16 @@ static kalos_value op_logical_op(kalos_state* state, kalos_op op, kalos_value* a
 }
 
 static kalos_int op_compare_string(kalos_state* state, kalos_op op, kalos_string* a, kalos_string* b) {
-    if (op < KALOS_OP_EQUAL || op > KALOS_OP_LTE) {
-        kalos_internal_error(state); // impossible
-        return 0;
+    kalos_int compare = kalos_string_compare(state, *a, *b);
+    switch (op) {
+        case KALOS_OP_EQUAL: return compare == 0;
+        case KALOS_OP_NOT_EQUAL: return compare != 0;
+        case KALOS_OP_GT: return compare > 0;
+        case KALOS_OP_GTE: return compare >= 0;
+        case KALOS_OP_LT: return compare < 0;
+        case KALOS_OP_LTE: return compare <= 0;
+        default: kalos_internal_error(state); return 0;
     }
-    return op_number_op(state, op, kalos_string_compare(state, *a, *b), 0);
 }
 
 static kalos_int op_compare_type(kalos_state* state, kalos_op op, kalos_value* a, kalos_value* b) {
