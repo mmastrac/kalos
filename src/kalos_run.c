@@ -143,11 +143,12 @@ static kalos_int op_to_int(kalos_state* state, kalos_op op, kalos_value* v) {
     return v->value.number;
 }
 
-static void op_goto(kalos_state_internal* state, kalos_op op, uint16_t pc) {
-    state->pc = pc;
+static void op_goto(kalos_state_internal* state, kalos_op op) {
+    state->pc = read_inline_integer(state);
 }
 
-static void op_goto_if(kalos_state_internal* state, kalos_op op, kalos_int flag, kalos_int pc) {
+static void op_goto_if(kalos_state_internal* state, kalos_op op, kalos_int flag) {
+    kalos_int pc = read_inline_integer(state);
     if (flag) {
         state->pc = pc;
     }

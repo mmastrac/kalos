@@ -114,23 +114,23 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=8 name=GOTO arg_count=1 binding=fn op_goto
-	if (K__match(/*id=*/8, /*args=*/1, /*name=*/GOTO)) {
+	// id=8 name=GOTO arg_count=0 binding=fn op_goto
+	if (K__match(/*id=*/8, /*args=*/0, /*name=*/GOTO)) {
 		LOG("Invoke %s", "GOTO");
-		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
-			op_goto((void*)state, op, K__arg_number(K__arg(arg_count, 1)));
+		const int arg_count = 0;
+		if (kalos_stack_setup_0(state, arg_count)) {
+			op_goto((void*)state, op);
 			kalos_stack_cleanup(state, arg_count);
 			return true;
 		}
 	}
 
-	// id=9 name=GOTO_IF arg_count=2 binding=fn op_goto_if
-	if (K__match(/*id=*/9, /*args=*/2, /*name=*/GOTO_IF)) {
+	// id=9 name=GOTO_IF arg_count=1 binding=fn op_goto_if
+	if (K__match(/*id=*/9, /*args=*/1, /*name=*/GOTO_IF)) {
 		LOG("Invoke %s", "GOTO_IF");
-		const int arg_count = 2;
-		if (kalos_stack_setup_2(state, arg_count, K__t_bool, K__t_number)) {
-			op_goto_if((void*)state, op, K__arg_bool(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_bool)) {
+			op_goto_if((void*)state, op, K__arg_bool(K__arg(arg_count, 1)));
 			kalos_stack_cleanup(state, arg_count);
 			return true;
 		}

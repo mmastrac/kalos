@@ -279,9 +279,8 @@ static void parse_make_list(struct parse_state* parse_state, kalos_int size) {
 }
 
 static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op) {
-    TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, 0));
+    TRY(parse_push_op_1(parse_state, op, 0));
     int offset = parse_state->output_script_index - 2;
-    TRY(parse_push_op(parse_state, op));
     TRY_EXIT;
     return offset;
 }
@@ -665,12 +664,10 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
         TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR_NEXT));
         TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, iterator_slot));
         TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_break));
-        TRY(parse_push_op(parse_state, KALOS_OP_GOTO_IF));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO_IF, parse_state->loop_break));
     }
     TRY(parse_statement_block(parse_state));
-    TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_continue));
-    TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
+    TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO, parse_state->loop_continue));
     TRY(parse_fixup_offset(parse_state, break_fixup, parse_state->output_script_index));
 
     parse_state->loop_break = saved_break;
@@ -993,15 +990,13 @@ static bool parse_statement(struct parse_state* parse_state) {
         if (parse_state->loop_break == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
         }
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_break));
-        TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO, parse_state->loop_break));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_CONTINUE) {
         if (parse_state->loop_continue == 0) {
             THROW(ERROR_BREAK_CONTINUE_WITHOUT_LOOP);
         }
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, parse_state->loop_continue));
-        TRY(parse_push_op(parse_state, KALOS_OP_GOTO));
+        TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO, parse_state->loop_continue));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
     } else if (token == KALOS_TOKEN_DEBUGGER) {
         TRY(parse_push_op(parse_state, KALOS_OP_DEBUGGER));

@@ -9,8 +9,8 @@ idl {
         fn PUSH_TRUE(): bool = c "1";
         fn PUSH_FALSE(): bool = c "0";
         fn MAKE_LIST(x: any...): object = op_make_list;
-        fn GOTO(x: number) = op_goto;
-        fn GOTO_IF(b: bool, x: number) = op_goto_if;
+        fn GOTO = op_goto;
+        fn GOTO_IF(b: bool) = op_goto_if;
 
         fn LOAD_LOCAL(slot: number): any = op_load;
         fn LOAD_GLOBAL(slot: number): any = op_load;
