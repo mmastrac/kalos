@@ -386,9 +386,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);
         switch (op) {
-            case KALOS_OP_DEBUGGER: 
-                // Set breakpoints here
-                break;
             case KALOS_OP_DUP: {
                 kalos_value* v = peek(state->stack, 0);
                 kalos_value_clone_to((kalos_state*)state, v, push_raw(state->stack));

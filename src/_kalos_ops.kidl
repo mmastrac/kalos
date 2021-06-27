@@ -3,6 +3,7 @@ idl {
     dispatch internal;
     module ops {
         fn END = op_end;
+        fn DEBUGGER = c "";
         fn DROP(x: any) = c "";
         fn PUSH_INTEGER(): number = op_push_integer;
         fn PUSH_STRING(): string = op_push_string;
