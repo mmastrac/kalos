@@ -2,7 +2,7 @@
 
 [![CI Build](https://github.com/mmastrac/kalos/actions/workflows/build.yml/badge.svg)](https://github.com/mmastrac/kalos/actions/workflows/build.yml)
 
-<img src="docs/kalos-logo-ebo.png" style="float: right; height: 200px;">
+<img align="right" src="docs/kalos-logo-ebo.png" style="float: right; height: 200px;">
 
 Kalos is a very lightweight, easy-to-integrate scripting system for applications wanting to add
 easy runtime configuration and automation.
