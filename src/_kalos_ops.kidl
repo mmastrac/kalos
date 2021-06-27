@@ -33,6 +33,7 @@ idl {
         fn TO_HEX(n: number): string = op_to_hex_or_char;
 
         fn ITERATOR(o: object): object = op_iterator;
+        fn ITERATOR_NEXT(o: object): object = op_iterator_next;
         fn SPLIT(s: string, s2: string): object = op_split;
         fn RANGE(n: number, n2: number): object = op_range;
 

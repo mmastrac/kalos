@@ -257,6 +257,19 @@ static kalos_object_ref op_iterator(kalos_state* state, kalos_op op, kalos_objec
     return (*iterable)->iterstart(state, iterable);
 }
 
+static kalos_object_ref op_iterator_next(kalos_state_internal* state, kalos_op op, kalos_object_ref* iterator) {
+    bool done;
+    kalos_value next = (*iterator)->iternext((kalos_state*)state, iterator, &done);
+    kalos_int local = read_inline_integer(state);
+    kalos_value_move_to((kalos_state*)state, &next, &state->locals[local]);
+    kalos_int pc = read_inline_integer(state);
+    if (done) {
+        state->pc = pc;
+    }
+    kalos_object_retain((kalos_state*)state, *iterator);
+    return *iterator;
+}
+
 static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_op op) {
     kalos_state* state = (kalos_state*)internal_state;
     kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script[internal_state->pc]);
@@ -379,18 +392,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             case KALOS_OP_DUP: {
                 kalos_value* v = peek(state->stack, 0);
                 kalos_value_clone_to((kalos_state*)state, v, push_raw(state->stack));
-                break;
-            }
-            case KALOS_OP_ITERATOR_NEXT: {
-                kalos_value* iterator = peek(state->stack, 0);
-                bool done;
-                if (iterator->type != KALOS_VALUE_OBJECT) {
-                    kalos_value_error((kalos_state*)state);
-                    return;
-                }
-                kalos_value next = iterator->value.object->iternext((kalos_state*)state, &iterator->value.object, &done);
-                push_bool(state->stack, done);
-                kalos_value_move_to((kalos_state*)state, &next, push_raw(state->stack));
                 break;
             }
             case KALOS_OP_CALL_NORET:

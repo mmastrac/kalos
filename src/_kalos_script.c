@@ -29,15 +29,6 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
         }
         s += sprintf(s, "%s", kalos_op_strings[op]);
         switch (op) {
-            #define KALOS_OP_CASE0(op)
-            #define KALOS_OP_CASE1(op) case KALOS_OP_##op: { \
-                uint16_t value = script[offset++]; \
-                value |= (uint16_t)script[offset++] << 8; \
-                s += sprintf(s, " %04x", value); \
-                break; \
-            }
-            #define KALOS_OP(op, args) KALOS_OP_CASE##args(op)
-            #include "_kalos_constants.inc"
             case KALOS_OP_PUSH_STRING: {
                 int len = strlen((char *)&script[offset]);
                 char* str = (char *)&script[offset];
@@ -90,6 +81,16 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
                 *s++ = '"';
                 break;
             }
+        }
+        int inline_arg_count;
+        switch (op) {
+            #define KALOS_OP(op, args) case KALOS_OP_##op: inline_arg_count = args; break;
+            #include "_kalos_constants.inc"
+        }
+        for (int i = 0; i < inline_arg_count; i++) {
+            uint16_t value = script[offset++];
+            value |= (uint16_t)script[offset++] << 8;
+            s += sprintf(s, " %04x", value);
         }
         s += sprintf(s, "\n");
     }

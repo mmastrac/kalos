@@ -268,6 +268,15 @@ static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_
     parse_state->output_script[parse_state->output_script_index++] = (data >> 8) & 0xff;
 }
 
+static void parse_push_op_2(struct parse_state* parse_state, kalos_op op, kalos_int data1, kalos_int data2) {
+    parse_state->output_script[parse_state->output_script_index++] = op;
+    LOG("OP: %s %d %d", kalos_op_strings[op], data1, data2);
+    parse_state->output_script[parse_state->output_script_index++] = data1 & 0xff;
+    parse_state->output_script[parse_state->output_script_index++] = (data1 >> 8) & 0xff;
+    parse_state->output_script[parse_state->output_script_index++] = data2 & 0xff;
+    parse_state->output_script[parse_state->output_script_index++] = (data2 >> 8) & 0xff;
+}
+
 static void parse_make_list(struct parse_state* parse_state, kalos_int size) {
     TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, size));
     TRY(parse_push_op(parse_state, KALOS_OP_MAKE_LIST));
@@ -625,10 +634,7 @@ static void parse_loop_statement(struct parse_state* parse_state, bool iterator,
     TRY(parse_fixup_offset(parse_state, initial_fixup, parse_state->output_script_index));
     parse_state->loop_continue = parse_state->output_script_index;
     if (iterator) {
-        TRY(parse_push_op(parse_state, KALOS_OP_ITERATOR_NEXT));
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, iterator_slot));
-        TRY(parse_push_op(parse_state, KALOS_OP_STORE_LOCAL));
-        TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO_IF, parse_state->loop_break));
+        TRY(parse_push_op_2(parse_state, KALOS_OP_ITERATOR_NEXT, iterator_slot, parse_state->loop_break));
     }
     TRY(parse_statement_block(parse_state));
     TRY(parse_push_op_1(parse_state, KALOS_OP_GOTO, parse_state->loop_continue));
