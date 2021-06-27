@@ -21,7 +21,7 @@ struct allocation_record {
 
 static void* internal_malloc(size_t size) {
     total_allocated += size;
-    LOG("alloc #%d %d", allocation_id, size);
+    // LOG("alloc #%d %d", allocation_id, size);
     // Stash the size in the allocation
     struct allocation_record info;
     info.size = size;
@@ -36,7 +36,7 @@ static void internal_free(void* memory) {
     struct allocation_record info;
     allocated -= sizeof(info);
     memcpy(&info, allocated, sizeof(info));
-    LOG("free #%d %d", info.id, info.size);
+    // LOG("free #%d %d", info.id, info.size);
     total_allocated -= info.size;
     free(allocated);
 }
