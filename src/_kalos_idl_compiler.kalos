@@ -48,9 +48,6 @@ fn write_binding(binding, arg_types, vararg_type) {
         }
     } else {
         print("{binding.value}((void*)state");
-        if (in_object) {
-            print(", object");
-        }
         if (is_internal) {
             print(", op");
         }
@@ -227,6 +224,7 @@ on module.object(context, object) {
     } else {
         println("bool {kidl.prefix}{current_module.name}_object_{object.name}_props_fn(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {{");
     }
+    println("\tbool retval = true;");
     in_object = true;
     module.walk_object_properties(OBJECT, object);
     in_object = false;
@@ -263,21 +261,19 @@ on module.property(context, property) {
     if property.read_binding.invoke_id != 0 {
         println("\t// id={property.read_binding.invoke_id} name={property.name} binding={property.read_binding.type} {property.read_binding.value}");
         write_matcher(property.read_binding.invoke_id, property.name, 0);
-        print("\t\tpush_{property.type}(stack, ");
-        write_binding(property.read_binding, [], "void");
-        println(");");
-        println("\t\treturn true;");
-        println("\t}}");
+        if in_object {
+            write_invoke(["object"], 1, "void", property.type, property.read_binding);
+        } else {
+            write_invoke([], 0, "void", property.type, property.read_binding);
+        }
     }
     if property.write_binding.invoke_id != 0 {
         println("\t// id={property.write_binding.invoke_id} name={property.name} binding={property.write_binding.type} {property.write_binding.value}");
         write_matcher(property.write_binding.invoke_id, property.name, 1);
-        println("\t\tconst int arg_count = 1;");
-        print("\t\t");
-        write_binding(property.write_binding, [property.type], "void");
-        println(";");
-        println("\t\tkalos_stack_cleanup(state, 1);");
-        println("\t\treturn true;");
-        println("\t}}");
+        if in_object {
+            write_invoke(["object", property.type], 2, "void", "void", property.write_binding);
+        } else {
+            write_invoke([property.type], 1, "void", "void", property.write_binding);
+        }
     }
 }
