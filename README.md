@@ -50,7 +50,7 @@ on app.init {
 
 ## Logo & Name
 
-Logo and name thanks to [@ojeda-e](https://github.com/ojeda-e/).
+Logo and name thanks to 🚴🏽‍♀️[@ojeda-e](https://github.com/ojeda-e/).
 
 ## Getting Started
 
