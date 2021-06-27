@@ -202,9 +202,75 @@ kalos_module_app_trigger_app_keyup(state, last_key);
 
 ### Module functions
 
-TODO
+Module functions are global, non-object functions. They may be accessed by prefixing the function with the module
+name and calling it with arguments in parentheses.
+
+```C
+idl {
+    module app {
+        fn close() = app_close;
+        fn alert(s: string) = app_alert;
+    }
+}
+
+on init {
+    app.alert("Error!");
+    app.close();
+}
+```
+
+Module functions may also be "built-in" by defining them in the module with the special name `builtin`. In this case,
+the function may be called in the same way as a default built-in function with no prefix. If your application wishes
+to provide a `print` or `log` function, providing it in the `builtin` module may make it more convenient for use by
+script authors.
+
+```C
+idl {
+    module builtin {
+        fn print(s: string) = app_print;
+    }
+}
+
+on init {
+    print("Hello, world!");
+}
+```
 
 ### Module properties
+
+Module properties are global variables, scoped to a module. 
+
+Properties may be read-only, write-only, or read-write. If a `read` or `write` binding is not specified and the
+property is read from or written to respectively, the compiler will return at error for the script at compile-time.
+
+```
+idl {
+    module app {
+        prop version { read = app_version; }
+    }
+}
+
+...
+
+on init {
+    print("Running in {app.version}");
+}
+```
+
+As with module functions, a module property may be provided in the global namespace which offers the ability
+for host programs to offer easy access to storage slot. A built-in property may also be used to provide a constant where
+the value is constant, but cannot be determined until runtime. In the case where the constant value is known ahead of
+time, a constant is usually a better choice as the compile may be able to optimize the value.
+
+```
+idl {
+    module builtin {
+        prop BUILD_DATE { read = app_build_date; }
+    }
+}
+```
+
+### Constants
 
 TODO
 
