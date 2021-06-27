@@ -65,6 +65,35 @@ fn write_binding(binding, arg_types, vararg_type) {
     }
 }
 
+fn write_invoke(args, arg_count, varargs, return_type, binding) {
+    if varargs == "void" {
+        println("\t\tconst int arg_count = {arg_count};");
+    } else {
+        println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
+        println("\t\tconst int arg_count = {arg_count + 1} + vararg_count;");
+    }
+    print("\t\tif (kalos_stack_setup_{arg_count}(state, arg_count");
+    var arg;
+    for arg in args {
+        print(", K__t_{arg}");
+    }
+    println(")) {{");
+    print("\t\t\t");
+    if return_type != "void" {
+        print("K__{return_type} x = ");
+    }
+    write_binding(binding, args, varargs);
+    println(";");
+    println("\t\t\tkalos_stack_cleanup(state, arg_count);");
+    if return_type != "void" {
+        println("\t\t\tK__final_{return_type}(stack, x);");
+    }
+    println("\t\t\treturn true;");
+    println("\t\t}}");
+    println("\t}}");
+    println("");
+}
+
 fn define_args(prefix, args, name, value) {
     println("#define {prefix + name + args:<25} {value}");
     undef += "#undef {prefix + name}\n";
@@ -224,31 +253,7 @@ on module.function(context, function) {
         println("\t// id={overload.binding.invoke_id} name={function.name} arg_count={overload.arg_count} binding={overload.binding.type} {overload.binding.value}");
         write_matcher(overload.binding.invoke_id, function.name, overload.arg_count);
         println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
-        if overload.varargs == "void" {
-            println("\t\tconst int arg_count = {overload.arg_count};");
-        } else {
-            println("\t\tconst int vararg_count = kalos_stack_vararg_count(stack);");
-            println("\t\tconst int arg_count = {overload.arg_count + 1} + vararg_count;");
-        }
-        print("\t\tif (kalos_stack_setup_{overload.arg_count}(state, arg_count");
-        for arg in overload.args {
-            print(", K__t_{arg}");
-        }
-        println(")) {{");
-        print("\t\t\t");
-        if overload.return_type != "void" {
-            print("K__{overload.return_type} x = ");
-        }
-        write_binding(overload.binding, overload.args, overload.varargs);
-        println(";");
-        println("\t\t\tkalos_stack_cleanup(state, arg_count);");
-        if overload.return_type != "void" {
-            println("\t\t\tK__final_{overload.return_type}(stack, x);");
-        }
-        println("\t\t\treturn true;");
-        println("\t\t}}");
-        println("\t}}");
-        println("");
+        write_invoke(overload.args, overload.arg_count, overload.varargs, overload.return_type, overload.binding);
     }
 }
 
