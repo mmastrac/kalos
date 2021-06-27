@@ -252,7 +252,6 @@ on module.function(context, function) {
     for overload in function.overloads {
         println("\t// id={overload.binding.invoke_id} name={function.name} arg_count={overload.arg_count} binding={overload.binding.type} {overload.binding.value}");
         write_matcher(overload.binding.invoke_id, function.name, overload.arg_count);
-        println("\t\tLOG(\"Invoke %s\", \"{function.name}\");");
         write_invoke(overload.args, overload.arg_count, overload.varargs, overload.return_type, overload.binding);
     }
 }
