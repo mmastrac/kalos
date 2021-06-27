@@ -52,6 +52,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
 
     /*!stags:re2c format = "const char kalos_far *@@{tag}; "; */
     for (;;) {
+        state->token_start = s;
     /*!re2c
         re2c:api:style = free-form;
         re2c:define:YYCTYPE = char;

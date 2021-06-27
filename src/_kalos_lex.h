@@ -18,6 +18,7 @@ extern const char* kalos_token_strings[KALOS_TOKEN_MAX + 1];
 
 typedef struct kalos_lex_state {
     const char kalos_far* s;
+    const char kalos_far* token_start;
     int line;
     int string_interp_state;
     int string_interp_mode;

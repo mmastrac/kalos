@@ -375,48 +375,18 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
 static kalos_token wordify(struct parse_state* parse_state) {
     const char* wordified = NULL;
     switch (parse_state->last_token) {
-    case KALOS_TOKEN_IDL:
-        wordified = "idl"; break;
-    case KALOS_TOKEN_ON:
-        wordified = "on"; break;
-    case KALOS_TOKEN_IMPORT:
-        wordified = "import"; break;
-    case KALOS_TOKEN_MODULE:
-        wordified = "module"; break;
-    case KALOS_TOKEN_HANDLER:
-        wordified = "handler"; break;
-    case KALOS_TOKEN_PROP:
-        wordified = "prop"; break;
-    case KALOS_TOKEN_OBJECT:
-        wordified = "object"; break;
-    case KALOS_TOKEN_READ:
-        wordified = "read"; break;
-    case KALOS_TOKEN_WRITE:
-        wordified = "write"; break;
-    case KALOS_TOKEN_DISPATCH:
-        wordified = "dispatch"; break;
-    case KALOS_TOKEN_NAME:
-        wordified = "name"; break;
-    case KALOS_TOKEN_INTERNAL:
-        wordified = "internal"; break;
-    case KALOS_TOKEN_PREFIX:
-        wordified = "prefix"; break;
-    case KALOS_TOKEN_C:
-        wordified = "c"; break;
-    case KALOS_TOKEN_STRING:
-        wordified = "string"; break;
-    case KALOS_TOKEN_BOOL:
-        wordified = "bool"; break;
-    case KALOS_TOKEN_NUMBER:
-        wordified = "number"; break;
-    case KALOS_TOKEN_ANY:
-        wordified = "any"; break;
+    #define KALOS_TOKEN_WORD(x) case KALOS_TOKEN_##x:
+    #include "_kalos_constants.inc"
+    {
+        kalos_int len = parse_state->lex_state.s - parse_state->lex_state.token_start;
+        script_memcpy(parse_state->token, (const uint8_t kalos_far*)parse_state->lex_state.token_start, len);
+        parse_state->token[len] = 0;
+        parse_state->last_token = KALOS_TOKEN_WORD;
+        return KALOS_TOKEN_WORD;
+    }
     default:
         return parse_state->last_token;
     }
-    strcpy(parse_state->token, wordified);
-    parse_state->last_token = KALOS_TOKEN_WORD;
-    return KALOS_TOKEN_WORD;
 }
 
 static void parse_assert_token(struct parse_state* parse_state, int token) {
