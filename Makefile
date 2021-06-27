@@ -44,7 +44,7 @@ TEST_CFLAGS=-std=c99 \
 	-fno-omit-frame-pointer
 HOST_CFLAGS=-std=c99 \
 	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-overlength-strings -Wno-gnu-flexible-array-initializer -ftrapv \
-	-g -O0 \
+	-g -O0 -DDEBUG=1 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 
