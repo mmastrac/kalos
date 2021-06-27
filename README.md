@@ -3,6 +3,7 @@
 # Kalos: The tiny embeddable scripting system
 
 [![CI Build](https://github.com/mmastrac/kalos/actions/workflows/build.yml/badge.svg)](https://github.com/mmastrac/kalos/actions/workflows/build.yml)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/mmastrac/kalos.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mmastrac/kalos/context:cpp)
 
 Kalos is a very lightweight, easy-to-integrate scripting system for applications wanting to add
 easy runtime configuration and automation.
