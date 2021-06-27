@@ -260,10 +260,6 @@ on module.property(context, property) {
     if !in_module && !in_object {
         return;
     }
-    var maybe_object = "";
-    if in_object {
-        maybe_object = ", object";
-    }
     if property.read_binding.invoke_id != 0 {
         println("\t// id={property.read_binding.invoke_id} name={property.name} binding={property.read_binding.type} {property.read_binding.value}");
         write_matcher(property.read_binding.invoke_id, property.name, 0);
