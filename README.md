@@ -38,6 +38,14 @@ on app.init {
  * String interpolation by default
  * Varargs-style invocation
 
+## Limitations
+
+ * The string system currently assumes ASCII, though it will work with UTF-8 in some cases (some functions
+ may not work properly in the presence of multi-byte, extended UTF-8 characters).
+ * Lists are currently immutable and the design for mutable lists/list builders is not complete.
+ * Dictionaries and/or maps are not implements.
+ * Objects may not be defined by script code, and object functions are not available.
+ 
 ## Getting Started
 
 Read the [Language Guide](docs/LanguageGuide.md) for tips on getting started. Check out the [DOS](example/dos) and
