@@ -428,45 +428,29 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
                 }
                 break;
             }
-            case KALOS_OP_GETPROP: {
+            case KALOS_OP_OBJCALL: {
                 int prop = pop(state->stack)->value.number;
+                int count = read_inline_integer(state);
+                if (peek(state->stack, count)->type != KALOS_VALUE_OBJECT) {
+                    kalos_value_error((kalos_state*)state);
+                    return;
+                }
+                kalos_object_ref object = peek(state->stack, count)->value.object;
+                if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state_, &object, prop, count, state->stack)) {
+                    kalos_value_error((kalos_state*)state);
+                }
+                break;
+            }
+            case KALOS_OP_OBJCALL_BYNAME: {
+                kalos_string prop = pop(state->stack)->value.string;
+                int count = read_inline_integer(state);
                 if (peek(state->stack, 0)->type != KALOS_VALUE_OBJECT) {
                     kalos_value_error((kalos_state*)state);
                     return;
                 }
                 kalos_object_ref object = peek(state->stack, 0)->value.object;
-                if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state_, &object, prop, 0, state->stack)) {
+                if (!object->dispatch || !object->dispatch->dispatch_name || !object->dispatch->dispatch_name(state_, &object, kalos_string_c((kalos_state*)state, prop), count, state->stack)) {
                     kalos_value_error((kalos_state*)state);
-                }
-                break;
-            }
-            case KALOS_OP_SETPROP: {
-                int prop = pop(state->stack)->value.number;
-                kalos_object_ref object = peek(state->stack, 1)->value.object;
-                if (!object->dispatch || !object->dispatch->dispatch_id || !object->dispatch->dispatch_id(state_, &object, prop, 1, state->stack)) {
-                    kalos_value_error((kalos_state*)state);
-                    break;
-                }
-                break;
-            }
-            case KALOS_OP_GETPROP_BYNAME: {
-                kalos_string prop = pop(state->stack)->value.string;
-                if (peek(state->stack, 0)->type != KALOS_VALUE_OBJECT) {
-                    kalos_value_error((kalos_state*)state);
-                    return;
-                }
-                kalos_object_ref object = peek(state->stack, 0)->value.object;
-                if (!object->dispatch || !object->dispatch->dispatch_name || !object->dispatch->dispatch_name(state_, &object, kalos_string_c((kalos_state*)state, prop), 0, state->stack)) {
-                    kalos_value_error((kalos_state*)state);
-                }
-                break;
-            }
-            case KALOS_OP_SETPROP_BYNAME: {
-                kalos_string prop = pop(state->stack)->value.string;
-                kalos_object_ref object = peek(state->stack, 1)->value.object;
-                if (!object->dispatch || !object->dispatch->dispatch_name || !object->dispatch->dispatch_name(state_, &object, kalos_string_c((kalos_state*)state, prop), 1, state->stack)) {
-                    kalos_value_error((kalos_state*)state);
-                    break;
                 }
                 break;
             }

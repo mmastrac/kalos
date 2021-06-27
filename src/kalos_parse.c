@@ -692,13 +692,13 @@ static void parse_flush_pending_op(struct parse_state* parse_state, struct pendi
     } else if (pending->op == KALOS_OP_GOSUB || pending->op == KALOS_OP_GOSUB_NORET) {
         TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
         TRY(parse_push_op_1(parse_state, pending->op, pending->data[1]));
-    } else if (pending->op == KALOS_OP_GETPROP || pending->op == KALOS_OP_SETPROP) {
+    } else if (pending->op == KALOS_OP_OBJCALL) {
         if (parse_state->dispatch_name) {
             TRY(parse_push_string(parse_state, pending->sdata[0]));
-            TRY(parse_push_op(parse_state, pending->op == KALOS_OP_GETPROP ? KALOS_OP_GETPROP_BYNAME : KALOS_OP_SETPROP_BYNAME));
+            TRY(parse_push_op_1(parse_state, KALOS_OP_OBJCALL_BYNAME, pending->data[1]));
         } else {
             TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, pending->data[0]));
-            TRY(parse_push_op(parse_state, pending->op));
+            TRY(parse_push_op_1(parse_state, pending->op, pending->data[1]));
         }
     } else if (pending->op == KALOS_OP_PUSH_STRING) {
         TRY(parse_push_string(parse_state, kalos_module_get_string(parse_state->all_modules, pending->data[0])));
@@ -788,12 +788,14 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
                 TRY(pending.load.data[0] = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token));
                 if (pending.load.data[0]) {
                     pending.load.sdata[0] = parse_state->token;
-                    pending.load.op = KALOS_OP_GETPROP;
+                    pending.store.data[1] = 0;
+                    pending.load.op = KALOS_OP_OBJCALL;
                 }
                 TRY(pending.store.data[0] = kalos_module_lookup_property(parse_state->all_modules, true, parse_state->token));
                 if (pending.store.data[0]) {
+                    pending.store.data[1] = 1;
                     pending.store.sdata[0] = parse_state->token;
-                    pending.store.op = KALOS_OP_SETPROP;
+                    pending.store.op = KALOS_OP_OBJCALL;
                 }
                 if (!pending.load.op && !pending.store.op) {
                     THROW(ERROR_UNKNOWN_PROPERTY);
