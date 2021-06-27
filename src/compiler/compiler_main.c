@@ -133,7 +133,7 @@ void write_file(const char* output, void* data, size_t size) {
     fclose(fd);
 }
 
-int compile_script(int verbose, const char* idl, const char* input, const char* output) {
+int compile_script(const char* idl, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     const char* idl_data = read_file_string(idl, NULL);
     kalos_buffer script = kalos_buffer_alloc(&compiler_env, 10 * 1024);
@@ -187,7 +187,7 @@ int compile_stringify(const char* input, const char* output) {
     return 0;
 }
 
-int dump_script(int verbose, const char* input) {
+int dump_script(const char* input) {
     size_t n;
     kalos_buffer script = read_file(input, &n);
     char* buffer = malloc(10 * 1024);
@@ -196,7 +196,7 @@ int dump_script(int verbose, const char* input) {
     return 0;
 }
 
-int compile_idl(int verbose, const char* input, const char* output) {
+int compile_idl(const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
     write_file(output, modules.buffer, kalos_buffer_size(modules));
@@ -206,7 +206,7 @@ int compile_idl(int verbose, const char* input, const char* output) {
     return 0;
 }
 
-int compile_dispatch(int verbose, const char* input, const char* output) {
+int compile_dispatch(const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     kalos_module_parsed modules = kalos_idl_parse_module(input_data, &compiler_env);
     if (!modules.buffer) {
@@ -257,14 +257,14 @@ int main(int argc, const char** argv) {
         }
         const char* input = argv[idx++];
         const char* output = argv[idx++];
-        return compile_idl(verbose, input, output);
+        return compile_idl(input, output);
     } else if (strcmp(mode, "dispatch") == 0) {
         if (argc - idx != 2) {
             return help("not enough arguments to dispatch", argv[0]);
         }
         const char* input = argv[idx++];
         const char* output = argv[idx++];
-        return compile_dispatch(verbose, input, output);
+        return compile_dispatch(input, output);
     } else if (strcmp(mode, "compile") == 0) {
         if (argc - idx != 3) {
             return help("not enough arguments to compile", argv[0]);
@@ -272,13 +272,13 @@ int main(int argc, const char** argv) {
         const char* idl = argv[idx++];
         const char* input = argv[idx++];
         const char* output = argv[idx++];
-        return compile_script(verbose, idl, input, output);
+        return compile_script(idl, input, output);
     } else if (strcmp(mode, "dump") == 0) {
         if (argc - idx != 1) {
             return help("not enough arguments to dump", argv[0]);
         }
         const char* input = argv[idx++];
-        return dump_script(verbose, input);
+        return dump_script(input);
     } else if (strcmp(mode, "hexify") == 0) {
         if (argc - idx != 2) {
             return help("not enough arguments to hexify", argv[0]);
