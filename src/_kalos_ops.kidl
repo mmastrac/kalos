@@ -101,7 +101,10 @@ idl {
         fn MODULUS(n: number, n2: number): number = c "@1==0?0:(@0%@1)";
 
         fn IDL(o: object) = op_idl;
-        fn GETINDEX(o: object, n: number): any = op_getindex;
+        fn GETINDEX {
+            (s: string, n: number): string = op_string_getindex;
+            (o: object, n: number): any = op_getindex;
+        }
         fn GOSUB(params: any...) = op_gosub;
         fn GOSUB_NORET(params: any...) = op_gosub;
     }

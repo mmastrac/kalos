@@ -1,0 +1,6 @@
+on init {
+    var a = "abcdef";
+    print(a[2]);
+
+    # print("abcdef"[2]) fails right now
+}

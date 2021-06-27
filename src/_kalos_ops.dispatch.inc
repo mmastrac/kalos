@@ -751,6 +751,17 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
+	// id=52 name=GETINDEX arg_count=2 binding=fn op_string_getindex
+	if (K__match(/*id=*/52, /*args=*/2, /*name=*/GETINDEX)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_number)) {
+			K__string x = op_string_getindex((void*)state, op, K__arg_string(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
 	// id=52 name=GETINDEX arg_count=2 binding=fn op_getindex
 	if (K__match(/*id=*/52, /*args=*/2, /*name=*/GETINDEX)) {
 		const int arg_count = 2;

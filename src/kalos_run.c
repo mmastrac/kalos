@@ -104,6 +104,16 @@ static kalos_int op_string_number(kalos_state* state, kalos_op op, kalos_string*
     }
 }
 
+static kalos_string op_string_getindex(kalos_state* state, kalos_op op, kalos_string* s, kalos_int index) {
+    if (index < 0 || index >= kalos_string_length(state, *s)) {
+        return kalos_string_allocate(state, "");
+    }
+    kalos_writable_string str = kalos_string_allocate_writable_size(state, 1);
+    char* out = kalos_string_writable_c(state, str);
+    out[0] = kalos_string_c(state, *s)[index];
+    return kalos_string_commit(state, str);
+}
+
 static kalos_string op_to_hex_or_char(kalos_state* state, kalos_op op, kalos_int v) {
     if (op == KALOS_OP_TO_HEX) {
         return kalos_string_allocate_fmt(state, "0x%x", v);
