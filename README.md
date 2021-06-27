@@ -40,5 +40,5 @@ Script documentation coming soon.
 
 ## Getting Started
 
-Read the [docs/LanguageGuide.md](Language Guide) for tips on getting started. Check out the [example/dos](DOS) and
-[example/avr](Arduino/AVR) samples for examples of how you might get started.
+Read the [Language Guide](docs/LanguageGuide.md) for tips on getting started. Check out the [DOS](example/dos) and
+[Arduino/AVR](example/avr) samples for examples of how you might get started.
