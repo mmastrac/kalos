@@ -372,29 +372,6 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);
-        // for (int i = 0; i < state->stack->stack_index; i++) {
-        //     kalos_value v = kalos_value_clone((kalos_state*)state, &state->stack->stack[i]);
-        //     const char* t;
-        //     switch (v.type) {
-        //         case KALOS_VALUE_BOOL: t = "bool"; break;
-        //         case KALOS_VALUE_NUMBER: t = "number"; break;
-        //         case KALOS_VALUE_STRING: t = "string"; break;
-        //         case KALOS_VALUE_NONE: t = "none"; break;
-        //         case KALOS_VALUE_OBJECT: t = "object"; break;
-        //     }
-        //     if (kalos_coerce((kalos_state*)state, &v, KALOS_VALUE_STRING)) {
-        //         const char* s = kalos_string_c((kalos_state*)state, v.value.string);
-        //         if (strlen(s) > 20) {
-        //             printf("[%s:%.20s...] ", t, s);
-        //         } else {
-        //             printf("[%s:%s] ", t, s);
-        //         }
-        //     } else {
-        //         printf("[%s] ", t);
-        //     }
-        //     kalos_clear((kalos_state*)state, &v);
-        // }
-        // printf("\n");
         switch (op) {
             case KALOS_OP_DEBUGGER: 
                 // Set breakpoints here
