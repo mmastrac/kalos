@@ -33,7 +33,6 @@
 bool builtin(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
 	// id=1 name=print arg_count=1 binding=fn dos_print
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/print)) {
-		LOG("Invoke %s", "print");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			dos_print((void*)state, K__arg_string(K__arg(arg_count, 1)));
@@ -44,7 +43,6 @@ bool builtin(kalos_run_state* state, int function, int param_count, kalos_stack*
 
 	// id=2 name=println arg_count=1 binding=fn dos_println
 	if (K__match(/*id=*/2, /*args=*/1, /*name=*/println)) {
-		LOG("Invoke %s", "println");
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_string)) {
 			dos_println((void*)state, K__arg_string(K__arg(arg_count, 1)));
