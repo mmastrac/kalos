@@ -416,7 +416,6 @@ static struct name_resolution_result resolve_word(struct parse_state* parse_stat
 }
 
 static kalos_token wordify(struct parse_state* parse_state) {
-    const char* wordified = NULL;
     switch (parse_state->last_token) {
     #define KALOS_TOKEN_WORD(x) case KALOS_TOKEN_##x:
     #include "_kalos_constants.inc"
