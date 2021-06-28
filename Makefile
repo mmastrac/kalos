@@ -105,21 +105,27 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 # Self-hosting bits
 ########################################################
 
+gen: gen-dispatch gen-compiler gen-test
+
 gen-test: $(OUTDIR)/compiler
-	$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc
-	mv $(OUTDIR)/test_kalos.dispatch.inc test/
+	$(call color,"GEN","host","test")
+	@$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc
+	@mv $(OUTDIR)/test_kalos.dispatch.inc test/
 
 gen-dispatch: $(OUTDIR)/compiler
-	$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc
-	mv $(OUTDIR)/_kalos_ops.dispatch.inc src/
+	$(call color,"GEN","host","dispatch")
+	@$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc
+	@mv $(OUTDIR)/_kalos_ops.dispatch.inc src/
 
 gen-compiler: $(OUTDIR)/compiler
-	rm -rf $(GENDIR)/compiler || true
-	mkdir -p $(GENDIR)/compiler
-	cp -R $(SRCDIR)/* $(GENDIR)/compiler
-	$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
-	$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kalos $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
-	$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
-	$(OUTDIR)/bootstrap-compiler dispatch src/_kalos_idl_compiler.kidl src/_kalos_idl_compiler.dispatch.inc
-	cp $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc $(SRCDIR)
-	cp $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc $(SRCDIR)
+	$(call color,"GEN","host","compiler")
+	@rm -rf $(GENDIR)/compiler || true
+	@mkdir -p $(GENDIR)/compiler
+	@cp -R $(SRCDIR)/* $(GENDIR)/compiler
+	@$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
+	@$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kalos $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
+	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
+	@$(OUTDIR)/bootstrap-compiler dispatch src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.dispatch.inc
+	@cp $(GENDIR)/compiler/_kalos_idl_compiler.dispatch.inc $(SRCDIR)
+	@cp $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc $(SRCDIR)
+	@cp $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc $(SRCDIR)
