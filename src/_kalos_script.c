@@ -105,23 +105,30 @@ void kalos_dump(kalos_state* state, const_kalos_script script) {
 struct dump_context {
     kalos_buffer buffer;
     size_t buffer_offset;
+    size_t buffer_size;
 };
 
 void kalos_dump_print(void* context_, const char* c) {
     struct dump_context* context = context_;
     size_t len = strlen(c);
+    while (context->buffer_offset + len + 1 > context->buffer_size) {
+        context->buffer_size *= 2;
+        kalos_buffer_resize(&context->buffer, context->buffer_size);
+    }
     memcpy(context->buffer.buffer + context->buffer_offset, c, len + 1);
     context->buffer_offset += len;
 }
 
 kalos_buffer kalos_dump_to_buffer(kalos_state* state, const_kalos_script script) {
     struct dump_context dump_context = {0};
-    dump_context.buffer = kalos_buffer_alloc(state, 10 * 1024);
+    dump_context.buffer_size = 1024;
+    dump_context.buffer = kalos_buffer_alloc(state, dump_context.buffer_size);
     dump_context.buffer_offset = 0;
     kalos_state dump_state = *state;
     dump_state.context = &dump_context;
     dump_state.print = kalos_dump_print;
     kalos_dump(&dump_state, script);
+    kalos_buffer_resize(&dump_context.buffer, dump_context.buffer_offset + 1);
     return dump_context.buffer;
 }
 

@@ -58,7 +58,11 @@ static void* test_realloc(void* ptr, size_t size) {
     allocated -= sizeof(info);
     memcpy(&info, allocated, sizeof(info));
     allocated = realloc(allocated, size + sizeof(info));
-    total_allocated += (ssize_t)size - (ssize_t)info.size;
+    if (size > info.size) {
+        total_allocated += size - info.size;
+    } else {
+        total_allocated -= info.size - size;
+    }
     info.size = size;
     memcpy(allocated, &info, sizeof(info));
     return allocated + sizeof(info);
