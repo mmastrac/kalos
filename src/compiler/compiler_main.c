@@ -56,7 +56,7 @@ static void* internal_realloc(void* ptr, size_t size) {
     return allocated + sizeof(info);
 }
 
-static void internal_error(int line, const char* error) {
+static void internal_error(void* context, int line, const char* error) {
     if (line) {
         printf("ERROR on line %d: %s\n", line, error);
     } else {
@@ -65,7 +65,7 @@ static void internal_error(int line, const char* error) {
     exit(1);
 }
 
-static void internal_print(const char* s) {
+static void internal_print(void* context, const char* s) {
     fprintf(output_file, "%s", s);
 }
 

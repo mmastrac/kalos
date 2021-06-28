@@ -18,19 +18,19 @@ typedef struct kalos_state_internal {
 void kalos_internal_error(kalos_state* state) {
     ASSERT(false);
     LOG("internal error");
-    state->error(0, "Internal error");
+    state->error(state->context, 0, "Internal error");
 }
 
 void kalos_type_error(kalos_state* state) {
     ASSERT(false);
     LOG("type error");
-    state->error(0, "Type error");
+    state->error(state->context, 0, "Type error");
 }
 
 void kalos_value_error(kalos_state* state) {
     ASSERT(false);
     LOG("value error");
-    state->error(0, "Value error");
+    state->error(state->context, 0, "Value error");
 }
 
 #define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state); } }
@@ -348,7 +348,7 @@ kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch,
     kalos_state_internal* state = state_provided->alloc(sizeof(kalos_state_internal));
     if (!state) {
         if (state_provided->error) {
-            state_provided->error(0, "malloc");
+            state_provided->error(state->context, 0, "malloc");
         }
         return NULL;
     }
@@ -376,12 +376,12 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
     size_t script_size = ((const kalos_script_header kalos_far*)state->script)->length;
     while (state->pc != PC_DONE) {
         if (state->pc >= script_size) {
-            state->error(0, "Internal error");
+            state->error(state->context, 0, "Internal error");
             goto done;
         }
         kalos_op op = state->script[state->pc++];
         if (op >= KALOS_OP_MAX || state->stack->stack_index < 0) {
-            state->error(0, "Internal error");
+            state->error(state->context, 0, "Internal error");
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);

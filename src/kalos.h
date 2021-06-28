@@ -49,8 +49,8 @@ typedef struct { kalos_string_allocated* s; } kalos_writable_string;
 typedef void* (*kalos_mem_alloc_fn)(size_t);
 typedef void* (*kalos_mem_realloc_fn)(void*, size_t);
 typedef void (*kalos_mem_free_fn)(void*);
-typedef void (*kalos_print_fn)(const char*);
-typedef void (*kalos_error_fn)(int line, const char* error);
+typedef void (*kalos_print_fn)(void* context, const char*);
+typedef void (*kalos_error_fn)(void* context, int line, const char* error);
 
 #define KALOS_BASIC_ENVIRONMENT                                               \
     /**                                                                       \

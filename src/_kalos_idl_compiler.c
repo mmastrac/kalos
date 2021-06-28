@@ -152,7 +152,7 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_parse_result result = kalos_parse_buffer(s, parsed, options, state, &idl);
     if (result.error) {
         if (state->error) {
-            state->error(result.line, result.error);
+            state->error(state->context, result.line, result.error);
         }
         return parsed;
     }
@@ -176,12 +176,12 @@ static kalos_export* script_current_export;
 static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state* state, kalos_string* string) {
-    script_environment->print(kalos_string_c(state, *string));
+    script_environment->print(state->context, kalos_string_c(state, *string));
 }
 
 void kalos_idl_compiler_println(kalos_state* state, kalos_string* string) {
-    script_environment->print(kalos_string_c(state, *string));
-    script_environment->print("\n");
+    script_environment->print(state->context, kalos_string_c(state, *string));
+    script_environment->print(state->context, "\n");
 }
 
 void kalos_idl_compiler_log(kalos_state* state, kalos_string* string) {
@@ -379,7 +379,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
     kalos_parse_result result = kalos_parse_buffer(IDL_COMPILER_SCRIPT, modules, options, state, &script);
     if (result.error) {
         if (state->error) {
-            state->error(result.line, result.error);
+            state->error(state->context, result.line, result.error);
         }
         return false;
     }

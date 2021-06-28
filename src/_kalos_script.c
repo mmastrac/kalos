@@ -4,8 +4,8 @@
 
 #define compare_address(a, b) ((a)->module_index == (b)->module_index && (a)->export_index == (b)->export_index)
 
-#define dump_print(...) { sprintf(print_buffer, __VA_ARGS__); state->print(print_buffer); }
-#define dump_char(c) { print_buffer[0] = c; print_buffer[1] = 0; state->print(print_buffer); }
+#define dump_print(...) { sprintf(print_buffer, __VA_ARGS__); state->print(state->context, print_buffer); }
+#define dump_char(c) { print_buffer[0] = c; print_buffer[1] = 0; state->print(state->context, print_buffer); }
 
 static bool kalos_dump_section(void* context, const_kalos_script script, const kalos_section_header kalos_far* header, uint16_t offset, uint16_t length) {
     char print_buffer[128] = {0};
@@ -102,22 +102,27 @@ void kalos_dump(kalos_state* state, const_kalos_script script) {
     kalos_walk(script, state, kalos_dump_section);
 }
 
-kalos_buffer dump_buffer;
-size_t dump_buffer_offset;
+struct dump_context {
+    kalos_buffer buffer;
+    size_t buffer_offset;
+};
 
-void kalos_dump_print(const char* c) {
+void kalos_dump_print(void* context_, const char* c) {
+    struct dump_context* context = context_;
     size_t len = strlen(c);
-    memcpy(dump_buffer.buffer + dump_buffer_offset, c, len + 1);
-    dump_buffer_offset += len;
+    memcpy(context->buffer.buffer + context->buffer_offset, c, len + 1);
+    context->buffer_offset += len;
 }
 
 kalos_buffer kalos_dump_to_buffer(kalos_state* state, const_kalos_script script) {
-    dump_buffer = kalos_buffer_alloc(state, 10 * 1024);
-    dump_buffer_offset = 0;
+    struct dump_context dump_context = {0};
+    dump_context.buffer = kalos_buffer_alloc(state, 10 * 1024);
+    dump_context.buffer_offset = 0;
     kalos_state dump_state = *state;
+    dump_state.context = &dump_context;
     dump_state.print = kalos_dump_print;
     kalos_dump(&dump_state, script);
-    return dump_buffer;
+    return dump_context.buffer;
 }
 
 void kalos_walk(const_kalos_script script, void* context, kalos_walk_fn walk_fn) {

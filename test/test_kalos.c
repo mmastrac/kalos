@@ -64,11 +64,11 @@ static void* test_realloc(void* ptr, size_t size) {
     return allocated + sizeof(info);
 }
 
-static void test_error(int line, const char* error) {
+static void test_error(void* context, int line, const char* error) {
     LOG("Error reported: %d %s", line, error);
 }
 
-static void test_print_string(const char* s) {
+static void test_print_string(void* context, const char* s) {
     LOG("print: %s", s);
 }
 
