@@ -190,9 +190,7 @@ int compile_stringify(const char* input, const char* output) {
 int dump_script(const char* input) {
     size_t n;
     kalos_buffer script = read_file(input, &n);
-    char* buffer = malloc(10 * 1024);
-    kalos_dump((const_kalos_script)script.buffer, buffer);
-    printf("%s\n", buffer);
+    kalos_dump(&compiler_env, (const_kalos_script)script.buffer);
     return 0;
 }
 

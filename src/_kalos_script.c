@@ -4,15 +4,18 @@
 
 #define compare_address(a, b) ((a)->module_index == (b)->module_index && (a)->export_index == (b)->export_index)
 
+#define dump_print(...) { sprintf(print_buffer, __VA_ARGS__); state->print(print_buffer); }
+#define dump_char(c) { print_buffer[0] = c; print_buffer[1] = 0; state->print(print_buffer); }
+
 static bool kalos_dump_section(void* context, const_kalos_script script, const kalos_section_header kalos_far* header, uint16_t offset, uint16_t length) {
-    char** out = context;
-    char* s = *out;
+    char print_buffer[128] = {0};
+    kalos_state* state = (kalos_state*)context;
     if (compare_address(&header->handler_address, &KALOS_GLOBAL_HANDLER_ADDRESS)) {
-        s += sprintf(s, "<global> locals=%d\n", header->locals_size);
+        dump_print("<global> locals=%d\n", header->locals_size);
     } else if (compare_address(&header->handler_address, &KALOS_IDL_HANDLER_ADDRESS)) {
-        s += sprintf(s, "<idl> locals=%d\n", header->locals_size);
+        dump_print("<idl> locals=%d\n", header->locals_size);
     } else {
-        s += sprintf(s, "%04x:%04x locals=%d\n", header->handler_address.module_index, header->handler_address.export_index, header->locals_size);
+        dump_print("%04x:%04x locals=%d\n", header->handler_address.module_index, header->handler_address.export_index, header->locals_size);
     }
 
     uint16_t start = offset;
@@ -20,34 +23,32 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
         if (offset >= start + length) {
             break;
         }
-        s += sprintf(s, "L%04x: ", offset);
+        dump_print("L%04x: ", offset);
         uint8_t op = script[offset++];
         if (op >= KALOS_OP_MAX) {
             // Don't try to continue after this.
-            s += sprintf(s, "<invalid_op %02x>\n", op);
+            dump_print("<invalid_op %02x>\n", op);
             return true;
         }
-        s += sprintf(s, "%s", kalos_op_strings[op]);
+        dump_print("%s", kalos_op_strings[op]);
         switch (op) {
             case KALOS_OP_PUSH_STRING: {
                 int len = strlen((char *)&script[offset]);
                 char* str = (char *)&script[offset];
-                *s++ = ' ';
-                *s++ = '"';
+                dump_char(' ');
+                dump_char('"');
                 for (int i = 0; i < strlen(str); i++) {
                     if (str[i] == '\n') {
-                        strcpy(s, "\\n");
-                        s += 2;
+                        dump_print("\\n");
                     } else if (str[i] == '\"') {
-                        strcpy(s, "\\\"");
-                        s += 2;
+                        dump_print("\\\"");
                     } else if (str[i] < 32 || str[i] >= 127) {
-                        s += sprintf(s, "\\x%02x", (uint8_t)str[i]);
+                        dump_print("\\x%02x", (uint8_t)str[i]);
                     } else {
-                        *s++ = str[i];
+                        dump_char(str[i]);
                     }
                 }
-                *s++ = '"';
+                dump_char('"');
                 offset += len + 1;
                 break;
             }
@@ -55,30 +56,30 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
                 kalos_string_format string_format;
                 script_memcpy(&string_format, &script[offset], sizeof(string_format));
                 offset += sizeof(kalos_string_format);
-                *s++ = ' ';
-                *s++ = '"';
+                dump_char(' ');
+                dump_char('"');
                 if (string_format.fill) {
-                    *s++ = string_format.fill;
+                    dump_char(string_format.fill);
                 }
                 if (string_format.align) {
-                    *s++ = string_format.align;
+                    dump_char(string_format.align);
                 }
                 if (string_format.sign) {
-                    *s++ = string_format.sign;
+                    dump_char(string_format.sign);
                 }
                 if (string_format.alt_fmt) {
-                    *s++ = string_format.alt_fmt;
+                    dump_char(string_format.alt_fmt);
                 }
                 if (string_format.min_width) {
-                    s += sprintf(s, "%d", string_format.min_width);
+                    dump_print("%d", string_format.min_width);
                 }
                 if (string_format.precision) {
-                    s += sprintf(s, ".%d", string_format.precision);
+                    dump_print(".%d", string_format.precision);
                 }
                 if (string_format.type) {
-                    *s++ = string_format.type;
+                    dump_char(string_format.type);
                 }
-                *s++ = '"';
+                dump_char('"');
                 break;
             }
         }
@@ -90,16 +91,33 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
         for (int i = 0; i < inline_arg_count; i++) {
             uint16_t value = script[offset++];
             value |= (uint16_t)script[offset++] << 8;
-            s += sprintf(s, " %04x", value);
+            dump_print(" %04x", value);
         }
-        s += sprintf(s, "\n");
+        dump_print("\n");
     }
-    *out = s;
     return true;
 }
 
-void kalos_dump(const_kalos_script script, char* s) {
-    kalos_walk(script, &s, kalos_dump_section);
+void kalos_dump(kalos_state* state, const_kalos_script script) {
+    kalos_walk(script, state, kalos_dump_section);
+}
+
+kalos_buffer dump_buffer;
+size_t dump_buffer_offset;
+
+void kalos_dump_print(const char* c) {
+    size_t len = strlen(c);
+    memcpy(dump_buffer.buffer + dump_buffer_offset, c, len + 1);
+    dump_buffer_offset += len;
+}
+
+kalos_buffer kalos_dump_to_buffer(kalos_state* state, const_kalos_script script) {
+    dump_buffer = kalos_buffer_alloc(state, 10 * 1024);
+    dump_buffer_offset = 0;
+    kalos_state dump_state = *state;
+    dump_state.print = kalos_dump_print;
+    kalos_dump(&dump_state, script);
+    return dump_buffer;
 }
 
 void kalos_walk(const_kalos_script script, void* context, kalos_walk_fn walk_fn) {

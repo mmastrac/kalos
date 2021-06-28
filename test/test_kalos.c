@@ -139,19 +139,16 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytec
         TEST_ASSERT_NOT_NULL_MESSAGE(bytecode.buffer, "Expected this test to fail but it didn't");
     }
 
-    const int PARSE_BUFFER_SIZE = 32 * 1024;
-    char* dump_buffer = malloc(PARSE_BUFFER_SIZE);
-    memset(dump_buffer, 0, PARSE_BUFFER_SIZE);
-    kalos_dump((kalos_script)script.buffer, dump_buffer);
+    kalos_buffer dump_buffer = kalos_dump_to_buffer(&test_env, (kalos_script)script.buffer);
 
-    if (strcmp(dump_buffer, (const char*)bytecode.buffer) != 0) {
-        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer);
+    if (strcmp((const char*)dump_buffer.buffer, (const char*)bytecode.buffer) != 0) {
+        printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer.buffer);
         // write_buffer(bytecode_file, dump_buffer);
         TEST_FAIL();
     }
 
     kalos_buffer_free(script);
-    free(dump_buffer);
+    kalos_buffer_free(dump_buffer);
     return res;
 }
 

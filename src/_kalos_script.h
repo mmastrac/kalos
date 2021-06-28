@@ -32,7 +32,8 @@ typedef struct kalos_section_header {
 } kalos_section_header;
 #pragma pack(pop)
 
-void kalos_dump(const_kalos_script script, char* buffer);
+void kalos_dump(kalos_state* state, const_kalos_script script);
+kalos_buffer kalos_dump_to_buffer(kalos_state* state, const_kalos_script script);
 typedef bool (*kalos_walk_fn)(void* context, const_kalos_script script, const kalos_section_header kalos_far* header, uint16_t pc, uint16_t length);
 void kalos_walk(const_kalos_script script, void* context, kalos_walk_fn fn);
 uint16_t kalos_find_section(const_kalos_script script, kalos_export_address handler_address, const kalos_section_header kalos_far** header);
