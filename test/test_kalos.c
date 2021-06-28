@@ -107,19 +107,29 @@ const char* make_test_filename(const char* name, const char* extension) {
 }
 
 kalos_module_parsed parse_modules_for_test() {
-    kalos_buffer buffer = read_buffer("test/test_kalos.kidl");
-    kalos_module_parsed parsed = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
-    ASSERT(parsed.buffer);
-    kalos_buffer_free(buffer);
+    static uint8_t parsed_modules[10 * 1024] = {0};
+    static size_t parsed_modules_size = 0;
+
+    if (!parsed_modules_size) {
+        kalos_buffer buffer = read_buffer("test/test_kalos.kidl");
+        kalos_module_parsed parsed = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
+        ASSERT(parsed.buffer);
+        kalos_buffer_free(buffer);
+        memcpy(parsed_modules, parsed.buffer, kalos_buffer_size(parsed));
+        parsed_modules_size = kalos_buffer_size(parsed);
+        kalos_buffer_free(parsed);
+    }
+
+    kalos_module_parsed parsed = kalos_buffer_alloc(&test_env, parsed_modules_size);
+    memcpy(parsed.buffer, &parsed_modules[0], parsed_modules_size);
     return parsed;
 }
 
 kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytecode_file, kalos_buffer bytecode) {
-    const int PARSE_BUFFER_SIZE = 32 * 1024;
-    kalos_buffer script = kalos_buffer_alloc(&test_env, PARSE_BUFFER_SIZE);
+    kalos_buffer script;
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
-    kalos_parse_result res = kalos_parse((const char*)script_text.buffer, parsed_modules, options, (kalos_script)script.buffer);
+    kalos_parse_result res = kalos_parse_buffer((const char*)script_text.buffer, parsed_modules, options, &test_env, &script);
     kalos_buffer_free(parsed_modules);
     if (res.error) {
         // Don't check bytecode if we failed to parse
@@ -129,6 +139,7 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytec
         TEST_ASSERT_NOT_NULL_MESSAGE(bytecode.buffer, "Expected this test to fail but it didn't");
     }
 
+    const int PARSE_BUFFER_SIZE = 32 * 1024;
     char* dump_buffer = malloc(PARSE_BUFFER_SIZE);
     memset(dump_buffer, 0, PARSE_BUFFER_SIZE);
     kalos_dump((kalos_script)script.buffer, dump_buffer);
@@ -281,7 +292,7 @@ void run_test(const char* name) {
     kalos_parse_options options = {0};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_buffer script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
-    kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, (kalos_script)script.buffer);
+    kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, (kalos_script)script.buffer, BUFFER_SIZE);
     kalos_buffer_free(parsed_modules);
     TEST_ASSERT_TRUE_MESSAGE(res.success, res.error);
 

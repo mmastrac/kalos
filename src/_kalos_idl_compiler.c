@@ -147,11 +147,13 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
 
 kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_parse_options options = {0};
+    kalos_buffer idl;
     kalos_module_parsed parsed = {0};
-    kalos_buffer idl = kalos_buffer_alloc(state, 10 * 1024);
-    kalos_parse_result result = kalos_parse(s, parsed, options, idl.buffer);
+    kalos_parse_result result = kalos_parse_buffer(s, parsed, options, state, &idl);
     if (result.error) {
-        kalos_buffer_free(idl);
+        if (state->error) {
+            state->error(result.line, result.error);
+        }
         return parsed;
     }
     kalos_dispatch dispatch;
@@ -373,10 +375,12 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
         return false;
     }
     kalos_parse_options options = {0};
-    kalos_buffer script = kalos_buffer_alloc(state, 10*1024);
-    kalos_parse_result result = kalos_parse(IDL_COMPILER_SCRIPT, modules, options, script.buffer);
+    kalos_buffer script;
+    kalos_parse_result result = kalos_parse_buffer(IDL_COMPILER_SCRIPT, modules, options, state, &script);
     if (result.error) {
-        printf("ERROR: %s\n", result.error);
+        if (state->error) {
+            state->error(result.line, result.error);
+        }
         return false;
     }
     script_modules = parsed_module;

@@ -145,7 +145,7 @@ static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_
 static void parse_push_string(struct parse_state* parse_state, const char* s);
 static void parse_push_token(struct parse_state* parse_state);
 static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op);
-static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc);
+static void parse_fixup_offset(struct parse_state* parse_state, int offset, kalos_int pc);
 static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address);
 
 static void parse_assert_token(struct parse_state* parse_state, int token);
@@ -214,17 +214,89 @@ static bool is_assignment_token(kalos_token token) {
     }
 }
 
+/********************************************************************
+ * Script modification
+ * 
+ * All functions in this section must correctly account for data written
+ * to the script so that the parser can compile in "sizing mode".
+ ********************************************************************/
+
+static bool parse_allocate_space(struct parse_state* parse_state, kalos_int size) {
+    if (parse_state->output_script) {
+        return true;
+    }
+    parse_state->output_script_index += size;
+    return false;
+}
+
+static void parse_fixup_offset(struct parse_state* parse_state, int offset, kalos_int pc) {
+    if (parse_allocate_space(parse_state, 0)) {
+        parse_state->output_script[offset] = pc & 0xff;
+        parse_state->output_script[offset + 1] = (pc >> 8) & 0xff;
+        LOG("FIXUP: @%d %d", offset, pc);
+    }
+}
+
+static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address) {
+    if (parse_allocate_space(parse_state, sizeof(*parse_state->last_section_header))) {
+        if (parse_state->last_section_header) {
+            parse_state->last_section_header->next_section = parse_state->output_script_index;
+        }
+
+        parse_state->last_section_header = (kalos_section_header*)&parse_state->output_script[parse_state->output_script_index];
+        memset(parse_state->last_section_header, 0, sizeof(*parse_state->last_section_header));
+        parse_state->last_section_header->handler_address = handler_address;
+        parse_state->output_script_index += sizeof(*parse_state->last_section_header);
+    }
+}
+
 static void parse_push_format(struct parse_state* parse_state, kalos_op op, kalos_string_format* string_format) {
-    parse_state->output_script[parse_state->output_script_index++] = op;
-    memcpy((void*)&parse_state->output_script[parse_state->output_script_index], (void*)string_format, sizeof(kalos_string_format));
-    parse_state->output_script_index += sizeof(kalos_string_format);
+    if (parse_allocate_space(parse_state, sizeof(kalos_string_format) + 1)) {
+        parse_state->output_script[parse_state->output_script_index++] = op;
+        memcpy((void*)&parse_state->output_script[parse_state->output_script_index], (void*)string_format, sizeof(kalos_string_format));
+        parse_state->output_script_index += sizeof(kalos_string_format);
+    }
 }
 
 static void parse_push_string(struct parse_state* parse_state, const char* s) {
-    parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_STRING;
-    strcpy((char*)&parse_state->output_script[parse_state->output_script_index], s);
-    parse_state->output_script_index += strlen(s) + 1;
+    kalos_int len = strlen(s);
+    if (parse_allocate_space(parse_state, len + 2)) {
+        parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_STRING;
+        strcpy((char*)&parse_state->output_script[parse_state->output_script_index], s);
+        parse_state->output_script_index += len + 1;
+    }
 }
+
+static void parse_push_op(struct parse_state* parse_state, kalos_op op) {
+    if (parse_allocate_space(parse_state, 1)) {
+        parse_state->output_script[parse_state->output_script_index++] = op;
+        LOG("OP: %s", kalos_op_strings[op]);
+    }
+}
+
+static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_int data) {
+    if (parse_allocate_space(parse_state, 3)) {
+        parse_state->output_script[parse_state->output_script_index++] = op;
+        LOG("OP: %s %d", kalos_op_strings[op], data);
+        parse_state->output_script[parse_state->output_script_index++] = data & 0xff;
+        parse_state->output_script[parse_state->output_script_index++] = (data >> 8) & 0xff;
+    }
+}
+
+static void parse_push_op_2(struct parse_state* parse_state, kalos_op op, kalos_int data1, kalos_int data2) {
+    if (parse_allocate_space(parse_state, 5)) {
+        parse_state->output_script[parse_state->output_script_index++] = op;
+        LOG("OP: %s %d %d", kalos_op_strings[op], data1, data2);
+        parse_state->output_script[parse_state->output_script_index++] = data1 & 0xff;
+        parse_state->output_script[parse_state->output_script_index++] = (data1 >> 8) & 0xff;
+        parse_state->output_script[parse_state->output_script_index++] = data2 & 0xff;
+        parse_state->output_script[parse_state->output_script_index++] = (data2 >> 8) & 0xff;
+    }
+}
+
+/********************************************************************
+ * End script modification
+ ********************************************************************/
 
 static void parse_push_token(struct parse_state* parse_state) {
     if (parse_state->last_token == KALOS_TOKEN_INTEGER) {
@@ -235,9 +307,9 @@ static void parse_push_token(struct parse_state* parse_state) {
             TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, atoi(parse_state->token)));
         }
     } else if (parse_state->last_token == KALOS_TOKEN_TRUE) {
-        parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_TRUE;
+        TRY(parse_push_op(parse_state, KALOS_OP_PUSH_TRUE));
     } else if (parse_state->last_token == KALOS_TOKEN_FALSE) {
-        parse_state->output_script[parse_state->output_script_index++] = KALOS_OP_PUSH_FALSE;
+        TRY(parse_push_op(parse_state, KALOS_OP_PUSH_FALSE));
     } else if (parse_state->last_token == KALOS_TOKEN_STRING_LITERAL 
         || parse_state->last_token == KALOS_TOKEN_STRING_INTERPOLATION
         || parse_state->last_token == KALOS_TOKEN_WORD) {
@@ -256,27 +328,6 @@ static void parse_push_token(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-static void parse_push_op(struct parse_state* parse_state, kalos_op op) {
-    parse_state->output_script[parse_state->output_script_index++] = op;
-    LOG("OP: %s", kalos_op_strings[op]);
-}
-
-static void parse_push_op_1(struct parse_state* parse_state, kalos_op op, kalos_int data) {
-    parse_state->output_script[parse_state->output_script_index++] = op;
-    LOG("OP: %s %d", kalos_op_strings[op], data);
-    parse_state->output_script[parse_state->output_script_index++] = data & 0xff;
-    parse_state->output_script[parse_state->output_script_index++] = (data >> 8) & 0xff;
-}
-
-static void parse_push_op_2(struct parse_state* parse_state, kalos_op op, kalos_int data1, kalos_int data2) {
-    parse_state->output_script[parse_state->output_script_index++] = op;
-    LOG("OP: %s %d %d", kalos_op_strings[op], data1, data2);
-    parse_state->output_script[parse_state->output_script_index++] = data1 & 0xff;
-    parse_state->output_script[parse_state->output_script_index++] = (data1 >> 8) & 0xff;
-    parse_state->output_script[parse_state->output_script_index++] = data2 & 0xff;
-    parse_state->output_script[parse_state->output_script_index++] = (data2 >> 8) & 0xff;
-}
-
 static void parse_make_list(struct parse_state* parse_state, kalos_int size) {
     TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, size));
     TRY(parse_push_op(parse_state, KALOS_OP_MAKE_LIST));
@@ -287,23 +338,6 @@ static int parse_push_goto_forward(struct parse_state* parse_state, kalos_op op)
     TRY(parse_push_op_1(parse_state, op, 0));
     TRY_EXIT;
     return parse_state->output_script_index - 2;
-}
-
-static void parse_fixup_offset(struct parse_state* parse_state, int offset, int pc) {
-    parse_state->output_script[offset] = pc & 0xff;
-    parse_state->output_script[offset + 1] = (pc >> 8) & 0xff;
-    LOG("FIXUP: @%d %d", offset, pc);
-}
-
-static void write_next_handler_section(struct parse_state* parse_state, kalos_export_address handler_address) {
-    if (parse_state->last_section_header) {
-        parse_state->last_section_header->next_section = parse_state->output_script_index;
-    }
-
-    parse_state->last_section_header = (kalos_section_header*)&parse_state->output_script[parse_state->output_script_index];
-    memset(parse_state->last_section_header, 0, sizeof(*parse_state->last_section_header));
-    parse_state->last_section_header->handler_address = handler_address;
-    parse_state->output_script_index += sizeof(*parse_state->last_section_header);
 }
 
 // Resolution order: builtins, locals, globals, modules
@@ -1309,7 +1343,7 @@ void parse_idl_block(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
-kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script script) {
+kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script script, size_t script_size) {
     struct parse_state parse_state_data = {0};
     parse_state_data.options = options;
     parse_state_data.output_script = script;
@@ -1318,14 +1352,16 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");
         parse_state_data.dispatch_name = (kalos_module_get_header(modules)->flags & KALOS_MODULE_FLAG_DISPATCH_NAME) != 0;
     }
-    kalos_script_header* header = (kalos_script_header*)parse_state_data.output_script;
-    memset(header, 0, sizeof(*header));
-    header->signature[0] = 'K';
-    header->signature[1] = 'L';
-    header->signature[2] = 26; // ^Z
-    header->signature[3] = 0;
+    kalos_script_header* header = NULL;
+    if (script) {
+        header = (kalos_script_header*)parse_state_data.output_script;
+        memset(header, 0, sizeof(*header));
+        header->signature[0] = 'K';
+        header->signature[1] = 'L';
+        header->signature[2] = 26; // ^Z
+        header->signature[3] = 0;
+    }
     parse_state_data.output_script_index = sizeof(*header);
-
     kalos_lex_init(s, &parse_state_data.lex_state);
     
     struct parse_state* parse_state = &parse_state_data;
@@ -1368,7 +1404,9 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
             }
             memset(&parse_state->locals, 0, sizeof(parse_state->locals));
             TRY(parse_function_statement(parse_state));
-            parse_state->last_section_header->locals_size = parse_state->locals.var_index;
+            if (parse_state->last_section_header) {
+                parse_state->last_section_header->locals_size = parse_state->locals.var_index;
+            }
         } else if (token == KALOS_TOKEN_IDL) {
             found_idl = true;
             TRY(parse_idl_block(parse_state));
@@ -1376,12 +1414,13 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
             THROW(ERROR_UNEXPECTED_TOKEN);
         }
     }
-
-    header->globals_size = parse_state->globals.var_index;
-    header->length = parse_state->output_script_index;
+    if (header) {
+        header->globals_size = parse_state->globals.var_index;
+        header->length = parse_state->output_script_index;
+    }
     kalos_parse_result res = {0};
     res.success = true;
-    res.size = header->length;
+    res.size = parse_state->output_script_index;
     return res;
 
     TRY_EXIT;
@@ -1389,4 +1428,21 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     res.error = parse_state->failure_message;
     res.line = parse_state->lex_state.line;
     return res;
+}
+
+kalos_parse_result kalos_parse_buffer(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_state* state, kalos_buffer* buffer) {
+    kalos_buffer output = {0};
+    *buffer = output;
+    kalos_parse_result result = kalos_parse(script_text, modules, options, NULL, 0);
+    if (result.error) {
+        return result;
+    }
+    output = kalos_buffer_alloc(state, result.size);
+    result = kalos_parse(script_text, modules, options, output.buffer, result.size);
+    if (result.error) {
+        kalos_buffer_free(output);
+        return result;
+    }
+    *buffer = output;
+    return result;
 }

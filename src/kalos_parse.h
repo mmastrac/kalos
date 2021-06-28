@@ -41,7 +41,13 @@ typedef struct kalos_parse_options {
 } kalos_parse_options;
 
 /**
- * Parse a script using the given modules and options.
+ * Parse a script using the given modules and options. If the buffer is not large enough, this method will return the
+ * required buffer size to continue.
  */
-kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_script script);
+kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options,
+    kalos_script script, size_t script_size);
 
+/**
+ * Parse a script using the given modules and options, storing the result in a buffer.
+ */
+kalos_parse_result kalos_parse_buffer(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_state* state, kalos_buffer* buffer);

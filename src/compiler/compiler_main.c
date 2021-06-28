@@ -136,10 +136,10 @@ void write_file(const char* output, void* data, size_t size) {
 int compile_script(const char* idl, const char* input, const char* output) {
     const char* input_data = read_file_string(input, NULL);
     const char* idl_data = read_file_string(idl, NULL);
-    kalos_buffer script = kalos_buffer_alloc(&compiler_env, 10 * 1024);
+    kalos_buffer script;
     kalos_module_parsed modules = kalos_idl_parse_module(idl_data, &compiler_env);
     kalos_parse_options options = {0};
-    kalos_parse_result res = kalos_parse(input_data, modules, options, script.buffer);
+    kalos_parse_result res = kalos_parse_buffer(input_data, modules, options, &compiler_env, &script);
     if (!res.success) {
         printf("ERROR on line %d: %s\n", res.line, res.error);
         exit(1);
