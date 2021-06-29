@@ -184,6 +184,7 @@ int compile_stringify(const char* input, const char* output) {
     }
     fprintf(out, "\"\n");
     fclose(out);
+    kalos_buffer_free(in);
     return 0;
 }
 
@@ -219,6 +220,8 @@ int compile_dispatch(const char* input, const char* output) {
         unlink(output);
         exit(2);
     }
+    kalos_buffer_free(modules);
+    free((void*)input_data);
     fclose(output_file);
     return 0;
 }

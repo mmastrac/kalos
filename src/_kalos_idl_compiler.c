@@ -387,6 +387,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
         }
         return false;
     }
+    kalos_buffer_free(modules);
     script_modules = parsed_module;
     script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};
@@ -395,5 +396,6 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
     kalos_module_idl_trigger_open(run_state, kalos_module_get_header(parsed_module)->flags);
     kalos_module_idl_trigger_close(run_state);
     kalos_run_free(run_state);
+    kalos_buffer_free(script);
     return true;
 }
