@@ -3,6 +3,8 @@
 #include "kalos_run.h"
 #include "_kalos_idl_compiler.h"
 #include "_kalos_lex.h"
+#include "modules/kalos_module_file.h"
+#include "modules/kalos_module_sys.h"
 
 #define ITERATE(name, list, sublist) {\
     ASSERT((list).type == KALOS_VALUE_OBJECT); \

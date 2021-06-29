@@ -15,6 +15,7 @@ idl {
     module sys {
         prop args: object { read = kalos_sys_get_args; }
         fn env(s: string): string = kalos_sys_get_env;
+        fn exit(n: number) = c "exit(@0)";
         handler main(args: object);
     }
 

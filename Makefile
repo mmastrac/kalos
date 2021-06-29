@@ -124,7 +124,7 @@ gen-compiler: $(OUTDIR)/compiler
 	@cp -R $(SRCDIR)/* $(GENDIR)/compiler
 	@$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc
 	@$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kalos $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
-	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
+	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/modules/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
 	@$(OUTDIR)/bootstrap-compiler dispatch src/_kalos_idl_compiler.kidl $(GENDIR)/compiler/_kalos_idl_compiler.dispatch.inc
 	@cp $(GENDIR)/compiler/_kalos_idl_compiler.dispatch.inc $(SRCDIR)
 	@cp $(GENDIR)/compiler/_kalos_idl_compiler.kidl.inc $(SRCDIR)

@@ -1,3 +1,7 @@
-on sys.main {
+fn help() {
+    
+}
 
+on sys.main(args: object) {
+    
 }
