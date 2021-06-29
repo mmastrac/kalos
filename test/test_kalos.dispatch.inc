@@ -327,9 +327,68 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 	return false;
 }
 
+bool kalos_module_dispatch_test_file(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
+	// id=1 name=open arg_count=2 binding=fn kalos_file_open
+	if (K__match(/*id=*/1, /*args=*/2, /*name=*/open)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_number)) {
+			K__object x = kalos_file_open((void*)state, K__arg_string(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_object(stack, x);
+			return true;
+		}
+	}
+
+	// id=2 name=readline arg_count=1 binding=fn kalos_file_readline
+	if (K__match(/*id=*/2, /*args=*/1, /*name=*/readline)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			K__string x = kalos_file_readline((void*)state, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
+	// id=3 name=read arg_count=1 binding=fn kalos_file_read_all
+	if (K__match(/*id=*/3, /*args=*/1, /*name=*/read)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			K__string x = kalos_file_read_all((void*)state, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
+	// id=3 name=read arg_count=2 binding=fn kalos_file_read
+	if (K__match(/*id=*/3, /*args=*/2, /*name=*/read)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_object, K__t_number)) {
+			K__string x = kalos_file_read((void*)state, K__arg_object(K__arg(arg_count, 1)), K__arg_number(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
+	// id=4 name=close arg_count=1 binding=fn kalos_file_close
+	if (K__match(/*id=*/4, /*args=*/1, /*name=*/close)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			kalos_file_close((void*)state, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 kalos_dispatch_fn kalos_module_dispatch_test_dispatch[] = {
 	kalos_module_dispatch_test_builtin,
 	kalos_module_dispatch_test_test,
+	kalos_module_dispatch_test_file,
 };
 
 #undef K__pstring

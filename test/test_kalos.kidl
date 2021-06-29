@@ -42,4 +42,21 @@ idl {
             prop c: number { read = test_read_c2; }
         }
     }
+
+    module file {
+        const READ: number = 1;
+        const WRITE: number = 2;
+        const READ_WRITE: number = 3;
+        const CREATE: number = 4;
+        const TRUNCATE: number = 8;
+        const APPEND: number = 16;
+
+        fn open(s: string, mode: number): object = kalos_file_open;
+        fn readline(file: object): string = kalos_file_readline;
+        fn read {
+            (file: object): string = kalos_file_read_all;
+            (file: object, size: number): string = kalos_file_read;
+        }
+        fn close(file: object) = kalos_file_close;
+    }
 }

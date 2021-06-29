@@ -24,6 +24,8 @@
  * The basic integer type of Kalos.
  */
 typedef int16_t kalos_int;
+#define KALOS_INT_MAX ((int16_t)(0x7fff))
+#define KALOS_INT_MIN ((int16_t)(0x8000))
 
 typedef struct {
     uint16_t count;

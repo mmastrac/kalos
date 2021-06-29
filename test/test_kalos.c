@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include <_kalos_defines.h>
 #include <kalos.h>
-#include <_kalos_idl_compiler.h>
-#include <_kalos_lex.h>
 #include <kalos_parse.h>
 #include <kalos_run.h>
+#include <_kalos_defines.h>
+#include <_kalos_idl_compiler.h>
+#include <_kalos_lex.h>
 #include <_kalos_script.h>
 #include <_kalos_string_format.h>
 #include <_kalos_string_system.h>
@@ -106,6 +106,7 @@ void write_buffer(const char* file, char* buffer) {
 
 const char* make_test_filename(const char* name, const char* extension) {
     static char filename[128] = {0};
+    memset(filename, 0, sizeof(filename));
     TEST_ASSERT_LESS_THAN(sizeof(filename), snprintf(filename, sizeof(filename), "%s/%s.%s", SCRIPT_DIR, name, extension));
     return filename;
 }
@@ -167,23 +168,28 @@ void parse_test(const char* file) {
     kalos_parse_result result = parse_test_runner(script, make_test_filename(file, "bytecode"), bytecode);
     if (is_failure_test) {
         // This is a failure case!
-        *strchr((const char*)script.buffer, '\n') = 0;
         char error_buf[128] = {0};
-        TEST_ASSERT_TRUE_MESSAGE(result.error, "Expected a failure");
         TEST_ASSERT_LESS_THAN(sizeof(error_buf), snprintf(error_buf, sizeof(error_buf), "# FAIL %d %s", result.line, result.error));
+        *strchr((const char*)script.buffer, '\n') = 0;
+        TEST_ASSERT_TRUE_MESSAGE(result.error, "Expected a failure");
         TEST_ASSERT_EQUAL_STRING(error_buf, script.buffer);
     } else {
         // Expected success
-        TEST_ASSERT_TRUE_MESSAGE(result.success, result.error);
+        if (!result.success) {
+            char error_buf[128] = {0};
+            TEST_ASSERT_LESS_THAN(sizeof(error_buf), snprintf(error_buf, sizeof(error_buf), "Error on line %d: %s", result.line, result.error));
+            TEST_ASSERT_TRUE_MESSAGE(result.success, error_buf);
+        }
     }
     kalos_buffer_free(script);
     kalos_buffer_free(bytecode);
     TEST_ASSERT_EQUAL(0, total_allocated);
 }
 
-char output_buffer[1024];
+char output_buffer[10*1024];
 
 void test_print(kalos_state* state, int size, kalos_value* args) {
+    ASSERT(strlen(output_buffer) < sizeof(output_buffer) - 1024);
     while (size--) {
         if (args->type == KALOS_VALUE_STRING) {
             sprintf(output_buffer, "%s%s", output_buffer, kalos_string_c(state, args->value.string));
@@ -328,6 +334,7 @@ SCRIPT_TEST(builtins)
 SCRIPT_TEST(comparisons)
 SCRIPT_TEST(complex_expressions)
 SCRIPT_TEST(const)
+SCRIPT_TEST(file)
 SCRIPT_TEST(fn)
 SCRIPT_TEST(fn_ret)
 SCRIPT_TEST(global_local)

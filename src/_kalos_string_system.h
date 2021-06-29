@@ -11,13 +11,18 @@
 #define KALOS_STRING_POISONED 0x7fff
 
 #ifdef IS_TEST
-#define VALIDATE_STRING(str_) { \
+#define VALIDATE_STRING_C(str_) { \
     ASSERT(strlen(__kalos_string_data(str_)) == abs(str_.length__)); \
+    ASSERT(__kalos_string_data(str_)[abs(str_.length__)] == 0); \
+    ASSERT(str_.length__ <= 0 || str_.sa->count != KALOS_STRING_POISONED); \
+}
+#define VALIDATE_STRING(str_) { \
     ASSERT(__kalos_string_data(str_)[abs(str_.length__)] == 0); \
     ASSERT(str_.length__ <= 0 || str_.sa->count != KALOS_STRING_POISONED); \
 }
 #else
 #define VALIDATE_STRING(str_)
+#define VALIDATE_STRING_C(str_)
 #endif
 
 // #define KALOS_STRING_AGGRESSIVE_INLINE 1
@@ -48,9 +53,11 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state* state, const
 KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state* state, const char* fmt, ...);
 KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable(kalos_state* state, const char* string);
 KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state* state, int size);
+KALOS_STRING_INLINE kalos_writable_string kalos_string_reallocate_writable(kalos_state* state, kalos_writable_string s, int size);
 
 KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state* state, kalos_string s);
 KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state* state, kalos_writable_string string);
+KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state* state, kalos_writable_string string, int length);
 KALOS_STRING_INLINE void kalos_string_release(kalos_state* state, kalos_string string);
 
 KALOS_STRING_ALWAYS_INLINE char* kalos_string_writable_c(kalos_state* state, kalos_writable_string s) { return (char*)s.s + sizeof(kalos_string_allocated); }
@@ -95,7 +102,7 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate(kalos_state* state, const
     kalos_string s;
     s.sc = string;
     s.length__ = -(int)strlen(string);
-    VALIDATE_STRING(s);
+    VALIDATE_STRING_C(s);
     return s;
 #endif
 }
@@ -113,13 +120,19 @@ KALOS_STRING_INLINE kalos_string kalos_string_allocate_fmt(kalos_state* state, c
         vsprintf(__kalos_string_data(s), fmt, args);
         va_end(args);
     }
-    VALIDATE_STRING(s);
+    VALIDATE_STRING_C(s);
     return s;
 }
 
 KALOS_STRING_INLINE kalos_writable_string kalos_string_allocate_writable_size(kalos_state* state, int size) {
     kalos_writable_string s;
     s.s = kalos_mem_alloc(state, size + sizeof(kalos_string_allocated) + 1);
+    kalos_string_writable_c(state, s)[size] = 0;
+    return s;
+}
+
+KALOS_STRING_INLINE kalos_writable_string kalos_string_reallocate_writable(kalos_state* state, kalos_writable_string s, int size) {
+    s.s = kalos_mem_realloc(state, s.s, size + sizeof(kalos_string_allocated) + 1);
     kalos_string_writable_c(state, s)[size] = 0;
     return s;
 }
@@ -135,15 +148,17 @@ KALOS_STRING_INLINE kalos_string kalos_string_duplicate(kalos_state* state, kalo
 }
 
 KALOS_STRING_INLINE kalos_string kalos_string_commit(kalos_state* state, kalos_writable_string string) {
-    kalos_string s;
-    s.length__ = strlen(kalos_string_writable_c(state, string));
-    s.sa = string.s;
-    s.sa->count = 0;
-    VALIDATE_STRING(s);
+    kalos_string s = kalos_string_commit_length(state, string, strlen(kalos_string_writable_c(state, string)));
+    VALIDATE_STRING_C(s);
     return s;
 }
 
 KALOS_STRING_INLINE kalos_string kalos_string_commit_length(kalos_state* state, kalos_writable_string string, int length) {
+    if (length == 0) {
+        kalos_mem_free(state, string.s);
+        return kalos_string_allocate(state, "");
+    }
+    // Note that committing a string with a lunch much smaller than the allocated space will waste memory
     kalos_string s;
     s.length__ = length;
     s.sa = string.s;
@@ -226,9 +241,9 @@ KALOS_STRING_INLINE kalos_string kalos_string_take_append(kalos_state* state, ka
     memcpy(s, __kalos_string_data(a), al);
     memcpy(s + al, __kalos_string_data(b), bl);
     s[al + bl] = 0;
-    VALIDATE_STRING(str);
     kalos_string_release(state, a);
     kalos_string_release(state, b);
+    VALIDATE_STRING(str);
     return str;
 }
 

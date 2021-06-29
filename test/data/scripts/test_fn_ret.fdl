@@ -1,7 +1,7 @@
 import test;
 
-fn callable_ret(n): number {
-    return n * 10;
+fn callable_ret(n): string {
+    return "*" * (n * 10);
 }
 
 fn callable_noret(n) {

@@ -1,0 +1,62 @@
+import file;
+
+const EXPECTED = 
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut \n"
+"enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut "
+"aliquip ex ea commodo consequat. Duis aute irure dolor \n"
+"in reprehenderit in voluptate velit esse cillum dolore eu fugiat "
+"nulla pariatur. Excepteur sint occaecat cupidatat non \n"
+"proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n";
+
+fn read_chunks(size): string {
+    var f = file.open("test/data/file/small.txt", file.READ);
+    var out = "";
+    loop {
+        var s = file.read(f, size);
+        if !s {
+            break;
+        }
+        out += s;
+    }
+    return out;
+}
+
+on init {
+    # Test reading in random chunks
+    var f = file.open("test/data/file/small.txt", file.READ);
+    print(file.read(f, 5) + "\n");
+    print(file.read(f, 6) + "\n");
+    print(file.read(f, 250) + "\n");
+    file.close(f);
+    print("-" * 5 + "\n");
+
+    # Chunk size 1 to 400
+    print((read_chunks(1) == EXPECTED) + "\n");
+    print("-" * 5 + "\n");
+
+    print((read_chunks(5) == EXPECTED) + "\n");
+    print("-" * 5 + "\n");
+
+    print((read_chunks(200) == EXPECTED) + "\n");
+    print("-" * 5 + "\n");
+
+    print((read_chunks(400) == EXPECTED) + "\n");
+    print("-" * 5 + "\n");
+
+    # readline
+    f = file.open("test/data/file/small.txt", file.READ);
+    var s1;
+    var s2;
+    for s1 in split(EXPECTED, "\n") {
+        s2 = file.readline(f);
+        if s1 != s2 {
+            print("'{s1}' != '{s2}'\n");
+        }
+    }
+    file.close(f);
+
+    # read fully
+    f = file.open("test/data/file/small.txt", file.READ);
+    print((file.read(f) == EXPECTED) + "\n");
+}

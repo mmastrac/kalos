@@ -17,7 +17,7 @@ void register_suite(test_suite* current_suite) {
 
 void test_log(char* file, int line, const char* fmt, ...) {
     va_list args;
-    static char print_buffer[2048];
+    static char print_buffer[4096];
 
     va_start(args, fmt);
     int written = vsnprintf(&print_buffer[0], sizeof(print_buffer), fmt, args);
