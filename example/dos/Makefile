@@ -3,7 +3,7 @@ OUTDIR := $(ROOTDIR)/target
 DOSOUTDIR := $(ROOTDIR)/target/dos
 
 KALOS_SRCDIR := $(ROOTDIR)/src
-KALOS_SOURCES := $(wildcard $(KALOS_SRCDIR)/*.c)
+KALOS_SOURCES := $(wildcard $(KALOS_SRCDIR)/*.c) $(wildcard $(KALOS_SRCDIR)/modules/*.c)
 KALOS_OBJECTS := $(patsubst $(KALOS_SRCDIR)/%.c,$(DOSOUTDIR)/kalos/%.o,$(KALOS_SOURCES))
 
 SRCDIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))

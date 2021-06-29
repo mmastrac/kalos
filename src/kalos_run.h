@@ -1,4 +1,6 @@
-#pragma once
+// Standard guards for main entry headers (https://github.com/open-watcom/open-watcom-v2/issues/714)
+#ifndef KALOS_RUN_H
+#define KALOS_RUN_H
 
 /** @file
  * The Kalos virtual machine for running compiled scripts.
@@ -33,3 +35,5 @@ void kalos_type_error(kalos_state* state);
  * Trigger a value error, halting the virtual machine and reporting to the host environment.
  */
 void kalos_value_error(kalos_state* state);
+
+#endif

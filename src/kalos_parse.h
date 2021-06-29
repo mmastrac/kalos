@@ -1,4 +1,6 @@
-#pragma once
+// Standard guards for main entry headers (https://github.com/open-watcom/open-watcom-v2/issues/714)
+#ifndef KALOS_PARSE_H
+#define KALOS_PARSE_H
 
 /** @file
  * The Kalos parser for parsing script text into compiled binaries.
@@ -51,3 +53,5 @@ kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_p
  * Parse a script using the given modules and options, storing the result in a buffer.
  */
 kalos_parse_result kalos_parse_buffer(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_state* state, kalos_buffer* buffer);
+
+#endif

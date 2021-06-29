@@ -1,8 +1,8 @@
 #include "_kalos_defines.h"
 #include "kalos_parse.h"
 #include "kalos_run.h"
-#include "_kalos_idl_compiler.h"
 #include "_kalos_lex.h"
+// #include "_kalos_idl_compiler.h"
 #include "modules/kalos_module_file.h"
 #include "modules/kalos_module_sys.h"
 
@@ -322,7 +322,9 @@ void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* s
     script_current_property = NULL;
 }
 
+KALOS_ALLOW_UNREACHABLE_CODE_BEGIN
 #include "_kalos_idl_compiler.dispatch.inc"
+KALOS_ALLOW_UNREACHABLE_CODE_END
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
     struct walk_callback_context* context = context_;

@@ -1,4 +1,6 @@
-#pragma once
+// Standard guards for main entry headers (https://github.com/open-watcom/open-watcom-v2/issues/714)
+#ifndef KALOS_H
+#define KALOS_H
 
 /** @file
  * Common include for all Kalos users.
@@ -12,12 +14,16 @@
 #define kalos_far __far
 #define KALOS_MAYBE_UNUSED_BEGIN _Pragma("off (unreferenced)")
 #define KALOS_MAYBE_UNUSED_END _Pragma("on (unreferenced)")
+#define KALOS_ALLOW_UNREACHABLE_CODE_BEGIN _Pragma("warning 201 9")
+#define KALOS_ALLOW_UNREACHABLE_CODE_END _Pragma("warning 201 3")
 #elif __AVR__
 #define kalos_far __flash
 #else
 #define kalos_far 
 #define KALOS_MAYBE_UNUSED_BEGIN
 #define KALOS_MAYBE_UNUSED_END
+#define KALOS_ALLOW_UNREACHABLE_CODE_BEGIN
+#define KALOS_ALLOW_UNREACHABLE_CODE_END
 #endif
 
 /**
@@ -122,3 +128,5 @@ void kalos_buffer_resize(kalos_buffer* buffer, size_t size);
  * Free a Kalos buffer.
  */
 void kalos_buffer_free(kalos_buffer buffer);
+
+#endif
