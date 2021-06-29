@@ -451,7 +451,7 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
     done: {
         kalos_value ret = {0};
         if (keep_ret) {
-            ret = kalos_value_clone((kalos_state*)state, pop(state->stack));
+            ret = kalos_value_move((kalos_state*)state, pop(state->stack));
         }
         for (int i = original_stack_index; i < state->stack->stack_index; i++) {
             kalos_clear((kalos_state*)state, &state->stack->stack[i]);
