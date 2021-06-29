@@ -1,0 +1,29 @@
+on init {
+    print(head([1, 2, 3]));
+    print(head(split("a,b,c", ",")));
+    print(head(range(10, 20)));
+    var i;
+
+    print("\n");
+    for i in tail([1,2,3]) {
+        print(i);
+    }
+    print("\n");
+    for i in tail(split("a,b,c", ",")) {
+        print(i);
+    }
+    print("\n");
+    for i in tail(range(10, 20)) {
+        print(i);
+    }
+    print("\n");
+
+    # Re-use the same tail
+    var iter = tail(split("a,b,c", ","));
+    for i in iter {
+        print(i);
+    }
+    for i in iter {
+        print(i);
+    }
+}

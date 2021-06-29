@@ -35,6 +35,8 @@ idl {
 
         fn ITERATOR(o: object): object = op_iterator;
         fn ITERATOR_NEXT(o: object): object = op_iterator_next;
+        fn ITERATOR_HEAD(o: object): any = op_iterator_head;
+        fn ITERATOR_TAIL(o: object): object = op_iterator_tail;
         fn SPLIT(s: string, s2: string): object = op_split;
         fn RANGE(n: number, n2: number): object = op_range;
 

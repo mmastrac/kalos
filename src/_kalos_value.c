@@ -105,6 +105,11 @@ kalos_value list_iternext(kalos_state* state, kalos_object_ref* object, bool* do
     return kalos_value_clone(state, &array[1 + context->index++]);
 }
 
+void list_iter_object_free(kalos_state* state, kalos_object_ref* object) {
+    struct list_iter_context* context = (*object)->context;
+    kalos_object_release(state, &context->object);
+}
+
 kalos_object_ref list_iterstart(kalos_state* state, kalos_object_ref* object) {
     kalos_object_ref iter = kalos_allocate_object(state, sizeof(struct list_iter_context));
     struct list_iter_context* context = iter->context;
@@ -112,6 +117,7 @@ kalos_object_ref list_iterstart(kalos_state* state, kalos_object_ref* object) {
     context->index = 0;
     context->object = *object;
     iter->iternext = list_iternext;
+    iter->object_free = list_iter_object_free;
     return iter;
 }
 

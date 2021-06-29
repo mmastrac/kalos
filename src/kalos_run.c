@@ -270,6 +270,46 @@ static kalos_object_ref op_iterator_next(kalos_state_internal* state, kalos_op o
     return *iterator;
 }
 
+static kalos_value op_iterator_head(kalos_state* state, kalos_op op, kalos_object_ref* iterable) {
+    kalos_object_ref iterator = (*iterable)->iterstart(state, iterable);
+    kalos_object_release(state, iterable);
+    bool done;
+    kalos_value next = iterator->iternext((kalos_state*)state, &iterator, &done);
+    kalos_object_release(state, &iterator);
+    if (done) {
+        kalos_value_error(state);
+        kalos_value none = {0};
+        return none;
+    }
+    return next;
+}
+
+static kalos_object_ref tail_iterstart(kalos_state* state, kalos_object_ref* object) {
+    kalos_object_ref* original = (*object)->context;
+    kalos_object_ref iterator = (*original)->iterstart(state, original);
+    bool done;
+    // Eat one value
+    kalos_value v = iterator->iternext(state, &iterator, &done);
+    kalos_clear(state, &v);
+    if (done) {
+        kalos_value_error(state);
+        return 0;
+    }
+    return iterator;
+}
+
+static void tail_object_free(kalos_state* state, kalos_object_ref* object) {
+    kalos_object_release(state, (*object)->context);
+}
+
+static kalos_object_ref op_iterator_tail(kalos_state* state, kalos_op op, kalos_object_ref* iterable_) {
+    kalos_object_ref iterable = kalos_allocate_object(state, sizeof(kalos_object_ref));
+    *(kalos_object_ref*)(iterable->context) = kalos_object_take(state, iterable_);
+    iterable->iterstart = tail_iterstart;
+    iterable->object_free = tail_object_free;
+    return iterable;
+}
+
 static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_op op) {
     kalos_state* state = (kalos_state*)internal_state;
     kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script[internal_state->pc]);
