@@ -15,6 +15,7 @@
 #include <_kalos_string_format.h>
 #include <_kalos_string_system.h>
 #include <_kalos_value.h>
+#include <modules/kalos_module_file.h>
 
 TEST_SUITE(kalos)
 

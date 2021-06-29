@@ -12,6 +12,12 @@ idl {
         handler open(flags: number);
     }
 
+    module sys {
+        prop args: object { read = kalos_sys_get_args; }
+        fn env(s: string): string = kalos_sys_get_env;
+        handler main(args: object);
+    }
+
     module file {
         const READ: number = 1;
         const WRITE: number = 2;
