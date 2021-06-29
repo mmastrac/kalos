@@ -51,17 +51,9 @@ HOST_CFLAGS=-std=c99 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 
-.PHONY: all test linux-test clean nore2c
+.PHONY: all test clean linux-test linux-gen
 
 all: $(OUTDIR)/compiler
-
-# TODO: This is a bit dumb: we sleep for a second and then touch the output targets. Would be
-# great to figure out a Makefile incantation so that these files are never re-made (maybe a warning?)
-nore2c:
-	$(call color,"TOUCH","host",(re2c targets))
-	@sleep 1
-	@touch $(SRCDIR)/kalos_string_format.c
-	@touch $(SRCDIR)/kalos_lex.c
 
 test: $(OUTDIR)/tests/test
 	$(call color,"TEST","host",$<)
@@ -69,6 +61,9 @@ test: $(OUTDIR)/tests/test
 
 linux-test:
 	@docker run -it --rm -w /home/ -v `pwd`:/home/ silkeh/clang:latest make test
+
+linux-gen:
+	@docker run -it --rm -w /home/ -v `pwd`:/home/ silkeh/clang:latest make gen
 
 clean:
 	$(call color,"CLEAN","all",$(ROOTOUTDIR))
@@ -86,11 +81,11 @@ $(OUTDIR)/compiler: $(HOST_OBJECTS) $(HOST_OBJDIR)/compiler/compiler_main.o
 
 $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 	$(call color,"re2c","all",$<)
-	@re2c -W -c --tags --no-debug-info $< -o $@
+	@re2c -W -c --tags --no-debug-info $< -o $@ || echo "WARNING: re2c not installed. Not rebuilding $@."
 
 $(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 	$(call color,"re2c","all",$<)
-	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@
+	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@ || echo "WARNING: re2c not installed. Not rebuilding $@."
 
 $(TEST_OBJDIR)/lib/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(call color,"CC","host",$<)
