@@ -1,12 +1,15 @@
+OS := $(shell uname | tr '[:upper:]' '[:lower:]')
+CC := $(shell which clang || which gcc)
+
 SRCDIR=src
 TESTDIR=test
-OUTDIR=target
+ROOTOUTDIR=target
+OUTDIR=$(ROOTOUTDIR)/$(OS)
 GENDIR=$(OUTDIR)/gen
 OBJDIR=$(OUTDIR)/obj
 DOS_OBJDIR=$(OBJDIR)/dos
 TEST_OBJDIR=$(OBJDIR)/test
 HOST_OBJDIR=$(OBJDIR)/host
-CC := $(shell which clang || which gcc)
 
 SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c)
 HEADERS=$(wildcard $(SRCDIR)/*.h)
@@ -48,7 +51,7 @@ HOST_CFLAGS=-std=c99 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 
-.PHONY: all test clean nore2c
+.PHONY: all test linux-test clean nore2c
 
 all: $(OUTDIR)/compiler
 
@@ -64,9 +67,12 @@ test: $(OUTDIR)/tests/test
 	$(call color,"TEST","host",$<)
 	@$(OUTDIR)/tests/test
 
+linux-test:
+	@docker run -it --rm -w /home/ -v `pwd`:/home/ silkeh/clang:latest make test
+
 clean:
-	$(call color,"CLEAN","all",$(OUTDIR))
-	@rm -rf $(OUTDIR)
+	$(call color,"CLEAN","all",$(ROOTOUTDIR))
+	@rm -rf $(ROOTOUTDIR)
 
 $(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) $(SRCDIR)/*.inc
 	$(call color,"CC","host",$<)
