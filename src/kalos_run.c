@@ -15,10 +15,10 @@ typedef struct kalos_state_internal {
     uint16_t pc;
 } kalos_state_internal;
 
-void kalos_internal_error(kalos_state* state) {
+void kalos_internal_error(kalos_state* state, int line) {
     ASSERT(false);
     LOG("internal error");
-    state->error(state->context, 0, "Internal error");
+    state->error(state->context, line, "Internal error");
 }
 
 void kalos_type_error(kalos_state* state) {
@@ -33,8 +33,8 @@ void kalos_value_error(kalos_state* state) {
     state->error(state->context, 0, "Value error");
 }
 
-#define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state); } }
-#define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack->stack_index - 1 < size) { kalos_internal_error((kalos_state*)state); } }
+#define ENSURE_STACK(size) { if (state->stack->stack_index < size) { kalos_internal_error((kalos_state*)state, __LINE__); } }
+#define ENSURE_STACK_SPACE(size) { if (KALOS_STACK_SIZE - state->stack->stack_index - 1 < size) { kalos_internal_error((kalos_state*)state, __LINE__); } }
 
 static kalos_int read_inline_integer(kalos_state_internal* state) {
     kalos_int int_value;
@@ -62,7 +62,7 @@ static kalos_int op_compare_string(kalos_state* state, kalos_op op, kalos_string
         case KALOS_OP_GTE: return compare >= 0;
         case KALOS_OP_LT: return compare < 0;
         case KALOS_OP_LTE: return compare <= 0;
-        default: kalos_internal_error(state); return 0;
+        default: kalos_internal_error(state, __LINE__); return 0;
     }
 }
 
@@ -123,7 +123,7 @@ static kalos_string op_to_hex_or_char(kalos_state* state, kalos_op op, kalos_int
         s[0] = v;
         return kalos_string_commit(state, str);
     }
-    kalos_internal_error(state);
+    kalos_internal_error(state, __LINE__);
     return kalos_string_allocate(state, "");
 }
 
@@ -416,12 +416,12 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
     size_t script_size = ((const kalos_script_header kalos_far*)state->script)->length;
     while (state->pc != PC_DONE) {
         if (state->pc >= script_size) {
-            state->error(state->context, 0, "Internal error");
+            kalos_internal_error((kalos_state*)state, __LINE__);
             goto done;
         }
         kalos_op op = state->script[state->pc++];
         if (op >= KALOS_OP_MAX || state->stack->stack_index < 0) {
-            state->error(state->context, 0, "Internal error");
+            kalos_internal_error((kalos_state*)state, __LINE__);
             goto done;
         }
         LOG("PC %04x exec %s (stack = %d)", state->pc - 1, kalos_op_strings[op], state->stack->stack_index);
@@ -481,7 +481,7 @@ void kalos_trigger_pc(kalos_run_state* state_, kalos_int pc, const kalos_section
             }
             default:
                 if (!kalos_run_dispatch_ops(state_, op, state->stack)) {
-                    kalos_internal_error((kalos_state*)state); // should be impossible
+                    kalos_internal_error((kalos_state*)state, __LINE__); // should be impossible
                     return;
                 }
                 break;

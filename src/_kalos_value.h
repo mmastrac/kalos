@@ -110,7 +110,7 @@ inline static kalos_value* kalos_stack_vararg_start(kalos_stack* stack, int vara
     return &stack->stack[stack->stack_index - vararg_count - 1];
 }
 
-#define KALOS_VALUE_ANY (999)
+#define KALOS_VALUE_ANY (99)
 #define KALOS_CHECK_STACK_REF(N) state->stack->stack[state->stack->stack_index-arg_count+N]
 #define KALOS_CHECK_1__                    is_same_type(type0, KALOS_CHECK_STACK_REF(0).type)
 #define KALOS_CHECK_2__ KALOS_CHECK_1__ && is_same_type(type1, KALOS_CHECK_STACK_REF(1).type)

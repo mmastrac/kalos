@@ -26,7 +26,7 @@ void kalos_run_free(kalos_run_state* state);
 /**
  * Trigger an internal error, halting the virtual machine and reporting to the host environment.
  */
-void kalos_internal_error(kalos_state* state);
+void kalos_internal_error(kalos_state* state, int line);
 /**
  * Trigger a type error, halting the virtual machine and reporting to the host environment.
  */
