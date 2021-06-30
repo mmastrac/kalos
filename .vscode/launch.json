@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug Tests",
-            "program": "${workspaceFolder}/target/tests/test",
+            "program": "${workspaceFolder}/target/darwin/tests/test",
             "args": [],
             "cwd": "${workspaceFolder}"
         },
@@ -16,7 +16,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug IDL Dispatch Compiler",
-            "program": "${workspaceFolder}/target/compiler",
+            "program": "${workspaceFolder}/target/darwin/compiler",
             "args": ["-v", "dispatch", "src/_kalos_idl_compiler.kidl", "/tmp/out.c"],
             "cwd": "${workspaceFolder}"
         },
@@ -24,7 +24,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug IDL Dispatch Compiler [Test]",
-            "program": "${workspaceFolder}/target/compiler",
+            "program": "${workspaceFolder}/target/darwin/compiler",
             "args": ["-v", "dispatch", "test/test_kalos.kidl", "/tmp/out.c"],
             "cwd": "${workspaceFolder}"
         },

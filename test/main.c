@@ -17,15 +17,12 @@ void register_suite(test_suite* current_suite) {
 
 void test_log(char* file, int line, const char* fmt, ...) {
     va_list args;
-    static char print_buffer[4096];
 
-    va_start(args, fmt);
-    int written = vsnprintf(&print_buffer[0], sizeof(print_buffer), fmt, args);
-    va_end(args);
-
-    strcat(&print_buffer[0], "\n");
     fprintf(log_stream, "%s:%d: ", file, line);
-    fwrite(&print_buffer[0], written + 1, 1, log_stream);
+    va_start(args, fmt);
+    vfprintf(log_stream, fmt, args);
+    va_end(args);
+    fputc('\n', log_stream);
     fflush(log_stream);
 }
 

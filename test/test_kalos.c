@@ -394,9 +394,18 @@ TEST(parse_modules_for_test) {
     TEST_ASSERT_EQUAL(0, total_allocated);
 }
 
-TEST(kalos_idl_parser) {
+TEST(kalos_idl_parser_smoke_test) {
     total_allocated = 0;
     kalos_buffer buffer = read_buffer("test/data/idl/smoketest.kidl");
+    kalos_module_parsed modules = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
+    kalos_buffer_free(buffer);
+    kalos_buffer_free(modules);
+    TEST_ASSERT_EQUAL(0, total_allocated);
+}
+
+TEST(kalos_idl_parser_many_consts) {
+    total_allocated = 0;
+    kalos_buffer buffer = read_buffer("test/data/idl/largeconsts.kidl");
     kalos_module_parsed modules = kalos_idl_parse_module((const char*)buffer.buffer, &test_env);
     kalos_buffer_free(buffer);
     kalos_buffer_free(modules);
