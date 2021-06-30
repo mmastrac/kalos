@@ -57,8 +57,7 @@ kalos_property kalos_idl_property(kalos_module_builder builder, kalos_state* sta
 
 void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
     kalos_state* state = kalos_state_from_run_state(run_state);
-    kalos_buffer* idl_buffer = (kalos_buffer*)run_state->context;
-    kalos_module_builder builder = kalos_module_create_builder(state, idl_buffer->buffer, kalos_buffer_size(*idl_buffer));
+    kalos_module_builder builder = kalos_module_create_builder(state);
     kalos_module_string prefix_index = kalos_module_create_string(builder, "");
     kalos_int flags = 0;
     kalos_module_list modules = kalos_module_create_list(builder);
@@ -144,7 +143,7 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
     } ITERATE_TYPE_END;
 
     kalos_module_create_idl(builder, prefix_index, flags, modules, prop_list);
-    kalos_module_free_builder(state, builder);
+    *((kalos_buffer*)state->context) = kalos_module_finish_builder(state, builder);
 }
 
 kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
@@ -161,13 +160,13 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     kalos_dispatch dispatch;
     dispatch.idl = kalos_idl_callback;
     kalos_state idl_parser_state = *state;
-    kalos_buffer idl_buffer = kalos_buffer_alloc(state, 10 * 1024);    
-    idl_parser_state.context = &idl_buffer;
+    kalos_buffer buffer = {0};
+    idl_parser_state.context = &buffer;
     kalos_run_state* run_state = kalos_init((const_kalos_script)idl.buffer, &dispatch, &idl_parser_state);
     kalos_trigger(run_state, KALOS_IDL_HANDLER_ADDRESS);
     kalos_run_free(run_state);
     kalos_buffer_free(idl);
-    return idl_buffer;
+    return buffer;
 }
 
 static kalos_state* script_environment;

@@ -163,8 +163,8 @@ BUILDER_HANDLE(string);
 BUILDER_HANDLE(object_property);
 BUILDER_HANDLE(property_address);
 
-kalos_module_builder kalos_module_create_builder(kalos_state* state, uint8_t* buffer, size_t size);
-void kalos_module_free_builder(kalos_state* state, kalos_module_builder builder);
+kalos_module_builder kalos_module_create_builder(kalos_state* state);
+kalos_buffer kalos_module_finish_builder(kalos_state* state, kalos_module_builder builder);
 
 void kalos_module_create_idl(kalos_module_builder, kalos_module_string prefix, kalos_int flags, kalos_module_list modules, kalos_module_list prop_list);
 kalos_module_module kalos_module_create_module(kalos_module_builder, kalos_int index, kalos_module_string name, kalos_module_list exports);

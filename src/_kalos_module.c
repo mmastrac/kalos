@@ -96,45 +96,48 @@ kalos_module_header* kalos_module_get_header(kalos_module_parsed parsed) {
 }
 
 struct kalos_module_builder_internal {
-    uint8_t* kalos_module_buffer;
-    int module_buffer_index, module_buffer_size;
-    kalos_state* state;
+    kalos_buffer module_buffer;
+    uint8_t* buffer;
+    int module_buffer_index;
 };
 
 static void* get_list_item(struct kalos_module_builder_internal* builder, kalos_int offset) {
     ASSERT(offset > 0);
-    return PTR_BYTE_OFFSET(builder->kalos_module_buffer, offset);
+    return PTR_BYTE_OFFSET(builder->buffer, offset);
 }
 
 static void* allocate_item(struct kalos_module_builder_internal* builder, size_t struct_size) {
-    if (builder->module_buffer_index + struct_size > builder->module_buffer_size) {
-        builder->module_buffer_size *= 2;
-        builder->kalos_module_buffer = builder->state->realloc(builder->kalos_module_buffer, builder->module_buffer_size);
+    kalos_int buffer_size = kalos_buffer_size(builder->module_buffer);
+    if (builder->module_buffer_index + struct_size > buffer_size) {
+        kalos_buffer_resize(&builder->module_buffer, buffer_size * 2);
+        builder->buffer = builder->module_buffer.buffer;
     }
-    void* ptr = PTR_BYTE_OFFSET(builder->kalos_module_buffer, builder->module_buffer_index);
+    void* ptr = PTR_BYTE_OFFSET(builder->buffer, builder->module_buffer_index);
     memset(ptr, 0, struct_size);
     builder->module_buffer_index += struct_size;
     return ptr;
 }
 
-#define return_indexof(X) kalos_int x = ((kalos_int)PTR_BYTE_SUBTRACT(X, builder->kalos_module_buffer)); return *(kalos_module_##X*)(&x)
+#define return_indexof(X) kalos_int x = ((kalos_int)PTR_BYTE_SUBTRACT(X, builder->buffer)); return *(kalos_module_##X*)(&x)
 
-kalos_module_builder kalos_module_create_builder(kalos_state* state, uint8_t* buffer, size_t size) {
+kalos_module_builder kalos_module_create_builder(kalos_state* state) {
     struct kalos_module_builder_internal* builder = kalos_mem_alloc(state, sizeof(struct kalos_module_builder_internal));
-    builder->kalos_module_buffer = buffer;
+    builder->module_buffer = kalos_buffer_alloc(state, 1024);
+    builder->buffer = builder->module_buffer.buffer;
     builder->module_buffer_index = sizeof(kalos_module_header);
-    builder->module_buffer_size = size;
     return (kalos_module_builder)builder;
 }
 
-void kalos_module_free_builder(kalos_state* state, kalos_module_builder builder_) {
+kalos_buffer kalos_module_finish_builder(kalos_state* state, kalos_module_builder builder_) {
     struct kalos_module_builder_internal* builder = builder_;
+    kalos_buffer buffer = builder->module_buffer;
     kalos_mem_free(state, builder);
+    return buffer;
 }
 
 void kalos_module_create_idl(kalos_module_builder builder_, kalos_module_string prefix, kalos_int flags, kalos_module_list modules, kalos_module_list prop_list) {
     struct kalos_module_builder_internal* builder = builder_;
-    kalos_module_header* header = (kalos_module_header*)builder->kalos_module_buffer;
+    kalos_module_header* header = (kalos_module_header*)builder->buffer;
     memset(header, 0, sizeof(*header));
     header->module_list = modules;
     header->flags = flags;
@@ -168,10 +171,10 @@ void kalos_module_append_to_list(kalos_module_builder builder_, kalos_module_lis
     kalos_int item_index = *(kalos_int*)handle;
     if (list->count == 0) {
         list->head = list->tail = item_index;
-        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list->tail);
+        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, list->tail);
         item->next = item->prev = 0;
     } else {
-        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, list->tail);
+        kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, list->tail);
         item->next = item_index;
         item = get_list_item(builder, item_index);
         item->prev = list->tail;
@@ -188,7 +191,7 @@ static void* insert_list_item(struct kalos_module_builder_internal* builder, kal
     if (list->count > 0) {
         kalos_int item_offset = list->head;
         while (item_offset) {
-            kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, item_offset);
+            kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, item_offset);
             int compare = fn(context, a, item);
             if (compare == 0) {
                 return item; // Exact match
@@ -204,7 +207,7 @@ static void* insert_list_item(struct kalos_module_builder_internal* builder, kal
                 if (prev_item_offset == 0) {
                     list->head = item_index;
                 } else {
-                    item = PTR_BYTE_OFFSET(builder->kalos_module_buffer, prev_item_offset);
+                    item = PTR_BYTE_OFFSET(builder->buffer, prev_item_offset);
                     item->next = item_index;
                 }
                 return ptr;
@@ -302,7 +305,7 @@ static int insert_prop_addr_fn(void* context, void* a, void* b) {
     struct kalos_module_builder_internal* builder = context;
     kalos_property_address* prop_addr = b;
     kalos_module_string* name = a;
-    return strcmp((const char*)builder->kalos_module_buffer + name->string_index, (const char*)builder->kalos_module_buffer + prop_addr->name_index);
+    return strcmp((const char*)builder->buffer + name->string_index, (const char*)builder->buffer + prop_addr->name_index);
 }
 
 void kalos_module_add_property_address(kalos_module_builder builder_, kalos_module_list* list, kalos_module_string name) {
