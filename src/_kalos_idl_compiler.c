@@ -322,7 +322,7 @@ void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* s
 }
 
 KALOS_ALLOW_UNREACHABLE_CODE_BEGIN
-#include "_kalos_idl_compiler.dispatch.inc"
+#include "compiler/compiler.dispatch.inc"
 KALOS_ALLOW_UNREACHABLE_CODE_END
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
@@ -369,7 +369,7 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
         #include "_kalos_idl_compiler.kalos.inc"
     };
     const char IDL_COMPILER_IDL[] = {
-        #include "_kalos_idl_compiler.kidl.inc"
+        #include "compiler/compiler.kidl.inc"
     };
     script_environment = state;
     kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, state);

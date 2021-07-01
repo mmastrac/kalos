@@ -89,12 +89,13 @@ int help(const char* message, const char* cmd) {
     }
     printf("Usage:\n"
         "  %s [-v] compile idl-file source-file compiled-file\n"
+        "  %s [-v] run source-file\n"
         "  %s [-v] dump compiled-file\n"
         "  %s [-v] idl idl-source-file idl-file\n"
         "  %s [-v] dispatch idl-source-file c-file\n"
         "  %s [-v] hexify source-file c-file\n"
         "  %s [-v] stringify source-file c-file\n",
-        cmd, cmd, cmd, cmd, cmd, cmd);
+        cmd, cmd, cmd, cmd, cmd, cmd, cmd);
     return 1;
 }
 
@@ -146,6 +147,11 @@ int compile_script(const char* idl, const char* input, const char* output) {
     }
     kalos_buffer_resize(&script, res.size);
     write_file(output, script.buffer, kalos_buffer_size(script));
+    return 0;
+}
+
+int run_script(const char* input) {
+    const char* input_data = read_file_string(input, NULL);
     return 0;
 }
 
@@ -275,6 +281,12 @@ int main(int argc, const char** argv) {
         const char* input = argv[idx++];
         const char* output = argv[idx++];
         return compile_script(idl, input, output);
+    } else if (strcmp(mode, "run") == 0) {
+        if (argc - idx != 1) {
+            return help("not enough arguments to run", argv[0]);
+        }
+        const char* input = argv[idx++];
+        return run_script(input);
     } else if (strcmp(mode, "dump") == 0) {
         if (argc - idx != 1) {
             return help("not enough arguments to dump", argv[0]);
