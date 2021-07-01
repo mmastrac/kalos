@@ -19,7 +19,10 @@ idl {
         fn STORE_GLOBAL(x: any, slot: number) = op_store;
 
         fn FORMAT(x: any): string = op_format;
-        fn LENGTH(x: string): number = op_string_number;
+        fn LENGTH {
+            (x: string): number = op_string_number;
+            (x: object): number = op_object_length;
+        }
         fn ORD(x: string): number = op_string_number;
 
         fn TO_STRING(x: any): string = op_to_string;

@@ -310,6 +310,14 @@ static kalos_object_ref op_iterator_tail(kalos_state* state, kalos_op op, kalos_
     return iterable;
 }
 
+static kalos_int op_object_length(kalos_state* state, kalos_op op, kalos_object_ref* object) {
+    if (!(*object)->getlength) {
+        kalos_value_error(state);
+        return 0;
+    }
+    return (*object)->getlength(state, object);
+} 
+
 static kalos_string op_push_string(kalos_state_internal* internal_state, kalos_op op) {
     kalos_state* state = (kalos_state*)internal_state;
     kalos_string string = kalos_string_allocate(state, (const char*)&internal_state->script[internal_state->pc]);

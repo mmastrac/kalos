@@ -201,6 +201,17 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
+	// id=16 name=LENGTH arg_count=1 binding=fn op_object_length
+	if (K__match(/*id=*/16, /*args=*/1, /*name=*/LENGTH)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			K__number x = op_object_length((void*)state, op, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_number(stack, x);
+			return true;
+		}
+	}
+
 	// id=17 name=ORD arg_count=1 binding=fn op_string_number
 	if (K__match(/*id=*/17, /*args=*/1, /*name=*/ORD)) {
 		const int arg_count = 1;
