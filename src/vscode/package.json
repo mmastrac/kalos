@@ -14,7 +14,7 @@
         "languages": [{
             "id": "kalos",
             "aliases": ["Kalos", "kalos"],
-            "extensions": [".kalos",".kidl"],
+            "extensions": [".kalos",".kidl",".kl"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
