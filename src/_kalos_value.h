@@ -236,9 +236,30 @@ static inline void kalos_load_arg_any(kalos_run_state* state, kalos_int index, k
     kalos_value_move_to(kalos_state_from_run_state(state), arg, &state->stack->stack[state->stack->stack_index + index]);
 }
 
+static inline void kalos_clamp_range(kalos_int* start, kalos_int end, kalos_int* length) {
+    if (end < 0) {
+        end += *length;
+    } else if (end >= *length) {
+        end = *length;
+    }
+    if (*start < 0) {
+        *start = *start + *length;
+        if (*start < 0) {
+            *start = 0;
+        }
+    }
+    if (*start >= *length || end <= *start) {
+        *length = 0;
+        return;
+    }
+    *length = end - *start;
+}
+
 bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type);
 kalos_object_ref kalos_allocate_object(kalos_state* state, size_t context_size);
+bool kalos_is_list(kalos_state* state, kalos_object_ref* object);
 kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values);
+kalos_object_ref kalos_list_sublist_take(kalos_state* state, kalos_object_ref* object, kalos_int start, kalos_int end);
 typedef void (*kalos_iterable_fn)(kalos_state* state, void* context, uint16_t index, kalos_value* output);
 kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
 kalos_object_ref kalos_allocate_prop_object(kalos_state* state, void* context, kalos_object_dispatch* dispatch);

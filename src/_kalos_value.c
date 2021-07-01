@@ -161,22 +161,52 @@ kalos_int list_getlength(kalos_state* state, kalos_object_ref* object) {
     return array[0].value.number;
 }
 
-kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values) {
+bool kalos_is_list(kalos_state* state, kalos_object_ref* object) {
+    return (*object)->object_free == list_free;
+}
+
+kalos_object_ref kalos_list_make(kalos_state* state, kalos_int size) {
     kalos_object_ref object = kalos_allocate_object(state, 0);
     object->context = kalos_mem_alloc(state, sizeof(kalos_value) * (size + 1)); // allocate size of size
     kalos_value* array = object->context;
     array[0].type = KALOS_VALUE_NUMBER;
     array[0].value.number = size;
-    memcpy(array + 1, values, sizeof(kalos_value) * size);
-    for (int i = 0; i < size; i++) {
-        values[i].type = KALOS_VALUE_NONE;
-    }
     object->tostring = list_tostring;
     object->getindex = list_getindex;
     object->getlength = list_getlength;
     object->iterstart = list_iterstart;
     object->object_free = list_free;
     return object;
+}
+
+kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values) {
+    kalos_object_ref object = kalos_list_make(state, size);
+    kalos_value* array = object->context;
+    memcpy(array + 1, values, sizeof(kalos_value) * size);
+    for (int i = 0; i < size; i++) {
+        values[i].type = KALOS_VALUE_NONE;
+    }
+    return object;
+}
+
+kalos_object_ref kalos_list_sublist_take(kalos_state* state, kalos_object_ref* object, kalos_int start, kalos_int end) {
+    kalos_object_ref list = kalos_object_take(state, object);
+    kalos_value* array = list->context;
+    kalos_int length = array[0].value.number;
+    kalos_clamp_range(&start, end, &length);
+    // TODO
+    // if (list->count == 0) {
+    //     // Mutate the list in-place
+    // } else {
+        // Copy the list
+        kalos_object_ref copy = kalos_list_make(state, length);
+        kalos_value* array_copy = copy->context;
+        for (kalos_int i = 0; i < length; i++) {
+            array_copy[i + 1] = kalos_value_clone(state, &array[i + start + 1]);
+        }
+        kalos_object_release(state, &list);
+        return copy;
+    // }
 }
 
 kalos_object_ref kalos_allocate_object(kalos_state* state, size_t context_size) {
