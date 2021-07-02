@@ -17,7 +17,7 @@
             "request": "launch",
             "name": "Debug IDL Dispatch Compiler",
             "program": "${workspaceFolder}/target/darwin/compiler",
-            "args": ["-v", "dispatch", "src/_kalos_idl_compiler.kidl", "/tmp/out.c"],
+            "args": ["-v", "dispatch", "src/compiler/compiler.kidl", "/tmp/out.c"],
             "cwd": "${workspaceFolder}"
         },
         {

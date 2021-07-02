@@ -9,12 +9,12 @@
 #include <kalos_parse.h>
 #include <kalos_run.h>
 #include <_kalos_defines.h>
-#include <_kalos_idl_compiler.h>
 #include <_kalos_lex.h>
 #include <_kalos_script.h>
 #include <_kalos_string_format.h>
 #include <_kalos_string_system.h>
 #include <_kalos_value.h>
+#include <compiler/compiler_idl.h>
 #include <modules/kalos_module_file.h>
 
 TEST_SUITE(kalos)

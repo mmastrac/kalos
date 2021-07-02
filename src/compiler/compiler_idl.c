@@ -1,10 +1,11 @@
-#include "_kalos_defines.h"
-#include "kalos_parse.h"
-#include "kalos_run.h"
-#include "_kalos_lex.h"
+#include "../_kalos_defines.h"
+#include "../kalos_parse.h"
+#include "../kalos_run.h"
+#include "../_kalos_lex.h"
 // #include "_kalos_idl_compiler.h"
-#include "modules/kalos_module_file.h"
-#include "modules/kalos_module_sys.h"
+#include "../modules/kalos_module_file.h"
+#include "../modules/kalos_module_sys.h"
+#include "compiler_gen.h"
 
 #define ITERATE(name, list, sublist) {\
     ASSERT((list).type == KALOS_VALUE_OBJECT); \
@@ -169,7 +170,6 @@ kalos_module_parsed kalos_idl_parse_module(const char* s, kalos_state* state) {
     return buffer;
 }
 
-static kalos_state* script_environment;
 static kalos_module_parsed script_modules;
 static kalos_module_header* script_current_header;
 static kalos_module* script_current_module;
@@ -177,12 +177,12 @@ static kalos_export* script_current_export;
 static kalos_object_property* script_current_property;
 
 void kalos_idl_compiler_print(kalos_state* state, kalos_string* string) {
-    script_environment->print(state->context, kalos_string_c(state, *string));
+    state->print(state->context, kalos_string_c(state, *string));
 }
 
 void kalos_idl_compiler_println(kalos_state* state, kalos_string* string) {
-    script_environment->print(state->context, kalos_string_c(state, *string));
-    script_environment->print(state->context, "\n");
+    state->print(state->context, kalos_string_c(state, *string));
+    state->print(state->context, "\n");
 }
 
 void kalos_idl_compiler_log(kalos_state* state, kalos_string* string) {
@@ -322,7 +322,7 @@ void kalos_idl_walk_object_properties(kalos_run_state* run_state, kalos_value* s
 }
 
 KALOS_ALLOW_UNREACHABLE_CODE_BEGIN
-#include "compiler/compiler.dispatch.inc"
+#include "compiler.dispatch.inc"
 KALOS_ALLOW_UNREACHABLE_CODE_END
 
 bool export_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t index, kalos_module* module, kalos_export* export) {
@@ -365,28 +365,7 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
 }
 
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
-    const char IDL_COMPILER_SCRIPT[] = {
-        #include "_kalos_idl_compiler.kalos.inc"
-    };
-    const char IDL_COMPILER_IDL[] = {
-        #include "compiler/compiler.kidl.inc"
-    };
-    script_environment = state;
-    kalos_module_parsed modules = kalos_idl_parse_module(IDL_COMPILER_IDL, state);
-    if (!modules.buffer) {
-        printf("ERROR: %s\n", "failed to parse compiler IDL");
-        return false;
-    }
-    kalos_parse_options options = {0};
-    kalos_buffer script;
-    kalos_parse_result result = kalos_parse_buffer(IDL_COMPILER_SCRIPT, modules, options, state, &script);
-    if (result.error) {
-        if (state->error) {
-            state->error(state->context, result.line, result.error);
-        }
-        return false;
-    }
-    kalos_buffer_free(modules);
+    kalos_buffer script = compiler_idl_script(state);
     script_modules = parsed_module;
     script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};

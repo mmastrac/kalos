@@ -11,7 +11,7 @@ DOS_OBJDIR=$(OBJDIR)/dos
 TEST_OBJDIR=$(OBJDIR)/test
 HOST_OBJDIR=$(OBJDIR)/host
 
-SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c)
+SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c) $(wildcard $(SRCDIR)/compiler/*.c)
 HEADERS=$(wildcard $(SRCDIR)/*.h)
 HOST_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(HOST_OBJDIR)/%.o,$(SOURCES))
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
@@ -74,7 +74,7 @@ $(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) $(SRCDIR)/*.inc
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) -c $< -o $@
 
-$(OUTDIR)/compiler: $(HOST_OBJECTS) $(HOST_OBJDIR)/compiler/compiler_main.o
+$(OUTDIR)/compiler: $(HOST_OBJECTS)
 	$(call color,"LINK","host",$@)
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) $^ -o $@
@@ -124,9 +124,9 @@ gen-compiler: $(OUTDIR)/compiler
 	@mkdir -p $(GENDIR)/compiler
 	@cp -R $(SRCDIR)/* $(GENDIR)/compiler
 	@$(OUTDIR)/compiler stringify src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.kidl.inc
-	@$(OUTDIR)/compiler stringify src/_kalos_idl_compiler.kalos $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc
+	@$(OUTDIR)/compiler stringify src/compiler/compiler_idl.kalos $(GENDIR)/compiler/compiler_idl.kalos.inc
 	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/modules/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
 	@$(OUTDIR)/bootstrap-compiler dispatch src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.dispatch.inc
 	@cp $(GENDIR)/compiler/compiler.dispatch.inc $(SRCDIR)/compiler
 	@cp $(GENDIR)/compiler/compiler.kidl.inc $(SRCDIR)/compiler
-	@cp $(GENDIR)/compiler/_kalos_idl_compiler.kalos.inc $(SRCDIR)
+	@cp $(GENDIR)/compiler/compiler_idl.kalos.inc $(SRCDIR)/compiler
