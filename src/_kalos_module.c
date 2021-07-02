@@ -172,12 +172,11 @@ void kalos_module_append_to_list(kalos_module_builder builder_, kalos_module_lis
     if (list->count == 0) {
         list->head = list->tail = item_index;
         kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, list->tail);
-        item->next = item->prev = 0;
+        item->next = 0;
     } else {
         kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, list->tail);
         item->next = item_index;
         item = get_list_item(builder, item_index);
-        item->prev = list->tail;
         item->next = 0;
         list->tail = item_index;
     }
@@ -189,7 +188,7 @@ typedef int (*list_find_fn)(void* context, void* a, void* b);
 static void* insert_list_item(struct kalos_module_builder_internal* builder, kalos_module_item_list_header* list, size_t struct_size, void* context, void* a, list_find_fn fn) {
     kalos_int item_index = builder->module_buffer_index;
     if (list->count > 0) {
-        kalos_int item_offset = list->head;
+        kalos_int item_offset = list->head, prev_item_offset = 0;
         while (item_offset) {
             kalos_module_item_list* item = PTR_BYTE_OFFSET(builder->buffer, item_offset);
             int compare = fn(context, a, item);
@@ -200,10 +199,7 @@ static void* insert_list_item(struct kalos_module_builder_internal* builder, kal
                 void* ptr = allocate_item(builder, struct_size);
                 list->count++;
                 kalos_module_item_list* new_item = ptr;
-                new_item->prev = item->prev;
                 new_item->next = item_offset;
-                kalos_int prev_item_offset = item->prev;
-                item->prev = item_index;
                 if (prev_item_offset == 0) {
                     list->head = item_index;
                 } else {
@@ -212,6 +208,7 @@ static void* insert_list_item(struct kalos_module_builder_internal* builder, kal
                 }
                 return ptr;
             }
+            prev_item_offset = item_offset;
             item_offset = item->next;
         }
     }

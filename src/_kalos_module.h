@@ -27,7 +27,7 @@ typedef enum kalos_export_type {
 
 #pragma pack(push, 1)
 typedef struct kalos_module_item_list {
-    kalos_int prev, next;
+    kalos_int next;
 } kalos_module_item_list;
 
 typedef struct kalos_module_item_list_header {
