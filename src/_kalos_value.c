@@ -71,7 +71,20 @@ static kalos_object_ref sized_iterstart(kalos_state* state, kalos_object_ref* ra
     return iter;
 }
 
-kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count) {
+kalos_int sized_getlength(kalos_state* state, kalos_object_ref* object) {
+    struct sized_iterator_context* sized_context = (*object)->context;
+    return sized_context->count;
+}
+
+kalos_value sized_getindex(kalos_state* state, kalos_object_ref* object, kalos_int index) {
+    struct sized_iterator_context* sized_context = (*object)->context;
+    kalos_value output = {0};
+    void* ctx = PTR_BYTE_OFFSET(sized_context, sizeof(*sized_context));
+    sized_context->fn(state, ctx, index, &output);
+    return output;
+}
+
+kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, bool indexable, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count) {
     // This currently copies the entire context to each iterator which is not as efficient as just
     // retaining the parent, but that requires a bit more complex code and might be slower overall
     kalos_object_ref obj = kalos_allocate_object(state, sizeof(struct sized_iterator_context) + context_size);
@@ -84,6 +97,36 @@ kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, kalos_iterabl
     sized_context->context_size = sizeof(struct sized_iterator_context) + context_size;
     sized_context->fn = fn;
     obj->iterstart = sized_iterstart;
+    obj->getlength = sized_getlength;
+    if (indexable) {
+        obj->getindex = sized_getindex;
+    }
+    return obj;
+}
+
+void string_iterable_fn(kalos_state* state, void* context, uint16_t index, kalos_value* output) {
+    const char*** ctx = context;
+    output->type = KALOS_VALUE_STRING;
+    output->value.string = kalos_string_allocate(state, (*ctx)[index]);
+}
+
+kalos_object_ref kalos_allocate_string_iterable(kalos_state* state, const char* values[], uint16_t count) {
+    void* ctx;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, true, string_iterable_fn, sizeof(const char**), &ctx, count);
+    *(const char***)ctx = values;
+    return obj;
+}
+
+void int_iterable_fn(kalos_state* state, void* context, uint16_t index, kalos_value* output) {
+    kalos_int** ctx = context;
+    output->type = KALOS_VALUE_NUMBER;
+    output->value.number = (*ctx)[index];
+}
+
+kalos_object_ref kalos_allocate_int_iterable(kalos_state* state, kalos_int values[], uint16_t count) {
+    void* ctx;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, true, int_iterable_fn, sizeof(kalos_int*), &ctx, count);
+    *(kalos_int**)ctx = values;
     return obj;
 }
 

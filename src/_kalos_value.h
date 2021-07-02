@@ -261,5 +261,7 @@ bool kalos_is_list(kalos_state* state, kalos_object_ref* object);
 kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values);
 kalos_object_ref kalos_list_sublist_take(kalos_state* state, kalos_object_ref* object, kalos_int start, kalos_int end);
 typedef void (*kalos_iterable_fn)(kalos_state* state, void* context, uint16_t index, kalos_value* output);
-kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
+kalos_object_ref kalos_allocate_sized_iterable(kalos_state* state, bool indexable, kalos_iterable_fn fn, size_t context_size, void** context, uint16_t count);
+kalos_object_ref kalos_allocate_string_iterable(kalos_state* state, const char* values[], uint16_t count);
+kalos_object_ref kalos_allocate_int_iterable(kalos_state* state, kalos_int values[], uint16_t count);
 kalos_object_ref kalos_allocate_prop_object(kalos_state* state, void* context, kalos_object_dispatch* dispatch);

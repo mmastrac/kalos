@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include "../_kalos_defines.h"
 #include "../kalos_parse.h"
+#include "compiler_gen.h"
 #include "compiler_idl.h"
 
 #define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
@@ -150,8 +151,24 @@ int compile_script(const char* idl, const char* input, const char* output) {
     return 0;
 }
 
-int run_script(const char* input) {
+int run_script(const char* input, kalos_int argc, const char* argv[]) {
+    output_file = stdout;
     const char* input_data = read_file_string(input, NULL);
+    kalos_module_parsed modules = compiler_idl(&compiler_env);
+    kalos_buffer script;
+    kalos_parse_options options = {0};
+    kalos_parse_result res = kalos_parse_buffer(input_data, modules, options, &compiler_env, &script);
+    if (!res.success) {
+        printf("ERROR on line %d: %s\n", res.line, res.error);
+        exit(1);
+    }
+    kalos_dispatch dispatch = {
+        .dispatch_name = kalos_module_idl_dynamic_dispatch
+    };
+    kalos_run_state* state = kalos_init(script.buffer, &dispatch, &compiler_env);
+    kalos_object_ref args = kalos_allocate_string_iterable(kalos_state_from_run_state(state), argv, argc);
+    kalos_module_idl_sys_trigger_main(state, &args);
+    kalos_run_free(state);
     return 0;
 }
 
@@ -282,11 +299,11 @@ int main(int argc, const char** argv) {
         const char* output = argv[idx++];
         return compile_script(idl, input, output);
     } else if (strcmp(mode, "run") == 0) {
-        if (argc - idx != 1) {
+        if (argc - idx < 1) {
             return help("not enough arguments to run", argv[0]);
         }
-        const char* input = argv[idx++];
-        return run_script(input);
+        const char* input = argv[idx];
+        return run_script(input, argc - idx, &argv[idx]);
     } else if (strcmp(mode, "dump") == 0) {
         if (argc - idx != 1) {
             return help("not enough arguments to dump", argv[0]);

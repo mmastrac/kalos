@@ -15,6 +15,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug Compiler Run",
+            "program": "${workspaceFolder}/target/darwin/compiler",
+            "args": ["-v", "run", "src/compiler/compiler.kalos", "1"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug IDL Dispatch Compiler",
             "program": "${workspaceFolder}/target/darwin/compiler",
             "args": ["-v", "dispatch", "src/compiler/compiler.kidl", "/tmp/out.c"],

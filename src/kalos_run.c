@@ -76,13 +76,17 @@ static kalos_int op_compare_type(kalos_state* state, kalos_op op, kalos_value* a
 }
 
 static kalos_string op_string_add(kalos_state* state, kalos_op op, kalos_string* a, kalos_value* b) {
-    kalos_coerce(state, b, KALOS_VALUE_STRING);
-    return kalos_string_take_append(state, a, &b->value.string);
+    if (kalos_coerce(state, b, KALOS_VALUE_STRING)) {
+        return kalos_string_take_append(state, a, &b->value.string);
+    }
+    return kalos_string_take(state, a);
 }
 
 static kalos_string op_string_add2(kalos_state* state, kalos_op op, kalos_value* a, kalos_string* b) {
-    kalos_coerce(state, a, KALOS_VALUE_STRING);
-    return kalos_string_take_append(state, &a->value.string, b);
+    if (kalos_coerce(state, a, KALOS_VALUE_STRING)) {
+        return kalos_string_take_append(state, &a->value.string, b);
+    }
+    return kalos_string_take(state, b);
 }
 
 static kalos_string op_string_multiply(kalos_state* state, kalos_op op, kalos_string* a, kalos_int b) {
@@ -128,9 +132,11 @@ static kalos_string op_to_hex_or_char(kalos_state* state, kalos_op op, kalos_int
 }
 
 static kalos_string op_to_string(kalos_state* state, kalos_op op, kalos_value* v) {
-    kalos_coerce(state, v, KALOS_VALUE_STRING);
-    kalos_string s = kalos_string_take(state, &v->value.string);
-    return s;
+    if (kalos_coerce(state, v, KALOS_VALUE_STRING)) {
+        kalos_string s = kalos_string_take(state, &v->value.string);
+        return s;
+    }
+    return kalos_string_allocate(state, "");
 }
 
 static kalos_int op_to_bool(kalos_state* state, kalos_op op, kalos_value* v) {
@@ -181,7 +187,7 @@ static void range_iterfunc(kalos_state* state, void* context, uint16_t index, ka
 
 static kalos_object_ref op_range(kalos_state* state, kalos_op op, kalos_int start, kalos_int end) {
     kalos_int* range_spec;
-    kalos_object_ref range = kalos_allocate_sized_iterable(state, range_iterfunc, sizeof(kalos_int[2]), (void**)&range_spec, end <= start ? 0 : end - start);
+    kalos_object_ref range = kalos_allocate_sized_iterable(state, true, range_iterfunc, sizeof(kalos_int[2]), (void**)&range_spec, end <= start ? 0 : end - start);
     range_spec[0] = start;
     range_spec[1] = 1; // step (TODO)
     return range;
@@ -302,11 +308,27 @@ static void tail_object_free(kalos_state* state, kalos_object_ref* object) {
     kalos_object_release(state, (*object)->context);
 }
 
+static kalos_value tail_getindex(kalos_state* state, kalos_object_ref* object, kalos_int index) {
+    kalos_object_ref* original = (*object)->context;
+    return (*original)->getindex(state, original, index + 1);
+}
+
+static kalos_int tail_getlength(kalos_state* state, kalos_object_ref* object) {
+    kalos_object_ref* original = (*object)->context;
+    return (*original)->getlength(state, original) - 1;
+}
+
 static kalos_object_ref op_iterator_tail(kalos_state* state, kalos_op op, kalos_object_ref* iterable_) {
     if (kalos_is_list(state, iterable_)) {
         return kalos_list_sublist_take(state, iterable_, 1, KALOS_INT_MAX);
     }
     kalos_object_ref iterable = kalos_allocate_object(state, sizeof(kalos_object_ref));
+    if ((*iterable_)->getindex) {
+        iterable->getindex = tail_getindex;
+    }
+    if ((*iterable_)->getlength) {
+        iterable->getlength = tail_getlength;
+    }
     *(kalos_object_ref*)(iterable->context) = kalos_object_take(state, iterable_);
     iterable->iterstart = tail_iterstart;
     iterable->object_free = tail_object_free;

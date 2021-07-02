@@ -235,7 +235,7 @@ static kalos_string kalos_idl_module_prefix(kalos_state* state) { return kalos_s
 static kalos_string kalos_idl_export_name(kalos_state* state, kalos_object_ref* o) { return kalos_string_allocate(state, kalos_module_get_string(script_modules, script_current_export->name_index)); }
 static kalos_object_ref kalos_idl_function_overloads(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
-    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_overload, sizeof(kalos_int), (void**)&index, script_current_export->entry.function_overload_list.count);
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, false, iter_function_overload, sizeof(kalos_int), (void**)&index, script_current_export->entry.function_overload_list.count);
     *index = script_current_export->entry.function_overload_list.head;
     return obj;
 }
@@ -243,7 +243,7 @@ static kalos_object_ref kalos_idl_function_overloads(kalos_state* state, kalos_o
 static kalos_string kalos_idl_overload_return_type(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, function_type_to_string(IDL_OBJECT(kalos_function)->return_type)); }
 static kalos_object_ref kalos_idl_overload_args(kalos_state* state, kalos_object_ref* object) {
     kalos_int* index;
-    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, IDL_OBJECT(kalos_function)->arg_list.count);
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, false, iter_function_arg, sizeof(kalos_int), (void**)&index, IDL_OBJECT(kalos_function)->arg_list.count);
     *index = IDL_OBJECT(kalos_function)->arg_list.head;
     return obj;
 }
@@ -259,7 +259,7 @@ static kalos_object_ref kalos_idl_property_write_binding(kalos_state* state, kal
 
 static kalos_object_ref kalos_idl_handler_args(kalos_state* state, kalos_object_ref* o) {
     kalos_int* index;
-    kalos_object_ref obj = kalos_allocate_sized_iterable(state, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_export->entry.handler.arg_list.count);
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, false, iter_function_arg, sizeof(kalos_int), (void**)&index, script_current_export->entry.handler.arg_list.count);
     *index = script_current_export->entry.handler.arg_list.head;
     return obj;
 }

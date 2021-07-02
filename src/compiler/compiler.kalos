@@ -1,14 +1,15 @@
+import sys;
+
 fn help(exe) {
-    
+    println("Help!");
 }
 
-on sys.main(args: object) {
+on sys.main(args) {
     var exe = args[0];
     args = tail(args);
+    print("args = {args}");
     if len(args) == 0 {
         help(exe);
         return;
     }
-
-    
 }
