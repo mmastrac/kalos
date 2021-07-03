@@ -102,7 +102,7 @@ static kalos_string op_string_multiply2(kalos_state* state, kalos_op op, kalos_i
 
 static kalos_int op_string_number(kalos_state* state, kalos_op op, kalos_string* v) {
     switch (op) {
-        case KALOS_OP_ORD: return kalos_string_char_at(state, *v, 0);
+        case KALOS_OP_ORD: return (uint8_t)kalos_string_char_at(state, *v, 0);
         case KALOS_OP_LENGTH: return kalos_string_length(state, *v);
         default: return 0;
     }

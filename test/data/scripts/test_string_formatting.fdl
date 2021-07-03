@@ -7,6 +7,7 @@ on init {
     print("{{1}}");
     print("\n");
     print("{0x007b:04x}\n");
+    # print("{1:#04x}); <-- zero pad needs to have sign-aware number padding, not string padding!
     var a = "abc";
     print("{a:10}\n");
     print("{a:<10}\n");

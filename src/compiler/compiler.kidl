@@ -36,6 +36,19 @@ idl {
         fn close(file: object) = kalos_file_close;
     }
 
+    module kalos {
+        fn compile_script(modules: object, script: string): object = kalos_compiler_compile_script;
+        fn compile_idl(script: string): object = kalos_compiler_compile_idl;
+
+        object idl {
+            prop data: string { read = kalos_compiler_get_buffer; }
+        }
+
+        object script {
+            prop data: string { read = kalos_compiler_get_buffer; }
+        }
+    }
+
     module kidl {
         fn walk_modules(context: any) = kalos_idl_walk_modules;
         prop prefix: string { read = kalos_idl_module_prefix; }

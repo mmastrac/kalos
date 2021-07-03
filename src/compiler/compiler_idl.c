@@ -6,6 +6,7 @@
 #include "../modules/kalos_module_file.h"
 #include "../modules/kalos_module_sys.h"
 #include "compiler_gen.h"
+#include "compiler_idl.h"
 
 #define ITERATE(name, list, sublist) {\
     ASSERT((list).type == KALOS_VALUE_OBJECT); \
@@ -376,4 +377,32 @@ bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state*
     kalos_run_free(run_state);
     kalos_buffer_free(script);
     return true;
+}
+
+kalos_string kalos_compiler_get_buffer(kalos_state* state, kalos_object_ref* object) {
+    kalos_buffer* buffer = (*object)->context;
+    size_t size = kalos_buffer_size(*buffer);
+    kalos_writable_string s = kalos_string_allocate_writable_size(state, size);
+    memcpy(kalos_string_writable_c(state, s), buffer->buffer, size);
+    // memcpy(kalos_string_writable_c(state, s), "hello", 6);
+    return kalos_string_commit_length(state, s, size);
+}
+
+void buffer_free(kalos_state* state, kalos_object_ref* object) {
+    kalos_buffer* buffer = (*object)->context;
+    kalos_buffer_free(*buffer);
+}
+
+kalos_object_ref kalos_compiler_compile_idl(kalos_state* state, kalos_string* idl) {
+    kalos_module_parsed parsed = kalos_idl_parse_module(kalos_string_c(state, *idl), state);
+    kalos_object_ref object = kalos_allocate_object(state, sizeof(parsed));
+    memcpy(object->context, &parsed, sizeof(parsed));
+    object->dispatch = &kalos_module_idl_kalos_object_idl_props;
+    object->object_free = buffer_free;
+    return object;
+}
+
+kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_ref* modules, kalos_string* script) {
+    // kalos_parse(kalos_string_c(state, script));
+    return NULL;
 }
