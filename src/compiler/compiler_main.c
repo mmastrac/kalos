@@ -162,9 +162,8 @@ int run_script(const char* input, kalos_int argc, const char* argv[]) {
         printf("ERROR on line %d: %s\n", res.line, res.error);
         exit(1);
     }
-    kalos_dispatch dispatch = {
-        .dispatch_name = kalos_module_idl_dynamic_dispatch
-    };
+    kalos_dispatch dispatch = {0};
+    dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
     kalos_run_state* state = kalos_init(script.buffer, &dispatch, &compiler_env);
     kalos_object_ref args = kalos_allocate_string_iterable(kalos_state_from_run_state(state), argv, argc);
     kalos_module_idl_sys_trigger_main(state, &args);

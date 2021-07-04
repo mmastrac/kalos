@@ -42,7 +42,6 @@ fn go_compile(args) {
         var c = compiled.data[i];
         print("0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
     }
-    print(compiled.data);
 }
 
 fn go_dump(args) {
