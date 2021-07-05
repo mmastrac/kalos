@@ -33,7 +33,12 @@ idl {
             (file: object): string = kalos_file_read_all;
             (file: object, size: number): string = kalos_file_read;
         }
+        fn write(file: object, s: string) = kalos_file_write;
         fn close(file: object) = kalos_file_close;
+
+        prop stdin: object { read = kalos_file_get_stdin; }
+        prop stdout: object { read = kalos_file_get_stdout; }
+        prop stderr: object { read = kalos_file_get_stderr; }
     }
 
     module kalos {

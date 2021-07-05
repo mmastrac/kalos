@@ -9,6 +9,7 @@
 struct kalos_file {
     int fd;
     uint8_t ring_buffer[FILE_BUFFER_SIZE];
+    bool closeable;
     uint16_t buffer_size;
     uint8_t buffer_start;
 };
@@ -19,6 +20,16 @@ void kalos_file_free(kalos_state* state, kalos_object_ref* object) {
         close(file->fd);
         file->fd = FILE_CLOSED;
     }
+}
+
+kalos_object_ref kalos_file_open_fd(kalos_state* state, int fd, bool closeable) {
+    struct kalos_file file = {0};
+    file.fd = fd;
+    file.closeable = closeable;
+    kalos_object_ref object = kalos_allocate_object(state, sizeof(file));
+    object->object_free = kalos_file_free;
+    memcpy(object->context, &file, sizeof(file));
+    return object;
 }
 
 kalos_object_ref kalos_file_open(kalos_state* state, kalos_string* file_, kalos_int mode_) {
@@ -39,12 +50,11 @@ kalos_object_ref kalos_file_open(kalos_state* state, kalos_string* file_, kalos_
         mode |= O_APPEND;
     }
     int fd = open(kalos_string_c(state, *file_), mode, 0644); // Always use mode (rw-r--r--)
-    struct kalos_file file = {0};
-    file.fd = fd;
-    kalos_object_ref object = kalos_allocate_object(state, sizeof(file));
-    object->object_free = kalos_file_free;
-    memcpy(object->context, &file, sizeof(file));
-    return object;
+    if (fd == -1) {
+        kalos_value_error(state);
+        return NULL;
+    }
+    return kalos_file_open_fd(state, fd, true);
 }
 
 kalos_int kalos_file_fill_buffer(struct kalos_file* file) {
@@ -66,7 +76,6 @@ kalos_string kalos_file_read_to_delim(kalos_state* state, kalos_object_ref* obje
         kalos_value_error(state);
         return kalos_string_allocate(state, "");    
     }
-
     int size = 16;
     int length = 0;
     kalos_writable_string s = kalos_string_allocate_writable_size(state, size);
@@ -159,8 +168,36 @@ kalos_string kalos_file_read(kalos_state* state, kalos_object_ref* object, kalos
     return kalos_string_commit_length(state, s, original_size - size);
 }
 
+kalos_int kalos_file_write(kalos_state* state, kalos_object_ref* object, kalos_string* data) {
+    struct kalos_file* file = (*object)->context;
+    if (file->fd == FILE_CLOSED) {
+        kalos_value_error(state);
+        return 0;
+    }
+    int written = write(file->fd, kalos_string_c(state, *data), kalos_string_length(state, *data));
+    if (written == -1) {
+        kalos_value_error(state);
+        return 0;
+    }
+    return written;
+}
+
 void kalos_file_close(kalos_state* state, kalos_object_ref* object) {
     struct kalos_file* file = (*object)->context;
-    close(file->fd);
+    if (file->closeable) {
+        close(file->fd);
+    }
     file->fd = FILE_CLOSED;
+}
+
+kalos_object_ref kalos_file_get_stdin(kalos_state* state) {
+    return kalos_file_open_fd(state, STDIN_FILENO, false);
+}
+
+kalos_object_ref kalos_file_get_stdout(kalos_state* state) {
+    return kalos_file_open_fd(state, STDOUT_FILENO, false);
+}
+
+kalos_object_ref kalos_file_get_stderr(kalos_state* state) {
+    return kalos_file_open_fd(state, STDERR_FILENO, false);
 }

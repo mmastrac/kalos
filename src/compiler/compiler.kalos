@@ -18,6 +18,9 @@ fn help() {
 }
 
 fn extract_args(args): object {
+    if len(args) <= 1 {
+        help();
+    }
     # Extract the last path segment
     var segment;
     for segment in split(args[0], "/") {
@@ -31,21 +34,40 @@ fn extract_args(args): object {
     return args;
 }
 
+fn open_read(f): object {
+    if f == "-" {
+        return file.stdin;
+    }
+    return file.open(f, file.READ);
+}
+
+fn open_write(f): object {
+    if f == "-" {
+        return file.stdout;
+    }
+    return file.open(f, file.WRITE);
+}
+
 fn go_compile(args) {
     if len(args) != 3 {
         help();
     }
-    var idl = file.read(file.open(args[0], file.READ));
+    var idl = file.read(open_read(args[0]));
     var compiled = kalos.compile_idl(idl);
-    var i;
-    for i in range(0, len(compiled.data)) {
-        var c = compiled.data[i];
-        print("0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
-    }
+    file.write(open_write(args[2]), compiled.data);
+    # var i;
+    # for i in range(0, len(compiled.data)) {
+    #     var c = compiled.data[i];
+    #     print("0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
+    # }
 }
 
 fn go_dump(args) {
-
+    if len(args) != 1 {
+        help();
+    }
+    var f = open_read(args[0]);
+    var script = file.read(f);
 }
 
 on sys.main(args) {
