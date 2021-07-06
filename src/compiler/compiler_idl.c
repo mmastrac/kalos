@@ -402,7 +402,14 @@ kalos_object_ref kalos_compiler_compile_idl(kalos_state* state, kalos_string* id
     return object;
 }
 
-kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_ref* modules, kalos_string* script) {
-    // kalos_parse(kalos_string_c(state, script));
-    return NULL;
+kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_ref* modules_, kalos_string* script) {
+    kalos_parse_options options = {0};
+    kalos_buffer buffer;
+    kalos_module_parsed* modules = (*modules_)->context;
+    kalos_parse_result result = kalos_parse_buffer(kalos_string_c(state, *script), *modules, options, state, &buffer);
+    kalos_object_ref object = kalos_allocate_object(state, sizeof(buffer));
+    memcpy(object->context, &buffer, sizeof(buffer));
+    object->dispatch = &kalos_module_idl_kalos_object_script_props;
+    object->object_free = buffer_free;
+    return object;
 }

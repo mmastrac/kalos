@@ -53,8 +53,10 @@ fn go_compile(args) {
         help();
     }
     var idl = file.read(open_read(args[0]));
-    var compiled = kalos.compile_idl(idl);
-    file.write(open_write(args[2]), compiled.data);
+    var compiled_idl = kalos.compile_idl(idl);
+    var script = file.read(open_read(args[1]));
+    var compiled_script = kalos.compile_script(compiled_idl, script);
+    file.write(open_write(args[2]), compiled_script.data);
     # var i;
     # for i in range(0, len(compiled.data)) {
     #     var c = compiled.data[i];
