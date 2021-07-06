@@ -8,11 +8,11 @@ var verbose;
 fn help() {
     println("""Usage:
   {exe} [-v] compile idl-file source-file compiled-file
-  {exe} [-v] run source-file
-  {exe} [-v] dump compiled-file
-  {exe} [-v] idl idl-source-file idl-file
   {exe} [-v] dispatch idl-source-file c-file
+  {exe} [-v] dump compiled-file
   {exe} [-v] hexify source-file c-file
+  {exe} [-v] idl idl-source-file idl-file
+  {exe} [-v] run source-file
   {exe} [-v] stringify source-file c-file""");
     sys.exit(1);
 }
@@ -64,12 +64,27 @@ fn go_compile(args) {
     # }
 }
 
+fn go_dispatch(args) {
+}
+
 fn go_dump(args) {
     if len(args) != 1 {
         help();
     }
     var f = open_read(args[0]);
     var script = file.read(f);
+}
+
+fn go_hexify(args) {
+}
+
+fn go_idl(args) {
+}
+
+fn go_run(args) {
+}
+
+fn go_stringify(args) {
 }
 
 on sys.main(args) {
@@ -79,8 +94,18 @@ on sys.main(args) {
     }
     if (args[0] == "compile") {
         go_compile(tail(args));
+    } else if (args[0] == "dispatch") {
+        go_dispatch(tail(args));
     } else if (args[0] == "dump") {
         go_dump(tail(args));
+    } else if (args[0] == "hexify") {
+        go_hexify(tail(args));
+    } else if (args[0] == "idl") {
+        go_idl(tail(args));
+    } else if (args[0] == "run") {
+        go_run(tail(args));
+    } else if (args[0] == "stringify") {
+        go_stringify(tail(args));
     } else {
         help();
     }
