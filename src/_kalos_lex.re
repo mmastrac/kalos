@@ -52,7 +52,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
 
     /*!stags:re2c format = "const char kalos_far *@@{tag}; "; */
     for (;;) {
-        state->token_start = s;
+        state->token_start = *s;
     /*!re2c
         re2c:api:style = free-form;
         re2c:define:YYCTYPE = char;
@@ -82,7 +82,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <instring,instringmulti> "\\t" { *output++ = '\t'; continue; }
         <instring,instringmulti> "\\x" @ch [a-fA-F0-9][a-fA-F0-9] { char n[3] = { ch[0], ch[1], 0 }; *output++ = (char)strtol(n, NULL, 16); continue; }
         <instring> [\n\r] { return KALOS_TOKEN_ERROR; }
-        <instringmulti> @ch [\n\r] { *output++ = *ch; continue; }
+        <instringmulti> @ch [\n\r] { if ((*ch) == '\n') { (*line)++; }; *output++ = *ch; continue; }
         <instring,instringmulti> "\\" [a-z] { return KALOS_TOKEN_ERROR; }
         <instring,instringmulti> "{{" { *output++ = '{'; continue; }
         <instring,instringmulti> "}}" { *output++ = '}'; continue; }

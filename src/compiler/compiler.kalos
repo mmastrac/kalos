@@ -76,6 +76,19 @@ fn go_dump(args) {
 }
 
 fn go_hexify(args) {
+    if len(args) != 2 {
+        help();
+    }
+    var data = file.read(open_read(args[0]));
+    var out = open_write(args[1]);
+    var i;
+    for i in range(0, len(data)) {
+        if i && i % 16 == 0 {
+            file.write(out, "\n");
+        }
+        var c = data[i];
+        file.write(out, "0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
+    }
 }
 
 fn go_idl(args) {
