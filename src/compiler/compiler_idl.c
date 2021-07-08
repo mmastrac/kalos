@@ -413,3 +413,7 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
     object->object_free = buffer_free;
     return object;
 }
+
+kalos_string kalos_compiler_get_idl_script(kalos_state* state) {
+    return kalos_string_allocate(state, compiler_script());
+}

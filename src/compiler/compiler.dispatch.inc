@@ -283,6 +283,17 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 		}
 	}
 
+	// id=3 name=idl_script binding=fn kalos_compiler_get_idl_script
+	if (K__match(/*id=*/3, /*args=*/0, /*name=*/idl_script)) {
+		const int arg_count = 0;
+		if (kalos_stack_setup_0(state, arg_count)) {
+			K__string x = kalos_compiler_get_idl_script((void*)state);
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
 	return false;
 }
 

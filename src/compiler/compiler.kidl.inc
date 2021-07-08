@@ -45,6 +45,8 @@
 "        fn compile_script(modules: object, script: string): object = kalos_compiler_compile_script;\n"
 "        fn compile_idl(script: string): object = kalos_compiler_compile_idl;\n"
 "\n"
+"        prop idl_script: string { read = kalos_compiler_get_idl_script; }\n"
+"\n"
 "        object idl {\n"
 "            prop data: string { read = kalos_compiler_get_buffer; }\n"
 "        }\n"
