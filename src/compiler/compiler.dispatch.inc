@@ -283,11 +283,32 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 		}
 	}
 
-	// id=3 name=idl_script binding=fn kalos_compiler_get_idl_script
-	if (K__match(/*id=*/3, /*args=*/0, /*name=*/idl_script)) {
+	// id=3 name=run_script arg_count=2 binding=fn kalos_compiler_run_script
+	if (K__match(/*id=*/3, /*args=*/2, /*name=*/run_script)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_object, K__t_object)) {
+			kalos_compiler_run_script((void*)state, K__arg_object(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	// id=4 name=idl_script binding=fn kalos_compiler_get_idl_script
+	if (K__match(/*id=*/4, /*args=*/0, /*name=*/idl_script)) {
 		const int arg_count = 0;
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__string x = kalos_compiler_get_idl_script((void*)state);
+			kalos_stack_cleanup(state, arg_count);
+			K__final_string(stack, x);
+			return true;
+		}
+	}
+
+	// id=5 name=idl binding=fn kalos_compiler_get_compiler_idl
+	if (K__match(/*id=*/5, /*args=*/0, /*name=*/idl)) {
+		const int arg_count = 0;
+		if (kalos_stack_setup_0(state, arg_count)) {
+			K__string x = kalos_compiler_get_compiler_idl((void*)state);
 			kalos_stack_cleanup(state, arg_count);
 			K__final_string(stack, x);
 			return true;

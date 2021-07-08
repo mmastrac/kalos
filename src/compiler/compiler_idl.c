@@ -415,5 +415,13 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
 }
 
 kalos_string kalos_compiler_get_idl_script(kalos_state* state) {
-    return kalos_string_allocate(state, compiler_script());
+    return kalos_string_allocate(state, compiler_script_text());
+}
+
+kalos_string kalos_compiler_get_compiler_idl(kalos_state* state) {
+    return kalos_string_allocate(state, compiler_idl_script_text());
+}
+
+void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args) {
+
 }
