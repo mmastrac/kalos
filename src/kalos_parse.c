@@ -99,8 +99,6 @@ typedef struct name_resolution_result {
         };
         kalos_builtin* builtin;
     };
-    struct name_resolution_result* next;
-    struct name_resolution_result* prev;
 } name_resolution_result;
 
 struct pending_op {
