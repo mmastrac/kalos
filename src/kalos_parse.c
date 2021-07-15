@@ -47,6 +47,7 @@ static const char* ERROR_EXPECTED_MODULE = "Expected module";
 static const char* ERROR_ILLEGAL_IN_THIS_CONTEXT = "Illegal in this context";
 static const char* ERROR_DUPLICATE_IMPORT = "Duplicate import";
 static const char* ERROR_UNEXPECTED_PARAMETERS = "Unexpected parameters";
+static const char* ERROR_UNEXPECTED_EXPORT_TYPE = "Unexpected export type";
 
 #define KALOS_VAR_SLOT_COUNT 32
 #define KALOS_VAR_MAX_LENGTH 16
@@ -155,13 +156,13 @@ static struct pending_op parse_function_call_local(struct parse_state* parse_sta
 static kalos_op parse_function_call_builtin(struct parse_state* parse_state, kalos_builtin* fn);
 static struct pending_op parse_function_call_export(struct parse_state* parse_state, kalos_export* fn, uint8_t module_index);
 static kalos_function_type parse_map_type(struct parse_state* parse_state, kalos_token token);
-static void parse_function_statement(struct parse_state* parse_state);
+static void parse_function_statement(struct parse_state* parse_state, bool export);
 static void parse_if_statement(struct parse_state* parse_state);
 static void parse_loop_statement(struct parse_state* parse_state, bool iterator, uint8_t iterator_slot);
 static void parse_statement_block(struct parse_state* parse_state);
 static bool parse_statement(struct parse_state* parse_state);
 static int parse_var_allocate(struct parse_state* parse_state, struct vars_state* var_state);
-static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state);
+static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state, bool export);
 static struct pending_ops parse_word_recursively(struct parse_state* parse_state);
 static void parse_flush_pending_op(struct parse_state* parse_state, struct pending_ops* pending, bool write, bool reset);
 
@@ -462,7 +463,7 @@ static int parse_var_allocate(struct parse_state* parse_state, struct vars_state
     return slot;
 }
 
-static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state) {
+static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state, bool export) {
     int slot;
     TRY(slot = parse_var_allocate(parse_state, var_state));
     kalos_token peek;
@@ -983,7 +984,7 @@ static bool parse_statement(struct parse_state* parse_state) {
     }
     parse_state->last_statement_type = token;
     if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
-        TRY(parse_var_statement(parse_state, &parse_state->locals));
+        TRY(parse_var_statement(parse_state, &parse_state->locals, false));
     } else if (token == KALOS_TOKEN_IF) {
         TRY(parse_if_statement(parse_state));
     } else if (token == KALOS_TOKEN_LOOP) {
@@ -1031,7 +1032,7 @@ static bool parse_statement(struct parse_state* parse_state) {
     return true;
 }
 
-static void parse_function_statement(struct parse_state* parse_state) {
+static void parse_function_statement(struct parse_state* parse_state, bool export) {
     kalos_token peek, token = parse_state->last_token;
     kalos_int module_index = 0, handler_index = 0;
     struct var_state* var = NULL;
@@ -1367,8 +1368,9 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLER_ADDRESS));
     bool code_phase = false;
     bool found_idl = false;
+    bool export = false;
     loop {
-        kalos_token token;
+        kalos_token token, peek;
         TRY(token = lex(parse_state));
         if (token == KALOS_TOKEN_EOF) {
             if (!code_phase && !found_idl) {
@@ -1393,18 +1395,26 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
                 THROW(ERROR_EXPECTED_MODULE);
             }
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
+        } else if (token == KALOS_TOKEN_EXPORT) {
+            TRY(peek = lex_peek(parse_state));
+            if (peek != KALOS_TOKEN_VAR && peek != KALOS_TOKEN_CONST && peek != KALOS_TOKEN_FN) {
+                THROW(ERROR_UNEXPECTED_EXPORT_TYPE);
+            }
+            export = true;
         } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
-            TRY(parse_var_statement(parse_state, &parse_state->globals));
+            TRY(parse_var_statement(parse_state, &parse_state->globals, export));
+            export = false;
         } else if (token == KALOS_TOKEN_ON || token == KALOS_TOKEN_FN) {
             if (!code_phase) {
                 code_phase = true;
                 TRY(parse_push_op(parse_state, KALOS_OP_END));
             }
             memset(&parse_state->locals, 0, sizeof(parse_state->locals));
-            TRY(parse_function_statement(parse_state));
+            TRY(parse_function_statement(parse_state, export));
             if (parse_state->last_section_header) {
                 parse_state->last_section_header->locals_size = parse_state->locals.var_index;
             }
+            export = false;
         } else if (token == KALOS_TOKEN_IDL) {
             found_idl = true;
             TRY(parse_idl_block(parse_state));
