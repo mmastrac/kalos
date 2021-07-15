@@ -68,6 +68,7 @@ struct var_state {
     char name[KALOS_VAR_MAX_LENGTH];
     struct fn_state fn_state; // slot or function index
     var_type type;
+    bool export;
 };
 
 struct vars_state {

@@ -199,6 +199,8 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> "on"       { return KALOS_TOKEN_ON; }
         <init> "import"   { return KALOS_TOKEN_IMPORT; }
         <init> "module"   { return KALOS_TOKEN_MODULE; }
+        <init> "export"   { return KALOS_TOKEN_EXPORT; }
+        <init> "from"     { return KALOS_TOKEN_FROM; }
         <init> "handler"  { return KALOS_TOKEN_HANDLER; }
         <init> "prop"     { return KALOS_TOKEN_PROP; }
         <init> "read"     { return KALOS_TOKEN_READ; }
