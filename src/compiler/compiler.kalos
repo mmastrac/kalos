@@ -114,6 +114,24 @@ fn go_run(args) {
 }
 
 fn go_stringify(args) {
+    if len(args) != 2 {
+        help();
+    }
+    var data = file.read(open_read(args[0]));
+    var out = open_write(args[1]);
+    var i;
+    file.write(out, "\"");
+    for i in range(0, len(data)) {
+        var c = data[i];
+        if c == "\n" {
+            file.write(out, "\\n\"\n\"");
+        } else if ord(c) < 32 || ord(c) >= 127 {
+            file.write(out, "\\x{ord(c):02x}");
+        } else {
+            file.write(out, c);
+        }
+    }
+    file.write(out, "\"\n");
 }
 
 on sys.main(args) {
