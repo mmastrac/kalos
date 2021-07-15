@@ -10,4 +10,5 @@ a
 """ == "\na\n") {
         print("correct 3!\n");
     }
+    print("\\");
 }

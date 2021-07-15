@@ -17,7 +17,7 @@
             "request": "launch",
             "name": "Debug Compiler Run",
             "program": "${workspaceFolder}/target/darwin/compiler",
-            "args": ["-v", "run", "src/compiler/compiler.kalos", "1"],
+            "args": ["-v", "run", "src/compiler/compiler.kalos", "dispatch", "src/compiler/compiler.kidl", "-"],
             "cwd": "${workspaceFolder}"
         },
         {

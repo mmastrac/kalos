@@ -139,6 +139,7 @@ void kalos_module_create_idl(kalos_module_builder builder_, kalos_module_string 
     struct kalos_module_builder_internal* builder = builder_;
     kalos_module_header* header = (kalos_module_header*)builder->buffer;
     memset(header, 0, sizeof(*header));
+    header->version = 1;
     header->module_list = modules;
     header->flags = flags;
     header->prefix_index = prefix.string_index;

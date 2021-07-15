@@ -76,6 +76,7 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> '"' :=> instring
 
         <instring,instringmulti> end { return KALOS_TOKEN_ERROR; }
+        <instring,instringmulti> '\\\\' { *output++ = '\\'; continue; }
         <instring,instringmulti> '\\"' { *output++ = '"'; continue; }
         <instring,instringmulti> "\\n" { *output++ = '\n'; continue; }
         <instring,instringmulti> "\\r" { *output++ = '\r'; continue; }

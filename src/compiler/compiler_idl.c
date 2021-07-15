@@ -8,6 +8,8 @@
 #include "compiler_gen.h"
 #include "compiler_idl.h"
 
+#define KALOS_IDL_HEADER_VERSION 1
+
 #define ITERATE(name, list, sublist) {\
     ASSERT((list).type == KALOS_VALUE_OBJECT); \
     kalos_object_ref name##_obj = (list).value.object; \
@@ -211,6 +213,39 @@ char* function_type_to_string(kalos_function_type type) {
 kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
 kalos_object_dispatch kalos_module_idl_module_object_overload_obj_props;
 kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_module_obj_props;
+kalos_object_dispatch kalos_module_idl_kalos_object_idl_props;
+
+struct iter_context {
+    kalos_module_parsed modules;
+    kalos_object_dispatch* object;
+    kalos_int index;
+};
+
+static void iter_list_object(kalos_state* state, void* context_, uint16_t index, kalos_value* value) {
+    struct iter_context* context = context_;
+    kalos_module_item_list* list = kalos_module_get_list_item(context->modules, context->index);
+    context->index = list->next;
+    value->type = KALOS_VALUE_OBJECT;
+    value->value.object = kalos_allocate_prop_object(state, list, context->object);
+}
+
+static kalos_object_ref make_list_iterator(kalos_state* state, kalos_module_parsed modules, kalos_module_item_list_header* list, kalos_object_dispatch* object) {
+    struct iter_context* context;
+    kalos_object_ref obj = kalos_allocate_sized_iterable(state, false, iter_list_object, sizeof(struct iter_context), (void**)&context, list->count);
+    context->modules = modules;
+    context->index = list->head;
+    context->object = object;
+    return obj;
+}
+
+kalos_object_ref kalos_idl_get_modules(kalos_state* state, kalos_object_ref* object) {
+    ASSERT((*object)->dispatch == &kalos_module_idl_kalos_object_idl_props);
+    kalos_module_parsed* modules = (*object)->context;
+    kalos_module_header* header = kalos_module_get_header(*modules);
+    // ASSERT(header->version == KALOS_IDL_HEADER_VERSION);
+    return make_list_iterator(state, *modules, &header->module_list, &kalos_module_idl_module_object_module_obj_props);
+}
 
 static void iter_function_arg(kalos_state* state, void* context, uint16_t index, kalos_value* value) {
     kalos_int* record = context;
@@ -423,5 +458,10 @@ kalos_string kalos_compiler_get_compiler_idl(kalos_state* state) {
 }
 
 void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args) {
-
+    kalos_dispatch dispatch = {0};
+    dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
+    kalos_buffer* buffer = (*script)->context;
+    kalos_run_state* run_state = kalos_init(buffer->buffer, &dispatch, state);
+    kalos_module_idl_sys_trigger_main(run_state, args);
+    kalos_run_free(run_state);
 }

@@ -51,6 +51,7 @@
 "\n"
 "        object idl {\n"
 "            prop data: string { read = kalos_compiler_get_buffer; }\n"
+"            prop modules: object { read = kalos_idl_get_modules; }\n"
 "        }\n"
 "\n"
 "        object script {\n"

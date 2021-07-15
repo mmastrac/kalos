@@ -40,6 +40,8 @@ static bool kalos_dump_section(void* context, const_kalos_script script, const k
                 for (int i = 0; i < strlen(str); i++) {
                     if (str[i] == '\n') {
                         dump_print("\\n");
+                    } else if (str[i] == '\\') {
+                        dump_print("\\\\");
                     } else if (str[i] == '\"') {
                         dump_print("\\\"");
                     } else if (str[i] < 32 || str[i] >= 127) {
