@@ -108,6 +108,12 @@ fn go_hexify(args) {
 }
 
 fn go_idl(args) {
+    if len(args) != 2 {
+        help();
+    }
+    var idl = file.read(open_read(args[0]));
+    var compiled_idl = kalos.compile_idl(idl);
+    file.write(open_write(args[1]), compiled_idl.data);
 }
 
 fn go_run(args) {
