@@ -1,0 +1,5 @@
+from .extra_import_test import foo, bar;
+
+on init {
+    print(foo() + bar);
+}
