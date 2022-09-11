@@ -135,6 +135,8 @@
 "        var c = data[i];\n"
 "        if c == \"\\n\" {\n"
 "            file.write(out, \"\\\\n\\\"\\n\\\"\");\n"
+"        } else if c == \"\\\"\" {\n"
+"            file.write(out, \"\\\\\\\"\");\n"
 "        } else if ord(c) < 32 || ord(c) >= 127 {\n"
 "            file.write(out, \"\\\\x{ord(c):02x}\");\n"
 "        } else {\n"
