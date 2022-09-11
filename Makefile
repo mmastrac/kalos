@@ -110,14 +110,16 @@ gen: gen-dispatch gen-compiler gen-test
 
 gen-test: $(OUTDIR)/compiler
 	$(call color,"GEN","host","test")
-	@$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc
+	@$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc > $(OUTDIR)/test_kalos.dispatch.inc
 	@mv $(OUTDIR)/test_kalos.dispatch.inc test/
 
 gen-dispatch: $(OUTDIR)/compiler
 	$(call color,"GEN","host","dispatch")
-	@$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc
+	@$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc > $(OUTDIR)/_kalos_ops.dispatch.inc
 	@mv $(OUTDIR)/_kalos_ops.dispatch.inc src/
 
+# TODO: dispatch generation is redirecting because we can't change where println outputs to yet
+# We should consider making the IDL generation script write to a file rather than using println
 gen-compiler: $(OUTDIR)/compiler
 	$(call color,"GEN","host","compiler")
 	@rm -rf $(GENDIR)/compiler || true
@@ -127,7 +129,7 @@ gen-compiler: $(OUTDIR)/compiler
 	@$(OUTDIR)/compiler stringify src/compiler/compiler.kalos $(GENDIR)/compiler/compiler.kalos.inc
 	@$(OUTDIR)/compiler stringify src/compiler/compiler_idl.kalos $(GENDIR)/compiler/compiler_idl.kalos.inc
 	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/modules/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
-	@$(OUTDIR)/bootstrap-compiler dispatch src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.dispatch.inc
+	@$(OUTDIR)/bootstrap-compiler dispatch src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.dispatch.inc > $(GENDIR)/compiler/compiler.dispatch.inc
 	@cp $(GENDIR)/compiler/compiler.dispatch.inc $(SRCDIR)/compiler
 	@cp $(GENDIR)/compiler/compiler.kidl.inc $(SRCDIR)/compiler
 	@cp $(GENDIR)/compiler/compiler.kalos.inc $(SRCDIR)/compiler
