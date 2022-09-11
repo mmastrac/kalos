@@ -72,10 +72,11 @@ fn go_dispatch(args) {
     # First, compile the IDL provided by the user
     var idl = file.read(open_read(args[0]));
     var compiled_idl = kalos.compile_idl(idl);
+    kalos.generate_dispatch(compiled_idl);
 
     # Compile our IDL dispatch compiler
-    var self_idl = kalos.compile_idl(kalos.idl);
-    var dispatch_script = kalos.compile_script(self_idl, kalos.idl_script);
+#    var self_idl = kalos.compile_idl(kalos.idl);
+#    var dispatch_script = kalos.compile_script(self_idl, kalos.idl_script);
 }
 
 fn go_dump(args) {
