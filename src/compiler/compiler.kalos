@@ -45,7 +45,7 @@ fn open_write(f): object {
     if f == "-" {
         return file.stdout;
     }
-    return file.open(f, file.WRITE);
+    return file.open(f, file.WRITE | file.CREATE);
 }
 
 fn go_compile(args) {

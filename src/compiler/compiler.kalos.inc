@@ -45,7 +45,7 @@
 "    if f == \"-\" {\n"
 "        return file.stdout;\n"
 "    }\n"
-"    return file.open(f, file.WRITE);\n"
+"    return file.open(f, file.WRITE | file.CREATE);\n"
 "}\n"
 "\n"
 "fn go_compile(args) {\n"
