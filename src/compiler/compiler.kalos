@@ -137,6 +137,8 @@ fn go_stringify(args) {
             file.write(out, "\\n\"\n\"");
         } else if c == "\"" {
             file.write(out, "\\\"");
+        } else if c == "\\" {
+            file.write(out, "\\\\");
         } else if ord(c) < 32 || ord(c) >= 127 {
             file.write(out, "\\x{ord(c):02x}");
         } else {
