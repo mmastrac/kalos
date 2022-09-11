@@ -124,9 +124,11 @@ gen-compiler: $(OUTDIR)/compiler
 	@mkdir -p $(GENDIR)/compiler
 	@cp -R $(SRCDIR)/* $(GENDIR)/compiler
 	@$(OUTDIR)/compiler stringify src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.kidl.inc
+	@$(OUTDIR)/compiler stringify src/compiler/compiler.kalos $(GENDIR)/compiler/compiler.kalos.inc
 	@$(OUTDIR)/compiler stringify src/compiler/compiler_idl.kalos $(GENDIR)/compiler/compiler_idl.kalos.inc
 	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/modules/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
 	@$(OUTDIR)/bootstrap-compiler dispatch src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.dispatch.inc
 	@cp $(GENDIR)/compiler/compiler.dispatch.inc $(SRCDIR)/compiler
 	@cp $(GENDIR)/compiler/compiler.kidl.inc $(SRCDIR)/compiler
+	@cp $(GENDIR)/compiler/compiler.kalos.inc $(SRCDIR)/compiler
 	@cp $(GENDIR)/compiler/compiler_idl.kalos.inc $(SRCDIR)/compiler
