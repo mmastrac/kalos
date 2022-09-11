@@ -117,6 +117,14 @@ fn go_idl(args) {
 }
 
 fn go_run(args) {
+    if len(args) != 1 {
+        help();
+    }
+    var idl = kalos.idl;
+    var compiled_idl = kalos.compile_idl(idl);
+    var script = file.read(open_read(args[0]));
+    var compiled_script = kalos.compile_script(compiled_idl, script);
+    kalos.run_script(compiled_script, tail(args));
 }
 
 fn go_stringify(args) {
