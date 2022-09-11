@@ -1,4 +1,4 @@
-from .extra_import_test import foo, bar;
+import .extra_import_test;
 
 on init {
     print(foo() + bar);

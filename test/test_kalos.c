@@ -131,9 +131,23 @@ kalos_module_parsed parse_modules_for_test() {
     return parsed;
 }
 
+kalos_loaded_script test_script_loader(const char* base_name, kalos_load_result* result) {
+    kalos_buffer buffer = read_buffer(make_test_filename(base_name, "fdl"));
+    kalos_loaded_script script = {0};
+    script.context = (void*)buffer.buffer;
+    script.text = (const char*)buffer.buffer;
+    *result = SCRIPT_LOAD_SUCCESS; // TODO: test failure
+    return script;
+}
+
+void test_script_unloader(kalos_loaded_script script) {
+    kalos_buffer buffer = {.buffer = script.context};
+    kalos_buffer_free(buffer);
+}
+
 kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytecode_file, kalos_buffer bytecode) {
     kalos_buffer script;
-    kalos_parse_options options = {0};
+    kalos_parse_options options = {.loader = test_script_loader, .unloader = test_script_unloader};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_parse_result res = kalos_parse_buffer((const char*)script_text.buffer, parsed_modules, options, &test_env, &script);
     kalos_buffer_free(parsed_modules);
@@ -297,7 +311,7 @@ void run_test(const char* name) {
     output_buffer[0] = 0;
 
     kalos_buffer buffer = read_buffer(make_test_filename(name, "fdl"));
-    kalos_parse_options options = {0};
+    kalos_parse_options options = {.loader = test_script_loader, .unloader = test_script_unloader};
     kalos_module_parsed parsed_modules = parse_modules_for_test();
     kalos_buffer script = kalos_buffer_alloc(&test_env, BUFFER_SIZE);
     kalos_parse_result res = kalos_parse((const char*)buffer.buffer, parsed_modules, options, (kalos_script)script.buffer, BUFFER_SIZE);
@@ -345,6 +359,7 @@ SCRIPT_TEST(idl)
 SCRIPT_TEST(if)
 SCRIPT_TEST(if_else)
 SCRIPT_TEST(ignored_return)
+SCRIPT_TEST(import)
 SCRIPT_TEST(iterable)
 SCRIPT_TEST(iterable_split)
 SCRIPT_TEST(list)

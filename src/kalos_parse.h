@@ -32,6 +32,19 @@ typedef struct kalos_parse_result {
     size_t size;
 } kalos_parse_result;
 
+typedef enum kalos_load_result {
+    SCRIPT_LOAD_SUCCESS,
+    SCRIPT_LOAD_ERROR,
+} kalos_load_result;
+
+typedef struct kalos_loaded_script {
+    const char kalos_far* text;
+    void* context;
+} kalos_loaded_script;
+
+typedef kalos_loaded_script (*kalos_loader)(const char* base, kalos_load_result* result);
+typedef void (*kalos_unloader)(kalos_loaded_script loaded_script);
+
 /**
  * Kalos parse options. Currently unused.
  */
@@ -40,6 +53,8 @@ typedef struct kalos_parse_options {
      * Kalos parse flags. Should be set to zero for future compatibility.
      */
     kalos_int flags;
+    kalos_loader loader;
+    kalos_unloader unloader;
 } kalos_parse_options;
 
 /**

@@ -1,7 +1,7 @@
 # Used by test_import
 
-export fn foo() {
+export const bar = "bar";
+
+export fn foo(): string {
     return "foo";
 }
-
-export const bar: string = "bar";

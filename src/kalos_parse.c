@@ -43,11 +43,12 @@ static const char* ERROR_MISSING_RETURN = "Missing return statement";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
-static const char* ERROR_EXPECTED_MODULE = "Expected module";
+static const char* ERROR_INVALID_IMPORT = "Invalid or missing import";
 static const char* ERROR_ILLEGAL_IN_THIS_CONTEXT = "Illegal in this context";
 static const char* ERROR_DUPLICATE_IMPORT = "Duplicate import";
 static const char* ERROR_UNEXPECTED_PARAMETERS = "Unexpected parameters";
 static const char* ERROR_UNEXPECTED_EXPORT_TYPE = "Unexpected export type";
+static const char* ERROR_NO_LOADER = "No loader configured";
 
 #define KALOS_VAR_SLOT_COUNT 32
 #define KALOS_VAR_MAX_LENGTH 16
@@ -738,7 +739,7 @@ static struct pending_ops parse_word_recursively(struct parse_state* parse_state
     if (res.type == NAME_RESOLUTION_NOT_FOUND) {
         THROW(ERROR_UNKNOWN_VARIABLE);
     } else if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
-        THROW(ERROR_EXPECTED_MODULE);
+        THROW(ERROR_INVALID_IMPORT);
     } else if (res.type == NAME_RESOLUTION_VAR) {
         pending.load.data[0] = pending.store.data[0] = res.var_slot;
         pending.load.op = res.load_op;
@@ -1230,7 +1231,6 @@ void parse_idl_fn(struct parse_state* parse_state) {
 }
 
 void parse_idl_block(struct parse_state* parse_state) {
-    TRY(parse_push_op(parse_state, KALOS_OP_END));
     TRY(write_next_handler_section(parse_state, KALOS_IDL_HANDLER_ADDRESS));
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
     kalos_token token, peek;
@@ -1342,6 +1342,109 @@ void parse_idl_block(struct parse_state* parse_state) {
     TRY_EXIT;
 }
 
+void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
+    kalos_lex_init(s, &parse_state->lex_state);
+    bool code_phase = false;
+    bool found_idl = false;
+    bool export = false;
+    bool has_written_global_section = false;
+    loop {
+        kalos_token token, peek;
+        TRY(token = lex(parse_state));
+        if (token == KALOS_TOKEN_EOF) {
+            if (!code_phase && !found_idl) {
+                THROW(ERROR_MISSING_HANDLE);
+            }
+            break;
+        }
+
+        if (code_phase && token != KALOS_TOKEN_ON && token != KALOS_TOKEN_FN && token != KALOS_TOKEN_EXPORT) {
+            THROW(ERROR_UNEXPECTED_TOKEN);
+        }
+
+        if (token == KALOS_TOKEN_IMPORT) {
+            TRY(peek = lex_peek(parse_state));
+            if (peek == KALOS_TOKEN_PERIOD) {
+                // Relative import, only current directory supported
+                TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+                if (!parse_state->options.loader) {
+                    THROW(ERROR_NO_LOADER);
+                }
+                kalos_load_result result;
+                kalos_loaded_script script = parse_state->options.loader(parse_state->token, &result);
+                if (result == SCRIPT_LOAD_ERROR) {
+                    THROW(ERROR_INVALID_IMPORT);
+                }
+                kalos_lex_state old_lex_state = parse_state->lex_state;
+                TRY(parse_file(parse_state, script.text));
+                parse_state->options.unloader(script);
+                parse_state->lex_state = old_lex_state;
+            } else {
+                TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+                struct name_resolution_result res;
+                TRY(res = resolve_word(parse_state, NULL));
+                if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
+                    parse_state->imported_modules[parse_state->module_index++] = res.module;
+                } else if (res.type == NAME_RESOLUTION_MODULE) {
+                    THROW(ERROR_DUPLICATE_IMPORT);
+                } else {
+                    THROW(ERROR_INVALID_IMPORT);
+                }
+            }
+
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
+        } else if (token == KALOS_TOKEN_EXPORT) {
+            TRY(peek = lex_peek(parse_state));
+            if (peek != KALOS_TOKEN_VAR && peek != KALOS_TOKEN_CONST && peek != KALOS_TOKEN_FN) {
+                THROW(ERROR_UNEXPECTED_EXPORT_TYPE);
+            }
+            export = true;
+        } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
+            if (!has_written_global_section) {
+                TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLER_ADDRESS));
+                has_written_global_section = true;
+            }
+            TRY(parse_var_statement(parse_state, &parse_state->globals, export));
+            export = false;
+        } else if (token == KALOS_TOKEN_ON || token == KALOS_TOKEN_FN) {
+            if (!code_phase) {
+                code_phase = true;
+                // TODO: If we don't write this global section, many of the tests change
+                if (!has_written_global_section) {
+                    TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLER_ADDRESS));
+                }
+                TRY(parse_push_op(parse_state, KALOS_OP_END));
+                has_written_global_section = false;
+            }
+            memset(&parse_state->locals, 0, sizeof(parse_state->locals));
+            TRY(parse_function_statement(parse_state, export));
+            if (parse_state->last_section_header) {
+                parse_state->last_section_header->locals_size = parse_state->locals.var_index;
+            }
+            export = false;
+        } else if (token == KALOS_TOKEN_IDL) {
+            found_idl = true;
+            // TODO: If we don't write this global section, many of the tests change
+            if (!has_written_global_section) {
+                TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLER_ADDRESS));
+            }
+            TRY(parse_push_op(parse_state, KALOS_OP_END));
+            has_written_global_section = false;
+            TRY(parse_idl_block(parse_state));
+        } else {
+            THROW(ERROR_UNEXPECTED_TOKEN);
+        }
+    }
+
+    // In case we have a var-only module
+    if (has_written_global_section) {
+        TRY(parse_push_op(parse_state, KALOS_OP_END));
+    }
+
+    TRY_EXIT;
+}
+
 kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script script, size_t script_size) {
     struct parse_state parse_state_data = {0};
     parse_state_data.options = options;
@@ -1361,67 +1464,10 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
         header->signature[3] = 0;
     }
     parse_state_data.output_script_index = sizeof(*header);
-    kalos_lex_init(s, &parse_state_data.lex_state);
     
     struct parse_state* parse_state = &parse_state_data;
+    TRY(parse_file(parse_state, s));
 
-    TRY(write_next_handler_section(parse_state, KALOS_GLOBAL_HANDLER_ADDRESS));
-    bool code_phase = false;
-    bool found_idl = false;
-    bool export = false;
-    loop {
-        kalos_token token, peek;
-        TRY(token = lex(parse_state));
-        if (token == KALOS_TOKEN_EOF) {
-            if (!code_phase && !found_idl) {
-                THROW(ERROR_MISSING_HANDLE);
-            }
-            break;
-        }
-
-        if (code_phase && token != KALOS_TOKEN_ON && token != KALOS_TOKEN_FN) {
-            THROW(ERROR_UNEXPECTED_TOKEN);
-        }
-
-        if (token == KALOS_TOKEN_IMPORT) {
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
-            struct name_resolution_result res;
-            TRY(res = resolve_word(parse_state, NULL));
-            if (res.type == NAME_RESOLUTION_UNIMPORTED_MODULE) {
-                parse_state->imported_modules[parse_state->module_index++] = res.module;
-            } else if (res.type == NAME_RESOLUTION_MODULE) {
-                THROW(ERROR_DUPLICATE_IMPORT);
-            } else {
-                THROW(ERROR_EXPECTED_MODULE);
-            }
-            TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
-        } else if (token == KALOS_TOKEN_EXPORT) {
-            TRY(peek = lex_peek(parse_state));
-            if (peek != KALOS_TOKEN_VAR && peek != KALOS_TOKEN_CONST && peek != KALOS_TOKEN_FN) {
-                THROW(ERROR_UNEXPECTED_EXPORT_TYPE);
-            }
-            export = true;
-        } else if (token == KALOS_TOKEN_VAR || token == KALOS_TOKEN_CONST) {
-            TRY(parse_var_statement(parse_state, &parse_state->globals, export));
-            export = false;
-        } else if (token == KALOS_TOKEN_ON || token == KALOS_TOKEN_FN) {
-            if (!code_phase) {
-                code_phase = true;
-                TRY(parse_push_op(parse_state, KALOS_OP_END));
-            }
-            memset(&parse_state->locals, 0, sizeof(parse_state->locals));
-            TRY(parse_function_statement(parse_state, export));
-            if (parse_state->last_section_header) {
-                parse_state->last_section_header->locals_size = parse_state->locals.var_index;
-            }
-            export = false;
-        } else if (token == KALOS_TOKEN_IDL) {
-            found_idl = true;
-            TRY(parse_idl_block(parse_state));
-        } else {
-            THROW(ERROR_UNEXPECTED_TOKEN);
-        }
-    }
     if (header) {
         header->globals_size = parse_state->globals.var_index;
         header->length = parse_state->output_script_index;
