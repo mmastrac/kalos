@@ -449,6 +449,11 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
     return object;
 }
 
+void kalos_compiler_generate_idl(kalos_state* state, kalos_object_ref* modules_) {
+    kalos_module_parsed* modules = (*modules_)->context;
+    kalos_idl_generate_dispatch(*modules, state);
+}
+
 kalos_string kalos_compiler_get_idl_script(kalos_state* state) {
     return kalos_string_allocate(state, compiler_script_text());
 }

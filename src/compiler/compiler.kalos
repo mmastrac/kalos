@@ -76,11 +76,6 @@ fn go_dispatch(args) {
     # Compile our IDL dispatch compiler
     var self_idl = kalos.compile_idl(kalos.idl);
     var dispatch_script = kalos.compile_script(self_idl, kalos.idl_script);
-
-    var module;
-    for module in compiled_idl.modules {
-        print("{module.name}\n");
-    }
 }
 
 fn go_dump(args) {
