@@ -98,6 +98,7 @@ int run_script(const char* input_data, kalos_int argc, const char* argv[]) {
     kalos_module_idl_sys_trigger_main(state, &args);
     kalos_run_free(state);
     kalos_buffer_free(script);
+    kalos_buffer_free(modules);
     return 0;
 }
 
