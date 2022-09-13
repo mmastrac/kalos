@@ -18,6 +18,7 @@ BOOTSTRAP_CANDIDATE_COMPILER=$(BOOTSTRAP_CANDIDATE_DIR)/compiler
 
 SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c) $(wildcard $(SRCDIR)/compiler/*.c)
 HEADERS=$(wildcard $(SRCDIR)/*.h)
+GEN_FILES=$(wildcard $(SRCDIR)/*.inc) $(wildcard $(SRCDIR)/compiler/*.inc)
 HOST_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(HOST_OBJDIR)/%.o,$(SOURCES))
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
 TEST_LIB_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(TEST_OBJDIR)/lib/%.o,$(SOURCES))
@@ -74,7 +75,7 @@ clean:
 	$(call color,"CLEAN","all",$(ROOTOUTDIR))
 	@rm -rf $(ROOTOUTDIR)
 
-$(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) $(SRCDIR)/*.inc
+$(HOST_OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) $(GEN_FILES)
 	$(call color,"CC","host",$<)
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) -c $< -o $@
@@ -91,6 +92,14 @@ $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 $(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@ || echo "WARNING: re2c not installed. Not rebuilding $@."
+
+$(SRCDIR)/%.inc: $(SRCDIR)/% $(BOOTSTRAP_COMPILER)
+	$(call color,"GEN","host",$<)
+	@$(BOOTSTRAP_COMPILER) stringify $< $@
+
+$(SRCDIR)/%.dispatch.inc: $(SRCDIR)/%.kidl $(BOOTSTRAP_COMPILER)
+	$(call color,"GEN","host",$<)
+	@$(BOOTSTRAP_COMPILER) dispatch $< $@ > $@
 
 $(TEST_OBJDIR)/lib/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(call color,"CC","host",$<)
@@ -149,32 +158,3 @@ $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDI
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
 	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@touch $@
-
-gen: gen-dispatch gen-compiler gen-test
-
-gen-test: $(OUTDIR)/compiler
-	$(call color,"GEN","host","test")
-	@$(OUTDIR)/compiler dispatch test/test_kalos.kidl $(OUTDIR)/test_kalos.dispatch.inc > $(OUTDIR)/test_kalos.dispatch.inc
-	@mv $(OUTDIR)/test_kalos.dispatch.inc test/
-
-gen-dispatch: $(OUTDIR)/compiler
-	$(call color,"GEN","host","dispatch")
-	@$(OUTDIR)/compiler dispatch src/_kalos_ops.kidl $(OUTDIR)/_kalos_ops.dispatch.inc > $(OUTDIR)/_kalos_ops.dispatch.inc
-	@mv $(OUTDIR)/_kalos_ops.dispatch.inc src/
-
-# TODO: dispatch generation is redirecting because we can't change where println outputs to yet
-# We should consider making the IDL generation script write to a file rather than using println
-gen-compiler: $(OUTDIR)/compiler
-	$(call color,"GEN","host","compiler")
-	@rm -rf $(GENDIR)/compiler || true
-	@mkdir -p $(GENDIR)/compiler
-	@cp -R $(SRCDIR)/* $(GENDIR)/compiler
-	@$(OUTDIR)/compiler stringify src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.kidl.inc
-	@$(OUTDIR)/compiler stringify src/compiler/compiler.kalos $(GENDIR)/compiler/compiler.kalos.inc
-	@$(OUTDIR)/compiler stringify src/compiler/compiler_idl.kalos $(GENDIR)/compiler/compiler_idl.kalos.inc
-	@$(CC) $(HOST_CFLAGS) $(GENDIR)/compiler/*.c $(GENDIR)/compiler/modules/*.c $(GENDIR)/compiler/compiler/*.c -o $(OUTDIR)/bootstrap-compiler
-	@$(OUTDIR)/bootstrap-compiler dispatch src/compiler/compiler.kidl $(GENDIR)/compiler/compiler.dispatch.inc > $(GENDIR)/compiler/compiler.dispatch.inc
-	@cp $(GENDIR)/compiler/compiler.dispatch.inc $(SRCDIR)/compiler
-	@cp $(GENDIR)/compiler/compiler.kidl.inc $(SRCDIR)/compiler
-	@cp $(GENDIR)/compiler/compiler.kalos.inc $(SRCDIR)/compiler
-	@cp $(GENDIR)/compiler/compiler_idl.kalos.inc $(SRCDIR)/compiler
