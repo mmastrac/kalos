@@ -8,8 +8,6 @@
 #include "compiler_gen.h"
 #include "compiler_idl.h"
 
-#define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
-
 static int verbose = 0;
 static FILE* output_file;
 
