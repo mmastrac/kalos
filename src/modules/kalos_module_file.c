@@ -66,6 +66,9 @@ kalos_int kalos_file_fill_buffer(struct kalos_file* file) {
         return -1;
     }
     int r = read(file->fd, file->ring_buffer + read_start, read_size);
+    if (r < 0) {
+        return -1;
+    }
     file->buffer_size = file->buffer_size + r;
     return r;
 }
