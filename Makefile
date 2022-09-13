@@ -18,7 +18,7 @@ BOOTSTRAP_CANDIDATE_SRCDIR=$(OUTDIR)/bootstrap_candidate/src
 BOOTSTRAP_CANDIDATE_COMPILER=$(BOOTSTRAP_CANDIDATE_DIR)/compiler
 
 SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c) $(wildcard $(SRCDIR)/compiler/*.c)
-HEADERS=$(wildcard $(SRCDIR)/*.h)
+HEADERS=$(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/modules/*.h) $(wildcard $(SRCDIR)/compiler/*.h)
 GEN_FILES=$(wildcard $(SRCDIR)/*.inc) $(wildcard $(SRCDIR)/compiler/*.inc)
 HOST_OBJECTS=$(patsubst $(SRCDIR)/%.c,$(HOST_OBJDIR)/%.o,$(SOURCES))
 TEST_SOURCES=$(wildcard $(TESTDIR)/*.c) $(wildcard $(TESTDIR)/unity/*.c)
@@ -85,6 +85,8 @@ $(OUTDIR)/compiler: $(HOST_OBJECTS)
 	$(call color,"LINK","host",$@)
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) $^ -o $@
+	$(call color,"SMOKE","host",$@)
+	@$@ run example/helloworld/helloworld.kalos
 
 $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 	$(call color,"re2c","all",$<)
@@ -121,17 +123,18 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 # Self-hosting bits
 ########################################################
 
-# Bootstrap requires a fully-tested bootstrap
-$(BOOTSTRAP_COMPILER): $(BOOTSTRAP_DIR)/* $(BOOTSTRAP_DIR)/*/*
-	$(call color,"BOOTSTRAP","host",$(BOOTSTRAP_COMPILER))
-	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_DIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_COMPILER)
-
 bootstrap: $(BOOTSTRAP_COMPILER)
 
 bootstrap-update: $(BOOTSTRAP_CANDIDATE_DIR)/success
 	$(call color,"BOOTSTRAP","host",$(BOOTSTRAP_DIR))
 	@rm -rf $(BOOTSTRAP_DIR) || true
 	@cp -R $(BOOTSTRAP_CANDIDATE_SRCDIR) $(BOOTSTRAP_DIR)
+
+# Bootstrap requires a fully-tested bootstrap
+$(BOOTSTRAP_COMPILER): $(BOOTSTRAP_DIR)/* $(BOOTSTRAP_DIR)/*/*
+	$(call color,"BOOTSTRAP","host",$(BOOTSTRAP_COMPILER))
+	@mkdir -p $(dir $@)
+	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_DIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_COMPILER)
 
 # To successfully bootstrap, the bootstrap compiler must compile with its existing files, then compile with files
 # that it generates itself.

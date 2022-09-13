@@ -1,0 +1,5 @@
+import sys;
+
+on sys.main(args) {
+    println("Hello, world!");
+}

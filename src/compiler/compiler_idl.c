@@ -455,11 +455,11 @@ void kalos_compiler_generate_idl(kalos_state* state, kalos_object_ref* modules_)
 }
 
 kalos_string kalos_compiler_get_idl_script(kalos_state* state) {
-    return kalos_string_allocate(state, compiler_script_text());
+    return kalos_string_allocate(state, compiler_idl_script_text_inc());
 }
 
 kalos_string kalos_compiler_get_compiler_idl(kalos_state* state) {
-    return kalos_string_allocate(state, compiler_idl_script_text());
+    return kalos_string_allocate(state, compiler_kidl_text_inc());
 }
 
 void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args) {
