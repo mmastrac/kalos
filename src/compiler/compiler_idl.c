@@ -400,6 +400,20 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     return true;
 }
 
+kalos_buffer compiler_idl_script(kalos_state* state) {
+    kalos_parse_options options = {0};
+    kalos_buffer script = {0};
+    kalos_module_parsed modules = kalos_idl_parse_module(compiler_kidl_text_inc(), state);
+    kalos_parse_result result = kalos_parse_buffer(compiler_idl_script_text_inc(), modules, options, state, &script);
+    kalos_buffer_free(modules);
+    if (result.error) {
+        if (state->error) {
+            state->error(state->context, result.line, result.error);
+        }
+    }
+    return script;
+}
+
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
     kalos_buffer script = compiler_idl_script(state);
     script_modules = parsed_module;

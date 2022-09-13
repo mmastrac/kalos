@@ -7,9 +7,6 @@
 #include "../kalos_parse.h"
 #include "compiler_gen.h"
 #include "compiler_idl.h"
-const char* COMPILER_SCRIPT =
-#include "compiler.kalos.inc"
-;
 
 #define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
 
@@ -83,7 +80,7 @@ kalos_state compiler_env = {
 
 int run_script(const char* input_data, kalos_int argc, const char* argv[]) {
     output_file = stdout;
-    kalos_module_parsed modules = compiler_idl(&compiler_env);
+    kalos_module_parsed modules = kalos_idl_parse_module(compiler_kidl_text_inc(), &compiler_env);
     kalos_buffer script;
     kalos_parse_options options = {0};
     kalos_parse_result res = kalos_parse_buffer(input_data, modules, options, &compiler_env, &script);
@@ -114,7 +111,7 @@ void log_printf(const char* fmt, ...) {
 
 #ifndef IS_TEST
 int main(int argc, const char** argv) {
-    run_script(COMPILER_SCRIPT, argc, argv);
+    run_script(compiler_script_text_inc(), argc, argv);
 
     return 0;
 }
