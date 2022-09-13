@@ -27,11 +27,11 @@ TEST_OBJECTS=$(TEST_LIB_OBJECTS) $(patsubst $(TESTDIR)/%.c,$(TEST_OBJDIR)/test/%
 
 is_term_set := $(shell echo $$TERM)
 ifdef is_term_set
-TPUT_SGR0=$(shell tput sgr0 || echo '')
-TPUT_BOLD=$(shell tput bold || echo '')
-TPUT_DIM=$(shell tput dim || echo '')
-TPUT_BG_BLACK=$(shell tput setab 0 || echo '')
-TPUT_FG_GREEN=$(shell tput setaf 2 || echo '')
+TPUT_SGR0=$(shell tput sgr0 2>/dev/null || echo '')
+TPUT_BOLD=$(shell tput bold 2>/dev/null || echo '')
+TPUT_DIM=$(shell tput dim 2>/dev/null || echo '')
+TPUT_BG_BLACK=$(shell tput setab 0 2>/dev/null || echo '')
+TPUT_FG_GREEN=$(shell tput setaf 2 2>/dev/null || echo '')
 endif
 
 define color_sh
