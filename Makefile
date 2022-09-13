@@ -135,13 +135,13 @@ bootstrap-update: $(BOOTSTRAP_CANDIDATE_DIR)/success
 # To successfully bootstrap, the bootstrap compiler must compile with its existing files, then compile with files
 # that it generates itself.
 $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDIR)/modules/*.c $(HEADERS)
+	$(call color,"STG_0","host",$@)
 	@rm -rf $(BOOTSTRAP_CANDIDATE_DIR)
 	@mkdir -p $(BOOTSTRAP_CANDIDATE_SRCDIR)/{compiler,modules}
 	@cp $(SRCDIR)/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)
 	@cp $(SRCDIR)/compiler/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler
 	@cp $(SRCDIR)/modules/*.{c,h} $(BOOTSTRAP_CANDIDATE_SRCDIR)/modules
 	@# First, build with the existing generated files
-	$(call color,"STG_0","host",$@)
 	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@# Invert success for help check
 	@! $(BOOTSTRAP_CANDIDATE_COMPILER) > /dev/null
