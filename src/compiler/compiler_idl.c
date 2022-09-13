@@ -2,7 +2,6 @@
 #include "../kalos_parse.h"
 #include "../kalos_run.h"
 #include "../_kalos_lex.h"
-// #include "_kalos_idl_compiler.h"
 #include "../modules/kalos_module_file.h"
 #include "../modules/kalos_module_sys.h"
 #include "compiler_gen.h"

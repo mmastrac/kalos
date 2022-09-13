@@ -1,9 +1,5 @@
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "../_kalos_defines.h"
 #include "../kalos_parse.h"
 #include "compiler_gen.h"
 #include "compiler_idl.h"
