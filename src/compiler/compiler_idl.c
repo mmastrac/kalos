@@ -246,6 +246,12 @@ kalos_object_ref kalos_idl_get_modules(kalos_state* state, kalos_object_ref* obj
     return make_list_iterator(state, *modules, &header->module_list, &kalos_module_idl_module_object_module_obj_props);
 }
 
+kalos_int kalos_idl_get_flags(kalos_state* state, kalos_object_ref* object) {
+    kalos_module_parsed* modules = (*object)->context;
+    kalos_module_header* header = kalos_module_get_header(*modules);
+    return header->flags;
+}
+
 static void iter_function_arg(kalos_state* state, void* context, uint16_t index, kalos_value* value) {
     kalos_int* record = context;
     kalos_arg* arg = kalos_module_get_list_item(script_modules, *record);
