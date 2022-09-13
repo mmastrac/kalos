@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <sys/types.h>
 #include "../kalos_parse.h"
 #include "compiler_gen.h"
 #include "compiler_idl.h"
