@@ -1,3 +1,5 @@
+OS := $(shell uname | tr '[:upper:]' '[:lower:]')
+
 ROOTDIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))/../..))
 OUTDIR := $(ROOTDIR)/target
 DOSOUTDIR := $(ROOTDIR)/target/dos
@@ -21,7 +23,7 @@ clean:
 	rm -rf $(DOSOUTDIR)
 
 WATCOM_MODEL=m
-CFLAGS=-c -march=i86 -Wall -Werror -std=c99 \
+CFLAGS=-c -march=i86 -Wall -std=c99 \
 	-fno-writable-strings -fnonconst-initializers -fshort-enum -ffunction-sections \
 	-mcmodel=$(WATCOM_MODEL) -O3 -frerun-optimizer -floop-optimize -funroll-loops -fno-stack-check
 
@@ -33,11 +35,11 @@ WATCOM=docker run --rm \
 	mmastrac/openwatcom:2021-05-01
 CC=$(WATCOM) owcc
 
-$(SRCDIR)/dos_dispatch.inc: $(OUTDIR)/compiler $(SRCDIR)/dos.kidl
-	$(OUTDIR)/compiler dispatch $(SRCDIR)/dos.kidl $(SRCDIR)/dos_dispatch.inc
+$(SRCDIR)/dos_dispatch.inc: $(OUTDIR)/$(OS)/compiler $(SRCDIR)/dos.kidl
+	$(OUTDIR)/$(OS)/compiler dispatch $(SRCDIR)/dos.kidl $(SRCDIR)/dos_dispatch.inc
 
-$(SRCDIR)/dos_script.inc: $(OUTDIR)/compiler $(SRCDIR)/dos.kidl
-	$(OUTDIR)/compiler compile $(SRCDIR)/dos.kidl $(SRCDIR)/dos.kalos $(DOSOUTDIR)/dos_script.bin
+$(SRCDIR)/dos_script.inc: $(OUTDIR)/$(OS)/compiler $(SRCDIR)/dos.kidl
+	$(OUTDIR)/$(OS)/compiler compile $(SRCDIR)/dos.kidl $(SRCDIR)/dos.kalos $(DOSOUTDIR)/dos_script.bin
 	xxd -i < $(DOSOUTDIR)/dos_script.bin > $(SRCDIR)/dos_script.inc
 
 $(DOSOUTDIR)/kalos/%.o: $(KALOS_SRCDIR)/%.c
@@ -48,7 +50,7 @@ $(DOSOUTDIR)/%.o: $(SRCDIR)/%.c $(SRCDIR)/dos_dispatch.inc $(SRCDIR)/dos_script.
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -I/src /src2/$(<:$(SRCDIR)/%=%) -o /obj/$(@:$(DOSOUTDIR)/%=%)
 
-$(DOSOUTDIR)/compiler.exe.lst: $(KALOS_OBJECTS) $(DOSOUTDIR)/kalos/compiler/compiler_main.o
+$(DOSOUTDIR)/compiler.exe.lst: $(KALOS_OBJECTS) $(DOSOUTDIR)/kalos/compiler/compiler_main.o $(DOSOUTDIR)/kalos/compiler/compiler_idl.o
 	echo $(patsubst $(DOSOUTDIR)/%.o,/obj/%.o,$^) > $@
 
 $(DOSOUTDIR)/example.exe.lst: $(KALOS_OBJECTS) $(OBJECTS)
