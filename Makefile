@@ -1,5 +1,6 @@
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 CC := $(shell which clang || which gcc)
+SHELL := /bin/bash
 
 SRCDIR=src
 TESTDIR=test
