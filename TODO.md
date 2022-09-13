@@ -5,6 +5,6 @@ version. This will be a less painful version of the current `make gen` process t
 
  - [X] Ensure that compiler_main.c calls into compiler.kalos
  - [ ] Fix redirect hack with compiler.kalos `dispatch`
- - [ ] Create a bootstrap folder to contain the bootstrap C and other files
- - [ ] Always use bootstrap to compile development version
- - [ ] Create a makefile task that promotes the current development version to a bootstrap
+ - [X] Create a bootstrap folder to contain the bootstrap C and other files
+ - [X] Always use bootstrap to compile development version
+ - [X] Create a makefile task that promotes the current development version to a bootstrap
