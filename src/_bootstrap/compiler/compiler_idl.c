@@ -2,7 +2,6 @@
 #include "../kalos_parse.h"
 #include "../kalos_run.h"
 #include "../_kalos_lex.h"
-// #include "_kalos_idl_compiler.h"
 #include "../modules/kalos_module_file.h"
 #include "../modules/kalos_module_sys.h"
 #include "compiler_gen.h"
@@ -245,6 +244,12 @@ kalos_object_ref kalos_idl_get_modules(kalos_state* state, kalos_object_ref* obj
     kalos_module_header* header = kalos_module_get_header(*modules);
     // ASSERT(header->version == KALOS_IDL_HEADER_VERSION);
     return make_list_iterator(state, *modules, &header->module_list, &kalos_module_idl_module_object_module_obj_props);
+}
+
+kalos_int kalos_idl_get_flags(kalos_state* state, kalos_object_ref* object) {
+    kalos_module_parsed* modules = (*object)->context;
+    kalos_module_header* header = kalos_module_get_header(*modules);
+    return header->flags;
 }
 
 static void iter_function_arg(kalos_state* state, void* context, uint16_t index, kalos_value* value) {

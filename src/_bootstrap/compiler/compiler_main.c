@@ -1,14 +1,9 @@
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "../_kalos_defines.h"
+#include <sys/types.h>
 #include "../kalos_parse.h"
 #include "compiler_gen.h"
 #include "compiler_idl.h"
-
-#define PAGE_ROUND_UP(offset, page_size) ((offset + page_size - 1) & (~(page_size - 1)))
 
 static int verbose = 0;
 static FILE* output_file;
