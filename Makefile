@@ -10,6 +10,11 @@ OBJDIR=$(OUTDIR)/obj
 DOS_OBJDIR=$(OBJDIR)/dos
 TEST_OBJDIR=$(OBJDIR)/test
 HOST_OBJDIR=$(OBJDIR)/host
+BOOTSTRAP_COMPILER=$(OUTDIR)/compiler-bootstrap
+BOOTSTRAP_DIR=$(SRCDIR)/_bootstrap
+BOOTSTRAP_CANDIDATE_DIR=$(OUTDIR)/bootstrap_candidate
+BOOTSTRAP_CANDIDATE_SRCDIR=$(OUTDIR)/bootstrap_candidate/src
+BOOTSTRAP_CANDIDATE_COMPILER=$(BOOTSTRAP_CANDIDATE_DIR)/compiler
 
 SOURCES=$(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/modules/*.c) $(wildcard $(SRCDIR)/compiler/*.c)
 HEADERS=$(wildcard $(SRCDIR)/*.h)
@@ -51,7 +56,7 @@ HOST_CFLAGS=-std=c99 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 
-.PHONY: all test clean linux-test linux-gen
+.PHONY: all test clean linux-test linux-gen bootstrap
 
 all: $(OUTDIR)/compiler
 
@@ -105,6 +110,45 @@ $(OUTDIR)/tests/test: $(TEST_OBJECTS)
 ########################################################
 # Self-hosting bits
 ########################################################
+
+# Bootstrap requires a fully-tested bootstrap
+$(BOOTSTRAP_COMPILER): $(BOOTSTRAP_DIR)/* $(BOOTSTRAP_DIR)/*/*
+	$(call color,"BOOTSTRAP","host",$(BOOTSTRAP_COMPILER))
+	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_DIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_COMPILER)
+
+bootstrap: $(BOOTSTRAP_COMPILER)
+
+bootstrap-update: $(BOOTSTRAP_CANDIDATE_DIR)/success
+	$(call color,"BOOTSTRAP","host",$(BOOTSTRAP_DIR))
+	@rm -rf $(BOOTSTRAP_DIR) || true
+	@cp -R $(BOOTSTRAP_CANDIDATE_SRCDIR) $(BOOTSTRAP_DIR)
+
+# To successfully bootstrap, the bootstrap compiler must compile with its existing files, then compile with files
+# that it generates itself.
+$(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDIR)/modules/*.c $(HEADERS)
+	@rm -rf $(BOOTSTRAP_CANDIDATE_DIR)
+	@mkdir -p $(BOOTSTRAP_CANDIDATE_SRCDIR)/{compiler,modules}
+	@cp $(SRCDIR)/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)
+	@cp $(SRCDIR)/compiler/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler
+	@cp $(SRCDIR)/modules/*.{c,h} $(BOOTSTRAP_CANDIDATE_SRCDIR)/modules
+	@# First, build with the existing generated files
+	$(call color,"STG_0","host",$@)
+	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
+	@# Invert success for help check
+	@! $(BOOTSTRAP_CANDIDATE_COMPILER) > /dev/null
+	$(call color,"STG_1","host",$@)
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_idl.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_idl.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
+	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
+	$(call color,"STG_2","host",$@)
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_idl.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_idl.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
+	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
+	@touch $@
 
 gen: gen-dispatch gen-compiler gen-test
 
