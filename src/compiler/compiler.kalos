@@ -1,6 +1,7 @@
 import file;
 import kalos;
 import sys;
+import .compiler_gen;
 
 var exe;
 var verbose;
@@ -101,6 +102,7 @@ fn go_hexify(args) {
         var c = data[i];
         file.write(out, "0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
     }
+    file.write(out, "\n");
 }
 
 fn go_idl(args) {
@@ -116,8 +118,7 @@ fn go_run(args) {
     if len(args) != 1 {
         help();
     }
-    var idl = kalos.idl;
-    var compiled_idl = kalos.compile_idl(idl);
+    var compiled_idl = kalos.module;
     var script = file.read(open_read(args[0]));
     var compiled_script = kalos.compile_script(compiled_idl, script);
     kalos.run_script(compiled_script, tail(args));

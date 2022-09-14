@@ -4,7 +4,6 @@
 #include "../_kalos_lex.h"
 #include "../modules/kalos_module_file.h"
 #include "../modules/kalos_module_sys.h"
-#include "compiler_gen.h"
 #include "compiler_idl.h"
 
 #define KALOS_IDL_HEADER_VERSION 1
@@ -405,11 +404,52 @@ bool module_walk_callback(void* context_, kalos_module_parsed parsed, uint16_t i
     return true;
 }
 
-kalos_buffer compiler_idl_script(kalos_state* state) {
-    kalos_parse_options options = {0};
+kalos_string kalos_compiler_read_file(kalos_state* state, const char* base, const char* ext_) {
+    kalos_string file = kalos_string_allocate(state, base);
+    kalos_string prefix = kalos_string_allocate(state, "src/compiler/");
+    kalos_string ext = kalos_string_allocate(state, ext_);
+    file = kalos_string_take_append(state, &prefix, &file);
+    file = kalos_string_take_append(state, &file, &ext);
+    kalos_object_ref f = kalos_file_open(state, &file, KALOS_FILE_READ_ONLY);
+    kalos_string contents = kalos_file_read_all(state, &f);
+    return contents;
+}
+
+kalos_loaded_script kalos_entrypoint_loader(kalos_state* state, const char* base, kalos_load_result* result) {
+    kalos_string contents = kalos_compiler_read_file(state, base, ".kalos");
+    kalos_int len = kalos_string_length(state, contents);
+    kalos_buffer script_buffer = kalos_buffer_alloc(state, len + 1);
+    memcpy(script_buffer.buffer, kalos_string_c(state, contents), len + 1);
+    kalos_string_release(state, contents);
+    kalos_loaded_script script = {.text = (const char*)script_buffer.buffer};
+    return script;
+}
+
+void kalos_entrypoint_unloader(kalos_state* state, kalos_loaded_script script) {
+    kalos_buffer buffer = {.buffer = (void*)script.text};
+    kalos_buffer_free(buffer);
+}
+
+/**
+ * Return either the compiled on-disk script, or the hard-coded script bytes that were pre-compiled.
+ */
+kalos_buffer kalos_compiler_idl_script(kalos_state* state) {
+#ifdef BINARY_COMPILER
+    const uint8_t compiler[] = {
+        #include "compiler.kalos.inc"
+    };
+    kalos_buffer buffer = kalos_buffer_alloc(state, sizeof(compiler));
+    memcpy(buffer.buffer, &compiler[0], sizeof(compiler));
+    return buffer;
+#else
+    kalos_string kidl = kalos_compiler_read_file(state, "compiler", ".kidl");
+    kalos_module_parsed modules = kalos_idl_parse_module(kalos_string_c(state, kidl), state);
+    kalos_parse_options options = {
+        .loader = kalos_entrypoint_loader,
+        .unloader = kalos_entrypoint_unloader,
+    };
     kalos_buffer script = {0};
-    kalos_module_parsed modules = kalos_idl_parse_module(compiler_kidl_text_inc(), state);
-    kalos_parse_result result = kalos_parse_buffer(compiler_idl_script_text_inc(), modules, options, state, &script);
+    kalos_parse_result result = kalos_parse_buffer("import .compiler;\nfn unused_function_todo_remove_me() {}", modules, options, state, &script);
     kalos_buffer_free(modules);
     if (result.error) {
         if (state->error) {
@@ -417,10 +457,11 @@ kalos_buffer compiler_idl_script(kalos_state* state) {
         }
     }
     return script;
+#endif
 }
 
 bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
-    kalos_buffer script = compiler_idl_script(state);
+    kalos_buffer script = kalos_compiler_idl_script(state);
     script_modules = parsed_module;
     script_current_header = (kalos_module_header*)parsed_module.buffer;
     kalos_dispatch dispatch = {0};
@@ -447,6 +488,26 @@ void buffer_free(kalos_state* state, kalos_object_ref* object) {
     kalos_buffer_free(*buffer);
 }
 
+kalos_object_ref kalos_get_compiler_module(kalos_state* state) {
+#ifdef BINARY_COMPILER
+    const uint8_t compiler[] = {
+        #include "compiler.kidl.inc"
+    };
+    kalos_buffer parsed = kalos_buffer_alloc(state, sizeof(compiler));
+    memcpy(parsed.buffer, &compiler[0], sizeof(compiler));
+    kalos_object_ref object = kalos_allocate_object(state, sizeof(parsed));
+    memcpy(object->context, &parsed, sizeof(parsed));
+    object->dispatch = &kalos_module_idl_kalos_object_idl_props;
+    object->object_free = buffer_free;
+    return object;
+#else
+    kalos_string idl_script = kalos_compiler_read_file(state, "compiler", ".kidl");
+    kalos_object_ref idl = kalos_compiler_compile_idl(state, &idl_script);
+    kalos_string_release(state, idl_script);
+    return idl;
+#endif
+}
+
 kalos_object_ref kalos_compiler_compile_idl(kalos_state* state, kalos_string* idl) {
     kalos_module_parsed parsed = kalos_idl_parse_module(kalos_string_c(state, *idl), state);
     kalos_object_ref object = kalos_allocate_object(state, sizeof(parsed));
@@ -457,10 +518,18 @@ kalos_object_ref kalos_compiler_compile_idl(kalos_state* state, kalos_string* id
 }
 
 kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_ref* modules_, kalos_string* script) {
-    kalos_parse_options options = {0};
+    kalos_parse_options options = {
+        .loader = kalos_entrypoint_loader,
+        .unloader = kalos_entrypoint_unloader,
+    };
     kalos_buffer buffer;
     kalos_module_parsed* modules = (*modules_)->context;
     kalos_parse_result result = kalos_parse_buffer(kalos_string_c(state, *script), *modules, options, state, &buffer);
+    if (!result.success) {
+        if (state->error) {
+            state->error(state->context, result.line, result.error);
+        }
+    }
     kalos_object_ref object = kalos_allocate_object(state, sizeof(buffer));
     memcpy(object->context, &buffer, sizeof(buffer));
     object->dispatch = &kalos_module_idl_kalos_object_script_props;
@@ -471,14 +540,6 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
 void kalos_compiler_generate_idl(kalos_state* state, kalos_object_ref* modules_) {
     kalos_module_parsed* modules = (*modules_)->context;
     kalos_idl_generate_dispatch(*modules, state);
-}
-
-kalos_string kalos_compiler_get_idl_script(kalos_state* state) {
-    return kalos_string_allocate(state, compiler_idl_script_text_inc());
-}
-
-kalos_string kalos_compiler_get_compiler_idl(kalos_state* state) {
-    return kalos_string_allocate(state, compiler_kidl_text_inc());
 }
 
 void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args) {

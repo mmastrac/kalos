@@ -47,8 +47,7 @@ idl {
         fn run_script(binary: object, args: object): void = kalos_compiler_run_script;
         fn generate_dispatch(idl: object): void = kalos_compiler_generate_idl;
 
-        prop idl_script: string { read = kalos_compiler_get_idl_script; }
-        prop idl: string { read = kalos_compiler_get_compiler_idl; }
+        prop module: object { read = kalos_get_compiler_module; }
 
         object idl {
             prop data: string { read = kalos_compiler_get_buffer; }

@@ -86,6 +86,7 @@ $(OUTDIR)/compiler: $(HOST_OBJECTS)
 	@mkdir -p $(dir $@)
 	@$(CC) $(HOST_CFLAGS) $^ -o $@
 	$(call color,"SMOKE","host",$@)
+	@$@ >/dev/null || true
 	@$@ run example/helloworld/helloworld.kalos
 
 $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
@@ -95,10 +96,6 @@ $(SRCDIR)/_kalos_lex.c: $(SRCDIR)/_kalos_lex.re
 $(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 	$(call color,"re2c","all",$<)
 	@re2c -W -Wno-nondeterministic-tags -Wno-match-empty-string -c --tags --no-debug-info $< -o $@ || echo "WARNING: re2c not installed. Not rebuilding $@."
-
-$(SRCDIR)/%.inc: $(SRCDIR)/% $(BOOTSTRAP_COMPILER)
-	$(call color,"GEN","host",$<)
-	@$(BOOTSTRAP_COMPILER) stringify $< $@
 
 $(SRCDIR)/%.dispatch.inc: $(SRCDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 	$(call color,"GEN","host",$<)
@@ -139,9 +136,10 @@ $(BOOTSTRAP_COMPILER): $(BOOTSTRAP_DIR)/* $(BOOTSTRAP_DIR)/*/*
 # To successfully bootstrap, the bootstrap compiler must compile with its existing files, then compile with files
 # that it generates itself.
 $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDIR)/modules/*.c $(HEADERS)
-	$(call color,"STG_0","host",$@)
+	$(call color,"STG_0","host",$(BOOTSTRAP_CANDIDATE_COMPILER))
 	@rm -rf $(BOOTSTRAP_CANDIDATE_DIR)
 	@mkdir -p $(BOOTSTRAP_CANDIDATE_SRCDIR)/{compiler,modules}
+	@mkdir -p $(GENDIR)
 	@cp $(SRCDIR)/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)
 	@cp $(SRCDIR)/compiler/*.{c,h,inc} $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler
 	@cp $(SRCDIR)/modules/*.{c,h} $(BOOTSTRAP_CANDIDATE_SRCDIR)/modules
@@ -149,16 +147,18 @@ $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDI
 	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@# Invert success for help check
 	@! $(BOOTSTRAP_CANDIDATE_COMPILER) > /dev/null
-	$(call color,"STG_1","host",$@)
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_gen.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_gen.kalos.inc
+	$(call color,"STG_1","host",$(BOOTSTRAP_CANDIDATE_COMPILER))
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) idl $(SRCDIR)/compiler/compiler.kidl $(GENDIR)/compiler.kidl.bin
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kidl.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) compile $(SRCDIR)/compiler/compiler.kidl $(SRCDIR)/compiler/compiler.kalos $(GENDIR)/compiler.kalos.bin
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kalos.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
-	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
-	$(call color,"STG_2","host",$@)
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_gen.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_gen.kalos.inc
+	@$(CC) -DBINARY_COMPILER $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
+	$(call color,"STG_2","host",$(BOOTSTRAP_CANDIDATE_COMPILER))
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) idl $(SRCDIR)/compiler/compiler.kidl $(GENDIR)/compiler.kidl.bin
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kidl.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler//compiler.kidl.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) compile $(SRCDIR)/compiler/compiler.kidl $(SRCDIR)/compiler/compiler.kalos $(GENDIR)/compiler.kalos.bin
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kalos.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler//compiler.kalos.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
-	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
+	@$(CC) -DBINARY_COMPILER $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@touch $@
