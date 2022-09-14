@@ -152,13 +152,13 @@ $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDI
 	$(call color,"STG_1","host",$@)
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_idl.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_idl.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_gen.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_gen.kalos.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
 	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	$(call color,"STG_2","host",$@)
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_idl.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_idl.kalos.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) stringify $(SRCDIR)/compiler/compiler_gen.kalos $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler_gen.kalos.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc > $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
 	@$(CC) $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@touch $@

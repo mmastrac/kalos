@@ -8,7 +8,7 @@ static const char* compiler_script_text_inc() {
 
 static const char* compiler_idl_script_text_inc() {
     return 
-        #include "compiler_idl.kalos.inc"
+        #include "compiler_gen.kalos.inc"
     ;
 }
 
