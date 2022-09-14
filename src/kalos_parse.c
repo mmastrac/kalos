@@ -1373,12 +1373,15 @@ void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
                     THROW(ERROR_NO_LOADER);
                 }
                 kalos_load_result result;
+                LOG("Loading module %s", parse_state->token);
                 kalos_loaded_script script = parse_state->options.loader(parse_state->state, parse_state->token, &result);
                 if (result == SCRIPT_LOAD_ERROR) {
                     THROW(ERROR_INVALID_IMPORT);
                 }
                 kalos_lex_state old_lex_state = parse_state->lex_state;
+                LOG("Loaded module %s, parsing", parse_state->token);
                 TRY(parse_file(parse_state, script.text));
+                LOG("Parsed module %s", parse_state->token);
                 if (parse_state->options.unloader) {
                     parse_state->options.unloader(parse_state->state, script);
                 }
