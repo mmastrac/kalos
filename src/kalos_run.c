@@ -27,9 +27,9 @@ void kalos_type_error(kalos_state* state) {
     state->error(state->context, 0, "Type error");
 }
 
-void kalos_value_error(kalos_state* state) {
+void kalos_value_error_(kalos_state* state, const char* c_file, int c_line) {
     ASSERT(false);
-    LOG("value error");
+    LOG("value error %s:%d", c_file, c_line);
     state->error(state->context, 0, "Value error");
 }
 
