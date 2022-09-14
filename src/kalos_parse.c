@@ -117,6 +117,7 @@ struct pending_ops {
 };
 
 struct parse_state {
+    kalos_state* state;
     kalos_lex_state lex_state;
     kalos_parse_options options;
     bool dispatch_name;
@@ -1372,13 +1373,15 @@ void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
                     THROW(ERROR_NO_LOADER);
                 }
                 kalos_load_result result;
-                kalos_loaded_script script = parse_state->options.loader(parse_state->token, &result);
+                kalos_loaded_script script = parse_state->options.loader(parse_state->state, parse_state->token, &result);
                 if (result == SCRIPT_LOAD_ERROR) {
                     THROW(ERROR_INVALID_IMPORT);
                 }
                 kalos_lex_state old_lex_state = parse_state->lex_state;
                 TRY(parse_file(parse_state, script.text));
-                parse_state->options.unloader(script);
+                if (parse_state->options.unloader) {
+                    parse_state->options.unloader(parse_state->state, script);
+                }
                 parse_state->lex_state = old_lex_state;
             } else {
                 TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
@@ -1445,10 +1448,13 @@ void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
     TRY_EXIT;
 }
 
-kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options, kalos_script script, size_t script_size) {
-    struct parse_state parse_state_data = {0};
-    parse_state_data.options = options;
-    parse_state_data.output_script = script;
+kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modules, kalos_parse_options options,
+    kalos_state* state, kalos_script script, size_t script_size) {
+    struct parse_state parse_state_data = {
+        .state = state,
+        .options = options,
+        .output_script = script,
+    };
     if (modules.buffer) {
         parse_state_data.all_modules = modules;
         parse_state_data.extra_builtins = kalos_module_find_module(modules, "builtin");
@@ -1484,15 +1490,17 @@ kalos_parse_result kalos_parse(const char kalos_far* s, kalos_module_parsed modu
     return res;
 }
 
-kalos_parse_result kalos_parse_buffer(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options, kalos_state* state, kalos_buffer* buffer) {
+kalos_parse_result kalos_parse_buffer(const char kalos_far* script_text,
+    kalos_module_parsed modules, kalos_parse_options options,
+    kalos_state* state, kalos_buffer* buffer) {
     kalos_buffer output = {0};
     *buffer = output;
-    kalos_parse_result result = kalos_parse(script_text, modules, options, NULL, 0);
+    kalos_parse_result result = kalos_parse(script_text, modules, options, state, NULL, 0);
     if (result.error) {
         return result;
     }
     output = kalos_buffer_alloc(state, result.size);
-    result = kalos_parse(script_text, modules, options, output.buffer, result.size);
+    result = kalos_parse(script_text, modules, options, state, output.buffer, result.size);
     if (result.error) {
         kalos_buffer_free(output);
         return result;

@@ -42,8 +42,8 @@ typedef struct kalos_loaded_script {
     void* context;
 } kalos_loaded_script;
 
-typedef kalos_loaded_script (*kalos_loader)(const char* base, kalos_load_result* result);
-typedef void (*kalos_unloader)(kalos_loaded_script loaded_script);
+typedef kalos_loaded_script (*kalos_loader)(kalos_state* state, const char* base, kalos_load_result* result);
+typedef void (*kalos_unloader)(kalos_state* state, kalos_loaded_script loaded_script);
 
 /**
  * Kalos parse options. Currently unused.
@@ -62,7 +62,7 @@ typedef struct kalos_parse_options {
  * required buffer size to continue.
  */
 kalos_parse_result kalos_parse(const char kalos_far* script_text, kalos_module_parsed modules, kalos_parse_options options,
-    kalos_script script, size_t script_size);
+    kalos_state* state, kalos_script script, size_t script_size);
 
 /**
  * Parse a script using the given modules and options, storing the result in a buffer.
