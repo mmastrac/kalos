@@ -8,3 +8,4 @@ version. This will be a less painful version of the current `make gen` process t
  - [X] Create a bootstrap folder to contain the bootstrap C and other files
  - [X] Always use bootstrap to compile development version
  - [X] Create a makefile task that promotes the current development version to a bootstrap
+ - [ ] Update compiler to use imports
