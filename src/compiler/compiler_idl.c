@@ -411,6 +411,7 @@ kalos_string kalos_compiler_read_file(kalos_state* state, const char* base, cons
     file = kalos_string_take_append(state, &prefix, &file);
     file = kalos_string_take_append(state, &file, &ext);
     kalos_object_ref f = kalos_file_open(state, &file, KALOS_FILE_READ_ONLY);
+    kalos_string_release(state, file);
     kalos_string contents = kalos_file_read_all(state, &f);
     return contents;
 }
@@ -444,6 +445,7 @@ kalos_buffer kalos_compiler_idl_script(kalos_state* state) {
 #else
     kalos_string kidl = kalos_compiler_read_file(state, "compiler", ".kidl");
     kalos_module_parsed modules = kalos_idl_parse_module(kalos_string_c(state, kidl), state);
+    kalos_string_release(state, kidl);
     kalos_parse_options options = {
         .loader = kalos_entrypoint_loader,
         .unloader = kalos_entrypoint_unloader,
