@@ -50,7 +50,7 @@ static const char* ERROR_UNEXPECTED_PARAMETERS = "Unexpected parameters";
 static const char* ERROR_UNEXPECTED_EXPORT_TYPE = "Unexpected export type";
 static const char* ERROR_NO_LOADER = "No loader configured";
 
-#define KALOS_VAR_SLOT_COUNT 32
+#define KALOS_VAR_SLOT_COUNT 64
 #define KALOS_VAR_MAX_LENGTH 16
 
 typedef enum var_type {
