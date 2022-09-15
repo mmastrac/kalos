@@ -413,6 +413,7 @@ kalos_string kalos_compiler_read_file(kalos_state* state, const char* base, cons
     kalos_object_ref f = kalos_file_open(state, &file, KALOS_FILE_READ_ONLY);
     kalos_string_release(state, file);
     kalos_string contents = kalos_file_read_all(state, &f);
+    kalos_object_release(state, &f);
     return contents;
 }
 
