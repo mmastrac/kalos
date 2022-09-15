@@ -19,3 +19,4 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
 void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args);
 kalos_string kalos_compiler_get_buffer(kalos_state* state, kalos_object_ref* buffer);
 kalos_object_ref kalos_get_compiler_module(kalos_state* state);
+void kalos_idl_set_module(kalos_state* state, kalos_object_ref* object);

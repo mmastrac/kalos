@@ -58,11 +58,6 @@ fn go_compile(args) {
     var script = file.read(open_read(args[1]));
     var compiled_script = kalos.compile_script(compiled_idl, script);
     file.write(open_write(args[2]), compiled_script.data);
-    # var i;
-    # for i in range(0, len(compiled.data)) {
-    #     var c = compiled.data[i];
-    #     print("0x{ord(c):02x},"); # see note about zero-pad in test_string_formatting
-    # }
 }
 
 fn go_dispatch(args) {
@@ -73,11 +68,8 @@ fn go_dispatch(args) {
     # First, compile the IDL provided by the user
     var idl = file.read(open_read(args[0]));
     var compiled_idl = kalos.compile_idl(idl);
-    kalos.generate_dispatch(compiled_idl);
 
-    # Compile our IDL dispatch compiler
-#    var self_idl = kalos.compile_idl(kalos.idl);
-#    var dispatch_script = kalos.compile_script(self_idl, kalos.idl_script);
+    gen_dispatch(compiled_idl);
 }
 
 fn go_dump(args) {

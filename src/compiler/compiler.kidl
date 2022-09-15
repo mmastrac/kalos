@@ -6,10 +6,6 @@ idl {
         fn println(s: string) = kalos_idl_compiler_println;
         fn print(s: string) = kalos_idl_compiler_print;
         fn log(s: string) = kalos_idl_compiler_log;
-
-        # Old handlers
-        handler close;
-        handler open(flags: number);
     }
 
     module sys {
@@ -45,7 +41,6 @@ idl {
         fn compile_script(modules: object, script: string): object = kalos_compiler_compile_script;
         fn compile_idl(script: string): object = kalos_compiler_compile_idl;
         fn run_script(binary: object, args: object): void = kalos_compiler_run_script;
-        fn generate_dispatch(idl: object): void = kalos_compiler_generate_idl;
 
         prop module: object { read = kalos_get_compiler_module; }
 
@@ -62,6 +57,7 @@ idl {
 
     module kidl {
         fn walk_modules(context: any) = kalos_idl_walk_modules;
+        prop module: object { write = kalos_idl_set_module; }
         prop prefix: string { read = kalos_idl_module_prefix; }
     }
 

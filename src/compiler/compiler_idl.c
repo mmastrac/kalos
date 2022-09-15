@@ -177,6 +177,12 @@ static kalos_module* script_current_module;
 static kalos_export* script_current_export;
 static kalos_object_property* script_current_property;
 
+void kalos_idl_set_module(kalos_state* state, kalos_object_ref* modules_) {
+    kalos_module_parsed* modules = (*modules_)->context;
+    script_modules = *modules;
+    script_current_header = (kalos_module_header*)(*modules).buffer;
+}
+
 void kalos_idl_compiler_print(kalos_state* state, kalos_string* string) {
     state->print(state->context, kalos_string_c(state, *string));
 }
@@ -463,20 +469,6 @@ kalos_buffer kalos_compiler_idl_script(kalos_state* state) {
 #endif
 }
 
-bool kalos_idl_generate_dispatch(kalos_module_parsed parsed_module, kalos_state* state) {
-    kalos_buffer script = kalos_compiler_idl_script(state);
-    script_modules = parsed_module;
-    script_current_header = (kalos_module_header*)parsed_module.buffer;
-    kalos_dispatch dispatch = {0};
-    dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
-    kalos_run_state* run_state = kalos_init((const_kalos_script)script.buffer, &dispatch, state);
-    kalos_module_idl_trigger_open(run_state, kalos_module_get_header(parsed_module)->flags);
-    kalos_module_idl_trigger_close(run_state);
-    kalos_run_free(run_state);
-    kalos_buffer_free(script);
-    return true;
-}
-
 kalos_string kalos_compiler_get_buffer(kalos_state* state, kalos_object_ref* object) {
     kalos_buffer* buffer = (*object)->context;
     size_t size = kalos_buffer_size(*buffer);
@@ -538,11 +530,6 @@ kalos_object_ref kalos_compiler_compile_script(kalos_state* state, kalos_object_
     object->dispatch = &kalos_module_idl_kalos_object_script_props;
     object->object_free = buffer_free;
     return object;
-}
-
-void kalos_compiler_generate_idl(kalos_state* state, kalos_object_ref* modules_) {
-    kalos_module_parsed* modules = (*modules_)->context;
-    kalos_idl_generate_dispatch(*modules, state);
 }
 
 void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kalos_object_ref* args) {
