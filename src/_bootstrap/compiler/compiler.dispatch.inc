@@ -30,17 +30,6 @@
 #define K__arg_any(x)             (x)
 #define K__match(id, n, s)        (param_count == n && strcmp(name, #s) == 0)
 
-// id=0000:0001 name=close
-void kalos_module_idl_trigger_close(kalos_run_state* state) {
-	kalos_trigger(state, kalos_make_address(0x0, 0x1));
-}
-
-// id=0000:0002 name=open
-void kalos_module_idl_trigger_open(kalos_run_state* state, K__pnumber a0) {
-	kalos_load_arg_number(state, 0, a0);
-	kalos_trigger(state, kalos_make_address(0x0, 0x2));
-}
-
 bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {
 	// id=1 name=println arg_count=1 binding=fn kalos_idl_compiler_println
 	if (K__match(/*id=*/1, /*args=*/1, /*name=*/println)) {
@@ -315,34 +304,13 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 		}
 	}
 
-	// id=4 name=generate_dispatch arg_count=1 binding=fn kalos_compiler_generate_idl
-	if (K__match(/*id=*/4, /*args=*/1, /*name=*/generate_dispatch)) {
-		const int arg_count = 1;
-		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
-			kalos_compiler_generate_idl((void*)state, K__arg_object(K__arg(arg_count, 1)));
-			kalos_stack_cleanup(state, arg_count);
-			return true;
-		}
-	}
-
-	// id=5 name=idl_script binding=fn kalos_compiler_get_idl_script
-	if (K__match(/*id=*/5, /*args=*/0, /*name=*/idl_script)) {
+	// id=4 name=module binding=fn kalos_get_compiler_module
+	if (K__match(/*id=*/4, /*args=*/0, /*name=*/module)) {
 		const int arg_count = 0;
 		if (kalos_stack_setup_0(state, arg_count)) {
-			K__string x = kalos_compiler_get_idl_script((void*)state);
+			K__object x = kalos_get_compiler_module((void*)state);
 			kalos_stack_cleanup(state, arg_count);
-			K__final_string(stack, x);
-			return true;
-		}
-	}
-
-	// id=6 name=idl binding=fn kalos_compiler_get_compiler_idl
-	if (K__match(/*id=*/6, /*args=*/0, /*name=*/idl)) {
-		const int arg_count = 0;
-		if (kalos_stack_setup_0(state, arg_count)) {
-			K__string x = kalos_compiler_get_compiler_idl((void*)state);
-			kalos_stack_cleanup(state, arg_count);
-			K__final_string(stack, x);
+			K__final_object(stack, x);
 			return true;
 		}
 	}
@@ -361,8 +329,18 @@ bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* 
 		}
 	}
 
-	// id=2 name=prefix binding=fn kalos_idl_module_prefix
-	if (K__match(/*id=*/2, /*args=*/0, /*name=*/prefix)) {
+	// id=2 name=module binding=fn kalos_idl_set_module
+	if (K__match(/*id=*/2, /*args=*/1, /*name=*/module)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_object)) {
+			kalos_idl_set_module((void*)state, K__arg_object(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	// id=3 name=prefix binding=fn kalos_idl_module_prefix
+	if (K__match(/*id=*/3, /*args=*/0, /*name=*/prefix)) {
 		const int arg_count = 0;
 		if (kalos_stack_setup_0(state, arg_count)) {
 			K__string x = kalos_idl_module_prefix((void*)state);

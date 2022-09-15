@@ -28,7 +28,7 @@ void test_log(const char* msg, ...);
 // #define ASSERT(x) { if (!(x)) { printf("%s", "ASSERTION FAILED: " #x "\n"); } else { printf("%s", "OK " #x "\n"); } }
 void log_printf(const char* msg, ...);
 #ifdef DEBUG
-#define ASSERT(x) { if (!(x)) { printf("%s", "ASSERTION FAILED: " #x "\n"); } }
+#define ASSERT(x) { if (!(x)) { printf("%s:%d %s", __FILE__, __LINE__, "ASSERTION FAILED: " #x "\n"); } }
 #ifndef LOG
 #define LOG(...) log_printf(__VA_ARGS__)
 #endif

@@ -2,8 +2,8 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include "../kalos_parse.h"
-#include "compiler_gen.h"
 #include "compiler_idl.h"
+#include "../modules/kalos_module_file.h"
 
 static int verbose = 0;
 static FILE* output_file;
@@ -73,24 +73,18 @@ kalos_state compiler_env = {
     .error = internal_error,
 };
 
-int run_script(const char* input_data, kalos_int argc, const char* argv[]) {
+int run_script(kalos_state* state_, kalos_int argc, const char* argv[]) {
     output_file = stdout;
-    kalos_module_parsed modules = kalos_idl_parse_module(compiler_kidl_text_inc(), &compiler_env);
-    kalos_buffer script;
-    kalos_parse_options options = {0};
-    kalos_parse_result res = kalos_parse_buffer(input_data, modules, options, &compiler_env, &script);
-    if (!res.success) {
-        printf("ERROR on line %d: %s\n", res.line, res.error);
-        exit(1);
-    }
-    kalos_dispatch dispatch = {0};
-    dispatch.dispatch_name = kalos_module_idl_dynamic_dispatch;
-    kalos_run_state* state = kalos_init(script.buffer, &dispatch, &compiler_env);
-    kalos_object_ref args = kalos_allocate_string_iterable(kalos_state_from_run_state(state), argv, argc);
+    kalos_buffer buffer = kalos_compiler_idl_script(state_);
+
+    kalos_dispatch dispatch = {.dispatch_name = kalos_module_idl_dynamic_dispatch};
+    const_kalos_script script = (const_kalos_script)buffer.buffer;
+    kalos_run_state* state = kalos_init(script, &dispatch, state_);
+
+    kalos_object_ref args = kalos_allocate_string_iterable(state_, argv, argc);
     kalos_module_idl_sys_trigger_main(state, &args);
     kalos_run_free(state);
-    kalos_buffer_free(script);
-    kalos_buffer_free(modules);
+    kalos_buffer_free(buffer);
     return 0;
 }
 
@@ -106,8 +100,8 @@ void log_printf(const char* fmt, ...) {
 
 #ifndef IS_TEST
 int main(int argc, const char** argv) {
-    run_script(compiler_script_text_inc(), argc, argv);
-
+    // verbose = 1;
+    run_script(&compiler_env, argc, argv);
     return 0;
 }
 #endif

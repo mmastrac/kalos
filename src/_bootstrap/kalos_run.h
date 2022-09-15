@@ -34,6 +34,8 @@ void kalos_type_error(kalos_state* state);
 /**
  * Trigger a value error, halting the virtual machine and reporting to the host environment.
  */
-void kalos_value_error(kalos_state* state);
+void kalos_value_error_(kalos_state* state, const char* c_file, int c_line);
+
+#define kalos_value_error(state) kalos_value_error_(state, __FILE__, __LINE__)
 
 #endif

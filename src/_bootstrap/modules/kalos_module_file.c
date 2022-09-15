@@ -35,18 +35,18 @@ kalos_object_ref kalos_file_open_fd(kalos_state* state, int fd, bool closeable) 
 kalos_object_ref kalos_file_open(kalos_state* state, kalos_string* file_, kalos_int mode_) {
     int mode = 0;
     switch (mode_ & 3) {
-        case 1: mode = O_RDONLY; break;
-        case 2: mode = O_WRONLY; break;
-        case 3: mode = O_RDWR; break;
+        case KALOS_FILE_READ_ONLY: mode = O_RDONLY; break;
+        case KALOS_FILE_WRITE_ONLY: mode = O_WRONLY; break;
+        case KALOS_FILE_READ_WRITE: mode = O_RDWR; break;
         default: kalos_value_error(state); break;
     }
-    if ((mode_ & 4) == 4) {
+    if ((mode_ & KALOS_FILE_CREATE) == KALOS_FILE_CREATE) {
         mode |= O_CREAT;
     }
-    if ((mode_ & 8) == 8) {
+    if ((mode_ & KALOS_FILE_TRUNCATE) == KALOS_FILE_TRUNCATE) {
         mode |= O_TRUNC;
     }
-    if ((mode & 16) == 16) {
+    if ((mode & KALOS_FILE_APPEND) == KALOS_FILE_APPEND) {
         mode |= O_APPEND;
     }
     int fd = open(kalos_string_c(state, *file_), mode, 0644); // Always use mode (rw-r--r--)
