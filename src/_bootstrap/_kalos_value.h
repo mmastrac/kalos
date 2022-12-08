@@ -256,6 +256,7 @@ static inline void kalos_clamp_range(kalos_int* start, kalos_int end, kalos_int*
 }
 
 bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type);
+kalos_int kalos_hash(kalos_state* state, kalos_value* v);
 kalos_object_ref kalos_allocate_object(kalos_state* state, size_t context_size);
 bool kalos_is_list(kalos_state* state, kalos_object_ref* object);
 kalos_object_ref kalos_allocate_list(kalos_state* state, kalos_int size, kalos_value* values);

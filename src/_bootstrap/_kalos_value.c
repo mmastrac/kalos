@@ -317,3 +317,19 @@ bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type) {
     }
     return success;
 }
+
+kalos_int kalos_hash(kalos_state* state, kalos_value* v) {
+    switch (v->type) {
+        case KALOS_VALUE_NONE:
+            return 0;
+        case KALOS_VALUE_OBJECT:
+            return 0; // TODO
+        case KALOS_VALUE_NUMBER:
+            return v->value.number;
+        case KALOS_VALUE_BOOL:
+            return v->value.number;
+        case KALOS_VALUE_STRING: {
+            return kalos_string_hash(state, v->value.string);
+        }
+    }
+}
