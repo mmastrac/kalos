@@ -41,6 +41,7 @@ idl {
         fn compile_script(modules: object, script: string): object = kalos_compiler_compile_script;
         fn compile_idl(script: string): object = kalos_compiler_compile_idl;
         fn run_script(binary: object, args: object): void = kalos_compiler_run_script;
+        fn lex_script(script: string): object = kalos_compiler_lex_script;
 
         prop module: object { read = kalos_get_compiler_module; }
 
@@ -52,6 +53,16 @@ idl {
 
         object script {
             prop data: string { read = kalos_compiler_get_buffer; }
+        }
+
+        object lexer {
+            prop peek: object { read = kalos_lexer_peek_token; }
+            prop read: object { read = kalos_lexer_read_token; }
+        }
+
+        object token {
+            prop string: string { read = kalos_lexer_token_read_string; }
+            prop token: string { read = kalos_lexer_token_read_token; }
         }
     }
 

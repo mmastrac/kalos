@@ -20,3 +20,9 @@ void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kal
 kalos_string kalos_compiler_get_buffer(kalos_state* state, kalos_object_ref* buffer);
 kalos_object_ref kalos_get_compiler_module(kalos_state* state);
 void kalos_idl_set_module(kalos_state* state, kalos_object_ref* object);
+
+kalos_object_ref kalos_compiler_lex_script(kalos_state* state, kalos_string* script);
+kalos_object_ref kalos_lexer_peek_token(kalos_state* state, kalos_object_ref* object);
+kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* object);
+kalos_string kalos_lexer_token_read_string(kalos_state* state, kalos_object_ref* object);
+kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* object);

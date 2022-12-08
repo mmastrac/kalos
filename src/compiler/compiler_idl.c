@@ -214,11 +214,17 @@ char* function_type_to_string(kalos_function_type type) {
     return "";
 }
 
-kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
-kalos_object_dispatch kalos_module_idl_module_object_overload_obj_props;
-kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
-kalos_object_dispatch kalos_module_idl_module_object_module_obj_props;
 kalos_object_dispatch kalos_module_idl_kalos_object_idl_props;
+kalos_object_dispatch kalos_module_idl_kalos_object_script_props;
+kalos_object_dispatch kalos_module_idl_kalos_object_lexer_props;
+kalos_object_dispatch kalos_module_idl_kalos_object_token_props;
+kalos_object_dispatch kalos_module_idl_module_object_module_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_function_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_overload_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_property_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_handler_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_object_obj_props;
+kalos_object_dispatch kalos_module_idl_module_object_binding_obj_props;
 
 struct iter_context {
     kalos_module_parsed modules;
@@ -539,4 +545,63 @@ void kalos_compiler_run_script(kalos_state* state, kalos_object_ref* script, kal
     kalos_run_state* run_state = kalos_init(buffer->buffer, &dispatch, state);
     kalos_module_idl_sys_trigger_main(run_state, args);
     kalos_run_free(run_state);
+}
+
+typedef struct lex_object_context {
+    kalos_lex_state lex_state;
+    kalos_string string;
+    char token_string[256];
+} lex_object_context;
+
+kalos_object_ref kalos_compiler_lex_script(kalos_state* state, kalos_string* script) {
+    kalos_object_ref lexer = kalos_allocate_object(state, sizeof(lex_object_context));
+    lexer->dispatch = &kalos_module_idl_kalos_object_lexer_props;
+    lex_object_context* context = lexer->context;
+    context->string = kalos_string_take(state, script);
+    kalos_lex_init(kalos_string_c(state, context->string), &context->lex_state);
+    return lexer;
+}
+
+typedef struct lex_token_object_context {
+    kalos_token token;
+    kalos_string string;
+} lex_token_object_context;
+
+kalos_object_ref kalos_lexer_peek_token(kalos_state* state, kalos_object_ref* object) {
+    lex_object_context* context = (*object)->context;
+    *context->token_string = 0;
+    kalos_token token = kalos_lex_peek(&context->lex_state, context->token_string);
+    kalos_object_ref token_object = kalos_allocate_object(state, sizeof(lex_token_object_context));
+    token_object->dispatch = &kalos_module_idl_kalos_object_token_props;
+    lex_token_object_context* token_context = token_object->context;
+    token_context->token = token;
+    token_context->string = kalos_string_allocate(state, context->token_string);
+    return token_object;
+}
+
+kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* object) {
+    lex_object_context* context = (*object)->context;
+    *context->token_string = 0;
+    kalos_token token = kalos_lex(&context->lex_state, context->token_string);
+    kalos_object_ref token_object = kalos_allocate_object(state, sizeof(lex_token_object_context));
+    token_object->dispatch = &kalos_module_idl_kalos_object_token_props;
+    lex_token_object_context* token_context = token_object->context;
+    token_context->token = token;
+    token_context->string = kalos_string_allocate(state, context->token_string);
+    return token_object;
+}
+
+kalos_string kalos_lexer_token_read_string(kalos_state* state, kalos_object_ref* object) {
+    lex_token_object_context* context = (*object)->context;
+    return context->string;
+}
+
+kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* object) {
+    lex_token_object_context* context = (*object)->context;
+    #define KALOS_TOKEN(x) case KALOS_TOKEN_##x: { return kalos_string_allocate(state, #x); }
+    switch (context->token) {
+        #include "../_kalos_constants.inc"
+        default: break;
+    }
+    return kalos_string_allocate(state, "");
 }
