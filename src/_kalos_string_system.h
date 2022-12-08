@@ -66,6 +66,7 @@ KALOS_STRING_ALWAYS_INLINE char kalos_string_char_at(kalos_state* state, kalos_s
 
 KALOS_STRING_ALWAYS_INLINE bool kalos_string_isempty(kalos_state* state, kalos_string string) { return string.length__ == 0; }
 KALOS_STRING_ALWAYS_INLINE kalos_int kalos_string_length(kalos_state* state, kalos_string string) { return abs(string.length__); }
+KALOS_STRING_INLINE kalos_int kalos_string_hash(kalos_state* state, kalos_string s);
 KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state* state, kalos_string a, kalos_string b);
 KALOS_STRING_INLINE kalos_int kalos_string_find(kalos_state* state, kalos_string a, kalos_string b);
 KALOS_STRING_INLINE kalos_int kalos_string_find_from(kalos_state* state, kalos_string a, kalos_string b, int start);
@@ -182,6 +183,18 @@ KALOS_STRING_INLINE void kalos_string_release(kalos_state* state, kalos_string s
 KALOS_STRING_INLINE const char* kalos_string_c(kalos_state* state, kalos_string s) {
     VALIDATE_STRING(s);
     return __kalos_string_data(s);
+}
+
+__attribute__((no_sanitize("integer")))
+KALOS_STRING_INLINE kalos_int kalos_string_hash(kalos_state* state, kalos_string s) {
+    const char* c = kalos_string_c(state, s);
+    uint32_t hash = 0;
+    for (; *c; c++) {
+        hash += *c;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    return hash;
 }
 
 KALOS_STRING_INLINE kalos_int kalos_string_compare(kalos_state* state, kalos_string a, kalos_string b) {
