@@ -317,3 +317,27 @@ bool kalos_coerce(kalos_state* state, kalos_value* v, kalos_value_type type) {
     }
     return success;
 }
+
+__attribute__((no_sanitize("integer")))
+kalos_int kalos_hash(kalos_state* state, kalos_value* v) {
+    switch (v->type) {
+        case KALOS_VALUE_NONE:
+            return 0;
+        case KALOS_VALUE_OBJECT:
+            return 0; // TODO
+        case KALOS_VALUE_NUMBER:
+            return v->value.number;
+        case KALOS_VALUE_BOOL:
+            return v->value.number;
+        case KALOS_VALUE_STRING: {
+            const char* s = kalos_string_c(state, v->value.string);
+            uint32_t hash = 0;
+            for (; *s; s++) {
+                hash += *s;
+                hash += (hash << 10);
+                hash ^= (hash >> 6);
+            }
+            return hash;
+        }
+    }
+}

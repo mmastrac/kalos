@@ -108,6 +108,10 @@ static kalos_int op_string_number(kalos_state* state, kalos_op op, kalos_string*
     }
 }
 
+static kalos_int op_hash(kalos_state* state, kalos_op op, kalos_value* value) {
+    return kalos_hash(state, value);
+}
+
 static kalos_string op_string_getindex(kalos_state* state, kalos_op op, kalos_string* s, kalos_int index) {
     if (index < 0 || index >= kalos_string_length(state, *s)) {
         return kalos_string_allocate(state, "");
