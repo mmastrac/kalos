@@ -67,7 +67,7 @@ bool kalos_module_idl_builtin_dynamic_dispatch(kalos_run_state* state, const cha
 // id=0001:0001 name=main
 void kalos_module_idl_sys_trigger_main(kalos_run_state* state, K__pobject a0) {
 	kalos_load_arg_object(state, 0, a0);
-	kalos_trigger(state, kalos_make_address(0x1, 0x1));
+	kalos_trigger_address(state, kalos_make_address(0x1, 0x1), false);
 }
 
 bool kalos_module_idl_sys_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {
@@ -397,7 +397,7 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 K__any kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, K__pobject a0, K__pstring a1) {
 	kalos_load_arg_object(state, 0, a0);
 	kalos_load_arg_string(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x4, 0x1));
+	kalos_trigger_address(state, kalos_make_address(0x4, 0x1), true);
 	kalos_value return_value = *pop(state->stack);
 	return return_value;
 }
@@ -441,35 +441,35 @@ bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* 
 void kalos_module_idl_module_trigger_begin(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x5, 0x1));
+	kalos_trigger_address(state, kalos_make_address(0x5, 0x1), false);
 }
 
 // id=0005:0002 name=function
 void kalos_module_idl_module_trigger_function(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x5, 0x2));
+	kalos_trigger_address(state, kalos_make_address(0x5, 0x2), false);
 }
 
 // id=0005:0003 name=handler
 void kalos_module_idl_module_trigger_handler(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x5, 0x3));
+	kalos_trigger_address(state, kalos_make_address(0x5, 0x3), false);
 }
 
 // id=0005:0004 name=property
 void kalos_module_idl_module_trigger_property(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x5, 0x4));
+	kalos_trigger_address(state, kalos_make_address(0x5, 0x4), false);
 }
 
 // id=0005:0005 name=object
 void kalos_module_idl_module_trigger_object(kalos_run_state* state, K__pany a0, K__pobject a1) {
 	kalos_load_arg_any(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x5, 0x5));
+	kalos_trigger_address(state, kalos_make_address(0x5, 0x5), false);
 }
 
 //kalos_module_idl_module_object_module_obj_props

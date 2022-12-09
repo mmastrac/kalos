@@ -134,6 +134,8 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
         <init> ";" { return KALOS_TOKEN_SEMI; }
         <init> "," { return KALOS_TOKEN_COMMA; }
 
+        <init> "@@" { return KALOS_TOKEN_AT_AT; }
+
         <init> "=" { return KALOS_TOKEN_EQ; }
         <init> "+=" { return KALOS_TOKEN_EQ_PLUS; }
         <init> "-=" { return KALOS_TOKEN_EQ_MINUS; }
