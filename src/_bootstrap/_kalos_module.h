@@ -78,7 +78,6 @@ typedef struct kalos_object_def {
 } kalos_object_def;
 
 typedef union kalos_export_entry {
-    kalos_module_item_list export_list;
     kalos_int const_number;
     kalos_int const_string_index;
     kalos_module_item_list_header function_overload_list;
