@@ -101,6 +101,10 @@ $(SRCDIR)/%.dispatch.inc: $(SRCDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 	$(call color,"GEN","host",$<)
 	@$(BOOTSTRAP_COMPILER) dispatch $< $@
 
+$(TESTDIR)/%.dispatch.inc: $(TESTDIR)/%.kidl $(BOOTSTRAP_COMPILER)
+	$(call color,"GEN","host",$<)
+	@$(BOOTSTRAP_COMPILER) dispatch $< $@
+
 $(TEST_OBJDIR)/lib/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(call color,"CC","host",$<)
 	@mkdir -p $(dir $@)

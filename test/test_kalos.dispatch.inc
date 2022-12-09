@@ -149,9 +149,11 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 };
 
 // id=0001:0003 name=with_return
-void kalos_module_dispatch_test_test_trigger_with_return(kalos_run_state* state, K__pnumber a0) {
+K__any kalos_module_dispatch_test_test_trigger_with_return(kalos_run_state* state, K__pnumber a0) {
 	kalos_load_arg_number(state, 0, a0);
 	kalos_trigger(state, kalos_make_address(0x1, 0x3));
+	kalos_value return_value = *pop(state->stack);
+	return return_value;
 }
 
 bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
