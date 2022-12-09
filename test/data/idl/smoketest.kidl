@@ -15,6 +15,7 @@ idl {
         handler init;
         handler init2(x: number, y: string);
         const x2: number = 1;
+        handler returns_value(x: number): number;
     }
 
     module other {

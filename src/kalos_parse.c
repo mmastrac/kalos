@@ -1303,7 +1303,8 @@ void parse_idl_block(struct parse_state* parse_state) {
                 } else if (token == KALOS_TOKEN_HANDLER) {
                     TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, ++hander_id));
                     TRY(parse_idl_args(parse_state));
-                    TRY(parse_make_list(parse_state, 4));
+                    TRY(parse_idl_type(parse_state));
+                    TRY(parse_make_list(parse_state, 5));
                     TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
                 } else if (token == KALOS_TOKEN_CONST) {
                     TRY(parse_idl_type(parse_state));
