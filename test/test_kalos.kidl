@@ -45,7 +45,7 @@ idl {
         }
 
         handler with_return(n: number): any;
-        # fn trigger_with_return(n: number): any = kalos_module_dispatch_test_test_trigger_with_return;
+        fn trigger_with_return(n: number): any = kalos_module_dispatch_test_test_trigger_with_return;
     }
 
     module file {

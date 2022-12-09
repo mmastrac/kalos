@@ -7,6 +7,7 @@
  */
 
 #include "kalos.h"
+#include "_kalos_defines.h"
 #include "_kalos_value.h"
 #include "_kalos_module.h"
 #include "_kalos_script.h"
@@ -19,6 +20,10 @@ kalos_run_state* kalos_init(const_kalos_script script, kalos_dispatch* dispatch,
  * Trigger a kalos export. Usually not called by anything but the generated IDL code.
  */
 void kalos_trigger(kalos_run_state* state, kalos_export_address handler_address);
+/**
+ * Trigger a kalos export. Usually not called by anything but the generated IDL code.
+ */
+void kalos_trigger_address(kalos_run_state* state, kalos_export_address handler_address, bool keep_ret);
 /**
  * Free the Kalos virtual machine internal state.
  */

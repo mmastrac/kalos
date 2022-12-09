@@ -1090,6 +1090,7 @@ static void parse_function_statement(struct parse_state* parse_state, bool expor
         }
     }
     if (var) {
+        // Function return type
         var->fn_state.pc = parse_state->output_script_index;
         var->fn_state.param_count = param_count;
         TRY(peek = lex_peek(parse_state));
@@ -1097,6 +1098,14 @@ static void parse_function_statement(struct parse_state* parse_state, bool expor
             TRY(parse_assert_token(parse_state, KALOS_TOKEN_COLON));
             TRY(token = lex(parse_state));
             TRY(parse_state->ret = var->fn_state.ret = parse_map_type(parse_state, token));
+        }
+    } else {
+        // Handler return type
+        TRY(peek = lex_peek(parse_state));
+        if (peek == KALOS_TOKEN_COLON) {
+            TRY(parse_assert_token(parse_state, KALOS_TOKEN_COLON));
+            TRY(token = lex(parse_state));
+            TRY(parse_state->ret = parse_map_type(parse_state, token));
         }
     }
     TRY(write_next_handler_section(parse_state, kalos_make_address(module_index, handler_index)));

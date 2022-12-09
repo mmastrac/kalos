@@ -551,12 +551,16 @@ void kalos_run_free(kalos_run_state* state_) {
     state->free(state);
 }
 
-void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
+void kalos_trigger_address(kalos_run_state* state_, kalos_export_address handler_address, bool keep_ret) {
     kalos_state_internal* state = (kalos_state_internal*)state_;
     const kalos_section_header kalos_far* header;
     kalos_int pc = kalos_find_section(state->script, handler_address, &header);
     if (pc == 0) {
         return;
     }
-    kalos_trigger_pc(state_, pc, header, false);
+    kalos_trigger_pc(state_, pc, header, keep_ret);
+}
+
+void kalos_trigger(kalos_run_state* state_, kalos_export_address handler_address) {
+    kalos_trigger_address(state_, handler_address, false);
 }

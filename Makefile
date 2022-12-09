@@ -49,7 +49,7 @@ WATCOM_CFLAGS=-march=i86 -Wall -Werror -std=c99 \
 #TODO: re-add -fmacro-backtrace-limit=0
 TEST_CFLAGS=-std=c99 \
 	-Werror -Wpedantic -Wno-typedef-redefinition -Wno-c11-extensions -Wno-overlength-strings -Wno-gnu-flexible-array-initializer -ftrapv \
-	-DIS_TEST -g -O0 \
+	-DIS_TEST -DDEBUG=1 -g -O0 \
 	-fsanitize=undefined -fsanitize=address -fsanitize=integer -fsanitize=bounds \
 	-fno-omit-frame-pointer
 HOST_CFLAGS=-std=c99 \

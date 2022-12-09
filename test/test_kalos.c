@@ -87,6 +87,9 @@ kalos_state test_env = {
 
 kalos_buffer read_buffer(const char* input) {
     FILE* fd = fopen(input, "rb");
+    if (!fd) {
+        LOG("Failed to open %s", input);
+    }
     ASSERT(fd);
     fseek(fd, 0, SEEK_END);
     off_t size = ftell(fd);
@@ -383,6 +386,7 @@ SCRIPT_TEST(string_index)
 SCRIPT_TEST(string_literals)
 SCRIPT_TEST(string_memory)
 SCRIPT_TEST(string_replace)
+SCRIPT_TEST(trigger_with_return)
 SCRIPT_TEST(unary_expressions)
 SCRIPT_TEST(varargs)
 

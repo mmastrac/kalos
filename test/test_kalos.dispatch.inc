@@ -32,7 +32,7 @@
 
 // id=0000:0001 name=init
 void kalos_module_dispatch_test_trigger_init(kalos_run_state* state) {
-	kalos_trigger(state, kalos_make_address(0x0, 0x1));
+	kalos_trigger_address(state, kalos_make_address(0x0, 0x1), false);
 }
 
 bool kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
@@ -53,14 +53,14 @@ bool kalos_module_dispatch_test_builtin(kalos_run_state* state, int function, in
 // id=0001:0001 name=with_args
 void kalos_module_dispatch_test_test_trigger_with_args(kalos_run_state* state, K__pstring a0) {
 	kalos_load_arg_string(state, 0, a0);
-	kalos_trigger(state, kalos_make_address(0x1, 0x1));
+	kalos_trigger_address(state, kalos_make_address(0x1, 0x1), false);
 }
 
 // id=0001:0002 name=self_trigger
 void kalos_module_dispatch_test_test_trigger_self_trigger(kalos_run_state* state, K__pstring a0, K__pobject a1) {
 	kalos_load_arg_string(state, 0, a0);
 	kalos_load_arg_object(state, 1, a1);
-	kalos_trigger(state, kalos_make_address(0x1, 0x2));
+	kalos_trigger_address(state, kalos_make_address(0x1, 0x2), false);
 }
 
 //kalos_module_dispatch_test_test_object_a_props
@@ -151,7 +151,7 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 // id=0001:0003 name=with_return
 K__any kalos_module_dispatch_test_test_trigger_with_return(kalos_run_state* state, K__pnumber a0) {
 	kalos_load_arg_number(state, 0, a0);
-	kalos_trigger(state, kalos_make_address(0x1, 0x3));
+	kalos_trigger_address(state, kalos_make_address(0x1, 0x3), true);
 	kalos_value return_value = *pop(state->stack);
 	return return_value;
 }
@@ -328,6 +328,17 @@ bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int p
 			K__object x = test_make_b((void*)state);
 			kalos_stack_cleanup(state, arg_count);
 			K__final_object(stack, x);
+			return true;
+		}
+	}
+
+	// id=20 name=trigger_with_return arg_count=1 binding=fn kalos_module_dispatch_test_test_trigger_with_return
+	if (K__match(/*id=*/20, /*args=*/1, /*name=*/trigger_with_return)) {
+		const int arg_count = 1;
+		if (kalos_stack_setup_1(state, arg_count, K__t_number)) {
+			K__any x = kalos_module_dispatch_test_test_trigger_with_return((void*)state, K__arg_number(K__arg(arg_count, 1)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_any(stack, x);
 			return true;
 		}
 	}

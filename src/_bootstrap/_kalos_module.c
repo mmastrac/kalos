@@ -254,13 +254,14 @@ kalos_module_export kalos_module_create_const_string_export(kalos_module_builder
     return_indexof(export);
 }
 
-kalos_module_export kalos_module_create_handler_export(kalos_module_builder builder_, kalos_module_string name, kalos_int invoke_id, kalos_module_list args) {
+kalos_module_export kalos_module_create_handler_export(kalos_module_builder builder_, kalos_function_type type, kalos_module_string name, kalos_int invoke_id, kalos_module_list args) {
     struct kalos_module_builder_internal* builder = builder_;
     kalos_export* export = allocate_item(builder, sizeof(kalos_export));
     export->name_index = name.string_index;
     export->type = KALOS_EXPORT_TYPE_HANDLER;
     export->entry.handler.arg_list = args;
     export->entry.handler.invoke_id = invoke_id;
+    export->entry.handler.return_type = type;
     return_indexof(export);
 }
 

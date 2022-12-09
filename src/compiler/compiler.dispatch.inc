@@ -394,10 +394,12 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 }
 
 // id=0004:0001 name=resolve_list_object_prop
-void kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, K__pobject a0, K__pstring a1) {
+K__any kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, K__pobject a0, K__pstring a1) {
 	kalos_load_arg_object(state, 0, a0);
 	kalos_load_arg_string(state, 1, a1);
 	kalos_trigger(state, kalos_make_address(0x4, 0x1));
+	kalos_value return_value = *pop(state->stack);
+	return return_value;
 }
 
 bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* name, int param_count, kalos_stack* stack, bool retval) {

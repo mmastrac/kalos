@@ -7,6 +7,7 @@
  */
 
 #include "kalos.h"
+#include "_kalos_defines.h"
 #include "_kalos_module.h"
 #include "_kalos_script.h"
 
