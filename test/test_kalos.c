@@ -166,7 +166,7 @@ kalos_parse_result parse_test_runner(kalos_buffer script_text, const char* bytec
 
     if (strcmp((const char*)dump_buffer.buffer, (const char*)bytecode.buffer) != 0) {
         printf("Expected:\n==================\n%s\nWas:\n==================\n%s\n", bytecode.buffer, dump_buffer.buffer);
-        // write_buffer(bytecode_file, dump_buffer);
+        // write_buffer(bytecode_file, (char*)dump_buffer.buffer);
         TEST_FAIL();
     }
 

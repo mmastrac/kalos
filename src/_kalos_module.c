@@ -78,8 +78,7 @@ kalos_int kalos_module_lookup_property(kalos_module_parsed parsed, bool write, c
     while (prop_offset) {
         kalos_property_address* prop_addr = kalos_module_get_list_item(parsed, prop_offset);
         if (strcmp(kalos_module_get_string(parsed, prop_addr->name_index), name) == 0) {
-            kalos_int base_id = prop_addr->invoke_id * 2;
-            return write ? base_id + 1 : base_id;
+            return prop_addr->invoke_id;
         }
         prop_offset = prop_addr->prop_list.next;
     }

@@ -1205,10 +1205,11 @@ void parse_idl_prop(struct parse_state* parse_state) {
     TRY(parse_idl_type(parse_state));
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_BRA_OPEN));
     TRY(peek = lex_peek(parse_state));
+    uint16_t invoke_id = ++parse_state->function_invoke_id;
     if (peek == KALOS_TOKEN_READ) {
         TRY(parse_assert_token(parse_state, peek));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
-        TRY(parse_idl_binding(parse_state, ++parse_state->function_invoke_id));
+        TRY(parse_idl_binding(parse_state, invoke_id));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
         TRY(peek = lex_peek(parse_state));
     } else if (peek == KALOS_TOKEN_WRITE) {
@@ -1219,7 +1220,7 @@ void parse_idl_prop(struct parse_state* parse_state) {
     if (peek == KALOS_TOKEN_WRITE) {
         TRY(parse_assert_token(parse_state, peek));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_EQ));
-        TRY(parse_idl_binding(parse_state, ++parse_state->function_invoke_id));
+        TRY(parse_idl_binding(parse_state, invoke_id));
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_SEMI));
         TRY(peek = lex_peek(parse_state));
     } else {
