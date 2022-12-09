@@ -126,7 +126,7 @@ void kalos_idl_callback(kalos_run_state* run_state, kalos_value* idl) {
                         kalos_module_arg arg = kalos_module_create_arg(builder, arg_name_index, IDL_LIST_NUMBER(arglist, 1));
                         kalos_module_append_to_list(builder, &args, &arg);
                     } ITERATE_END;
-                    kalos_module_export handler_export = kalos_module_create_handler_export(builder, handler_name_index, IDL_LIST_NUMBER(export, 2), args);
+                    kalos_module_export handler_export = kalos_module_create_handler_export(builder, IDL_LIST_NUMBER(export, 4), handler_name_index, IDL_LIST_NUMBER(export, 2), args);
                     kalos_module_append_to_list(builder, &exports, &handler_export);
                 }
                 ITERATE_CASE(KALOS_TOKEN_CONST): {
@@ -317,6 +317,7 @@ static kalos_object_ref kalos_idl_handler_args(kalos_state* state, kalos_object_
 }
 static kalos_int kalos_idl_handler_index(kalos_state* state, kalos_object_ref* o) { return script_current_export->entry.handler.invoke_id; }
 static kalos_int kalos_idl_handler_module_index(kalos_state* state, kalos_object_ref* o) { return script_current_module->index; }
+static kalos_string kalos_idl_handler_return_type(kalos_state* state, kalos_object_ref* object) { return kalos_string_allocate(state, function_type_to_string(script_current_export->entry.handler.return_type)); }
 
 static kalos_string kalos_idl_binding_type(kalos_state* state, kalos_object_ref* o) { return ((kalos_binding*)(*o)->context)->c_index ? kalos_string_allocate(state, "c") : kalos_string_allocate(state, "fn"); }
 static kalos_string kalos_idl_binding_value(kalos_state* state, kalos_object_ref* o) { return ((kalos_binding*)(*o)->context)->c_index ? IDL_STRING(((kalos_binding*)(*o)->context)->c_index) : IDL_STRING(((kalos_binding*)(*o)->context)->symbol_index); }

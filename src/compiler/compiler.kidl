@@ -70,6 +70,8 @@ idl {
         fn walk_modules(context: any) = kalos_idl_walk_modules;
         prop module: object { write = kalos_idl_set_module; }
         prop prefix: string { read = kalos_idl_module_prefix; }
+
+        handler resolve_list_object_prop(list: object, name: string): any;
     }
 
     module module {
@@ -111,6 +113,7 @@ idl {
             prop module_index: number { read = kalos_idl_handler_module_index; }
             prop handler_index: number { read = kalos_idl_handler_index; }
             prop args: object { read = kalos_idl_handler_args; }
+            prop return_type: string { read = kalos_idl_handler_return_type; }
         }
 
         object object_obj {

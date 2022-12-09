@@ -148,6 +148,12 @@ kalos_object_dispatch kalos_module_dispatch_test_test_object_b_props = {
 	.dispatch_id = kalos_module_dispatch_test_test_object_b_props_fn
 };
 
+// id=0001:0003 name=with_return
+void kalos_module_dispatch_test_test_trigger_with_return(kalos_run_state* state, K__pnumber a0) {
+	kalos_load_arg_number(state, 0, a0);
+	kalos_trigger(state, kalos_make_address(0x1, 0x3));
+}
+
 bool kalos_module_dispatch_test_test(kalos_run_state* state, int function, int param_count, kalos_stack* stack, bool retval) {
 	// id=1 name=read_write binding=fn test_read_write_read
 	if (K__match(/*id=*/1, /*args=*/0, /*name=*/read_write)) {

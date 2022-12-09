@@ -27,8 +27,10 @@ idl {
         }
 
         handler with_args(s: string);
+
         handler self_trigger(s: string, o: object);
         fn trigger_self(s: string, o: object) = kalos_module_dispatch_test_test_trigger_self_trigger;
+
         fn raw_c(a: number, b: number): number = c "@0*10+@1";
         fn make_a(): object = test_make_a;
         fn make_b(): object = test_make_b;
@@ -41,6 +43,9 @@ idl {
             prop b: string { read = test_read_b; }
             prop c: number { read = test_read_c2; }
         }
+
+        handler with_return(n: number): any;
+        # fn trigger_with_return(n: number): any = kalos_module_dispatch_test_test_trigger_with_return;
     }
 
     module file {

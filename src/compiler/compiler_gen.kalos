@@ -205,9 +205,9 @@ on module.handler(context, handler) {
     }
     fprintln("// id={handler.module_index:04x}:{handler.handler_index:04x} name={handler.name}");
     if current_module.name == "builtin" {
-        fprint("void {kidl.prefix}trigger_{handler.name}(kalos_run_state* state");
+        fprint("K__{handler.return_type} {kidl.prefix}trigger_{handler.name}(kalos_run_state* state");
     } else {
-        fprint("void {kidl.prefix}{current_module.name}_trigger_{handler.name}(kalos_run_state* state");
+        fprint("K__{handler.return_type} {kidl.prefix}{current_module.name}_trigger_{handler.name}(kalos_run_state* state");
     }
     var index = 0;
     var arg;
