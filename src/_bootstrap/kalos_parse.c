@@ -932,6 +932,16 @@ static void parse_expression_part(struct parse_state* parse_state) {
         int count;
         TRY(count = parse_list_of_args(parse_state, 0, KALOS_TOKEN_SQBRA_CLOSE));
         TRY(parse_make_list(parse_state, count));
+    } else if (token == KALOS_TOKEN_AT_AT) {
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_OPEN));
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_PERIOD));
+        TRY(token = lex(parse_state));
+        if (wordify(parse_state) != KALOS_TOKEN_WORD) {
+            THROW(ERROR_UNKNOWN_PROPERTY);
+        }
+        kalos_int property = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token);
+        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, property));
+        TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
     }
 
     TRY_EXIT;
