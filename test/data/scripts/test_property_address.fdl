@@ -1,0 +1,4 @@
+on init {
+    # This syntax may change, but we'll need a test for it
+    print("{@@(.a)} {@@(.b)} {@@(.c)}");
+}
