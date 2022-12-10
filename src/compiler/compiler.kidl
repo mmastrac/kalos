@@ -71,7 +71,8 @@ idl {
         prop module: object { write = kalos_idl_set_module; }
         prop prefix: string { read = kalos_idl_module_prefix; }
 
-        handler resolve_list_object_prop(list: object, name: string): any;
+        fn create_list_object(type: string, list: object): object = kalos_idl_create_list_object;
+        handler resolve_list_object_prop(type: string, property: any, list: object): any;
     }
 
     module module {

@@ -102,6 +102,9 @@ void log_printf(const char* fmt, ...) {
 int main(int argc, const char** argv) {
     // verbose = 1;
     run_script(&compiler_env, argc, argv);
+    if (total_allocated != 0) {
+        printf("Memory leak detected: %d bytes", (int)total_allocated);
+    }
     return 0;
 }
 #endif

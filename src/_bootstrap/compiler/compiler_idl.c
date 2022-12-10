@@ -40,6 +40,65 @@ static inline kalos_value release(kalos_state* state, kalos_value v) {
     return vcopy;
 }
 
+typedef struct kalos_list_object_context {
+    kalos_string name;
+    kalos_object_ref list;
+} kalos_list_object_context;
+
+kalos_value kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, kalos_string* name, kalos_value* prop, kalos_object_ref* list);
+
+bool kalos_list_object_dispatch_value(kalos_run_state* state, kalos_object_ref* object, kalos_value function, int param_count, kalos_stack* stack) {
+    if (kalos_stack_setup_1(state, 1, KALOS_VALUE_OBJECT)) {
+        kalos_list_object_context* context = (*peek(stack, 0)).value.object->context;
+        kalos_object_ref list = context->list;
+        kalos_object_retain(kalos_state_from_run_state(state), list);
+        kalos_string name = kalos_string_duplicate(kalos_state_from_run_state(state), context->name);
+        kalos_value retval = kalos_module_idl_kidl_trigger_resolve_list_object_prop(state, &name, &function, &list);
+        kalos_object_release(kalos_state_from_run_state(state), &list);
+        kalos_string_release(kalos_state_from_run_state(state), name);
+        kalos_stack_cleanup(state, 1);
+        push_any(stack, retval);
+    }
+    return true;
+}
+
+bool kalos_list_object_dispatch_id(kalos_run_state* state, kalos_object_ref* object, int function, int param_count, kalos_stack* stack) {
+    kalos_value v;
+    v.type = KALOS_VALUE_NUMBER;
+    v.value.number = function;
+    kalos_list_object_dispatch_value(state, object, v, param_count, stack);
+    return true;
+}
+
+bool kalos_list_object_dispatch_name(kalos_run_state* state, kalos_object_ref* object, const char* name, int param_count, kalos_stack* stack) {
+    kalos_value v;
+    v.type = KALOS_VALUE_STRING;
+    v.value.string = kalos_string_allocate((kalos_state*)state, name);
+    kalos_list_object_dispatch_value(state, object, v, param_count, stack);
+    return true;
+}
+
+static kalos_object_dispatch kalos_list_object_dispatch = {
+    .dispatch_id = kalos_list_object_dispatch_id,
+    .dispatch_name = kalos_list_object_dispatch_name,
+};
+
+void kalos_list_object_free(kalos_state* state, kalos_object_ref* object) {
+    kalos_list_object_context* context = (*object)->context;
+    kalos_object_release(state, &context->list);
+    kalos_string_release(state, context->name);
+}
+
+kalos_object_ref kalos_idl_create_list_object(kalos_state* state, kalos_string* name, kalos_object_ref* list) {
+    kalos_object_ref object = kalos_allocate_object(state, sizeof(kalos_list_object_context));
+    object->dispatch = &kalos_list_object_dispatch;
+    object->object_free = &kalos_list_object_free;
+    kalos_list_object_context* context = object->context;
+    context->list = kalos_object_take(state, list);
+    context->name = kalos_string_take(state, name);
+    return object;
+}
+
 kalos_binding kalos_idl_binding(kalos_module_builder builder, kalos_state* state, kalos_object_ref binding_list) {
     if (binding_list->getlength(state, &binding_list) == 0) {
         kalos_binding binding = {0};

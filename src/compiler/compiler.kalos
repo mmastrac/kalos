@@ -142,6 +142,17 @@ fn go_stringify(args) {
     file.write(out, "\"\n");
 }
 
+on kidl.resolve_list_object_prop(type, property, list): any {
+    if property == @@(.name) {
+        return type + "=" + list[0];
+    } else if property == @@(.return_type) {
+        return type + "=" + list[1];
+    } else if property == @@(.b) {
+        return type + "=" + list[2];
+    }
+    return "unknown";
+}
+
 on sys.main(args) {
     args = extract_args(args);
     if len(args) == 0 {

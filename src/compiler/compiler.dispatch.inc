@@ -394,9 +394,10 @@ bool kalos_module_idl_kalos_dynamic_dispatch(kalos_run_state* state, const char*
 }
 
 // id=0004:0001 name=resolve_list_object_prop
-K__any kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, K__pobject a0, K__pstring a1) {
-	kalos_load_arg_object(state, 0, a0);
-	kalos_load_arg_string(state, 1, a1);
+K__any kalos_module_idl_kidl_trigger_resolve_list_object_prop(kalos_run_state* state, K__pstring a0, K__pany a1, K__pobject a2) {
+	kalos_load_arg_string(state, 0, a0);
+	kalos_load_arg_any(state, 1, a1);
+	kalos_load_arg_object(state, 2, a2);
 	kalos_trigger_address(state, kalos_make_address(0x4, 0x1), true);
 	kalos_value return_value = *pop(state->stack);
 	return return_value;
@@ -430,6 +431,17 @@ bool kalos_module_idl_kidl_dynamic_dispatch(kalos_run_state* state, const char* 
 			K__string x = kalos_idl_module_prefix((void*)state);
 			kalos_stack_cleanup(state, arg_count);
 			K__final_string(stack, x);
+			return true;
+		}
+	}
+
+	// id=4 name=create_list_object arg_count=2 binding=fn kalos_idl_create_list_object
+	if (K__match(/*id=*/4, /*args=*/2, /*name=*/create_list_object)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_string, K__t_object)) {
+			K__object x = kalos_idl_create_list_object((void*)state, K__arg_string(K__arg(arg_count, 1)), K__arg_object(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			K__final_object(stack, x);
 			return true;
 		}
 	}

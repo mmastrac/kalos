@@ -940,7 +940,11 @@ static void parse_expression_part(struct parse_state* parse_state) {
             THROW(ERROR_UNKNOWN_PROPERTY);
         }
         kalos_int property = kalos_module_lookup_property(parse_state->all_modules, false, parse_state->token);
-        TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, property));
+        if (parse_state->dispatch_name) {
+            TRY(parse_push_string(parse_state, parse_state->token));
+        } else {
+            TRY(parse_push_op_1(parse_state, KALOS_OP_PUSH_INTEGER, property));
+        }
         TRY(parse_assert_token(parse_state, KALOS_TOKEN_PAREN_CLOSE));
     }
 
