@@ -44,6 +44,9 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
     const char kalos_far** s = &state->s;
     int* line = &state->line;
     *output = 0;
+    if (!*s) {
+        return KALOS_TOKEN_EOF;
+    }
 
     const char kalos_far* word_start;
     const char kalos_far* word_end;
@@ -110,10 +113,10 @@ kalos_token kalos_lex(kalos_lex_state* state, char* output) {
 
         <comment> * { continue; }
         <comment> [\n] => init { (*line)++; continue; }
-        <comment> end { return KALOS_TOKEN_EOF; }
+        <comment> end { *s = 0; return KALOS_TOKEN_EOF; }
 
         <init> * { return KALOS_TOKEN_ERROR; }
-        <init> end { return KALOS_TOKEN_EOF; }
+        <init> end { *s = 0; return KALOS_TOKEN_EOF; }
         <init> "#" :=> comment
 
         <init> "(" { return KALOS_TOKEN_PAREN_OPEN; }
