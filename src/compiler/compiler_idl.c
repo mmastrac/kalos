@@ -647,13 +647,13 @@ kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* ob
     token_object->dispatch = &kalos_module_idl_kalos_object_token_props;
     lex_token_object_context* token_context = token_object->context;
     token_context->token = token;
-    token_context->string = kalos_string_allocate(state, context->token_string);
+    token_context->string = kalos_string_allocate_fmt(state, "%s", context->token_string);
     return token_object;
 }
 
 kalos_string kalos_lexer_token_read_string(kalos_state* state, kalos_object_ref* object) {
     lex_token_object_context* context = (*object)->context;
-    return context->string;
+    return kalos_string_duplicate(state, context->string);
 }
 
 kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* object) {
@@ -664,4 +664,13 @@ kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* 
         default: break;
     }
     return kalos_string_allocate(state, "");
+}
+
+bool kalos_lexer_token_read_is_word(kalos_state* state, kalos_object_ref* object) {
+    lex_token_object_context* context = (*object)->context;
+    #define KALOS_TOKEN_WORD(x) case KALOS_TOKEN_##x: { return true; }
+    switch (context->token) {
+        #include "../_kalos_constants.inc"
+        default: return false;
+    }
 }
