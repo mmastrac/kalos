@@ -10,6 +10,7 @@ typedef struct kalos_stack kalos_stack;
 typedef struct kalos_run_state kalos_run_state;
 typedef kalos_string (*kalos_tostring)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_value (*kalos_getindex)(kalos_state* state, kalos_object_ref* object, kalos_int index);
+typedef void (*kalos_append)(kalos_state* state, kalos_object_ref* object, kalos_value* value);
 typedef kalos_int (*kalos_getlength)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_object_ref (*kalos_iterstart)(kalos_state* state, kalos_object_ref* object);
 typedef kalos_value (*kalos_iternext)(kalos_state* state, kalos_object_ref* object, bool* done);
@@ -49,6 +50,7 @@ struct kalos_object {
     kalos_tostring tostring;
     kalos_iterstart iterstart;
     kalos_iternext iternext;
+    kalos_append append;
     kalos_object_dispatch* dispatch;
 };
 

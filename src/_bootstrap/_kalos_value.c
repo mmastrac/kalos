@@ -177,6 +177,14 @@ kalos_value list_getindex(kalos_state* state, kalos_object_ref* object, kalos_in
     return kalos_value_clone(state, &array[index + 1]);
 }
 
+void list_append(kalos_state* state, kalos_object_ref* object, kalos_value* value) {
+    kalos_value* array = (*object)->context;
+    kalos_int length = ++array[0].value.number;
+    array = (*object)->context = state->realloc(array, sizeof(*array) * (length + 1));
+    array[length].type = KALOS_VALUE_NONE;
+    kalos_value_move_to(state, value, &array[length]);
+}
+
 kalos_string list_tostring(kalos_state* state, kalos_object_ref* object) {
     kalos_value* array = (*object)->context;
     kalos_string out = kalos_string_allocate(state, "[");
@@ -216,6 +224,7 @@ kalos_object_ref kalos_list_make(kalos_state* state, kalos_int size) {
     array[0].value.number = size;
     object->tostring = list_tostring;
     object->getindex = list_getindex;
+    object->append = list_append;
     object->getlength = list_getlength;
     object->iterstart = list_iterstart;
     object->object_free = list_free;

@@ -417,6 +417,14 @@ static kalos_value op_getindex(kalos_run_state* state, kalos_op op, kalos_object
     return object->getindex((kalos_state*)state, &object, index);
 }
 
+static void op_append(kalos_run_state* state, kalos_op op, kalos_object_ref* object_, kalos_value* value) {
+    kalos_object_ref object = *object_;
+    if (!object->append) {
+        kalos_value_error((kalos_state*)state);
+    }
+    object->append((kalos_state*)state, &object, value);
+}
+
 static void op_end(kalos_state_internal* state, kalos_op op) {
     state->pc = PC_DONE;
 }

@@ -614,6 +614,11 @@ static void parse_word_statement(struct parse_state* parse_state) {
         pending.load.op = KALOS_OP_GOSUB_NORET;
         TRY(parse_flush_pending_op(parse_state, &pending, false, true));
         return;
+    } else if (peek == KALOS_TOKEN_SEMI && pending.load.op == KALOS_OP_APPEND) {
+        // TODO: We should either handle all builtins via a different path (a builtin invoke op?), or come up with a way to specify
+        // that builtins have no return value.
+        TRY(parse_flush_pending_op(parse_state, &pending, false, true));
+        return;
     }
 
     THROW(ERROR_UNEXPECTED_TOKEN);

@@ -113,6 +113,7 @@ idl {
             (s: string, n: number): string = op_string_getindex;
             (o: object, n: number): any = op_getindex;
         }
+        fn APPEND(o: object, x: any) = op_append;
         fn GOSUB(params: any...) = op_gosub;
         fn GOSUB_NORET(params: any...) = op_gosub;
     }

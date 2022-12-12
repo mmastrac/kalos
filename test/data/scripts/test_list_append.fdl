@@ -1,0 +1,5 @@
+on init {
+    var a = ["a", "b", "c"];
+    append(a, "d");
+    print("{a}");
+}

@@ -838,8 +838,18 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=58 name=GOSUB arg_count=0 binding=fn op_gosub
-	if (K__match(/*id=*/58, /*args=*/0, /*name=*/GOSUB)) {
+	// id=58 name=APPEND arg_count=2 binding=fn op_append
+	if (K__match(/*id=*/58, /*args=*/2, /*name=*/APPEND)) {
+		const int arg_count = 2;
+		if (kalos_stack_setup_2(state, arg_count, K__t_object, K__t_any)) {
+			op_append((void*)state, op, K__arg_object(K__arg(arg_count, 1)), K__arg_any(K__arg(arg_count, 2)));
+			kalos_stack_cleanup(state, arg_count);
+			return true;
+		}
+	}
+
+	// id=59 name=GOSUB arg_count=0 binding=fn op_gosub
+	if (K__match(/*id=*/59, /*args=*/0, /*name=*/GOSUB)) {
 		const int vararg_count = kalos_stack_vararg_count(stack);
 		const int arg_count = 1 + vararg_count;
 		if (kalos_stack_setup_0(state, arg_count)) {
@@ -849,8 +859,8 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=59 name=GOSUB_NORET arg_count=0 binding=fn op_gosub
-	if (K__match(/*id=*/59, /*args=*/0, /*name=*/GOSUB_NORET)) {
+	// id=60 name=GOSUB_NORET arg_count=0 binding=fn op_gosub
+	if (K__match(/*id=*/60, /*args=*/0, /*name=*/GOSUB_NORET)) {
 		const int vararg_count = kalos_stack_vararg_count(stack);
 		const int arg_count = 1 + vararg_count;
 		if (kalos_stack_setup_0(state, arg_count)) {
