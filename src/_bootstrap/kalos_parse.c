@@ -42,6 +42,7 @@ static const char* ERROR_MISSING_HANDLE = "Missing handler statement";
 static const char* ERROR_MISSING_RETURN = "Missing return statement";
 static const char* ERROR_INVALID_STRING_FORMAT = "Invalid string format";
 static const char* ERROR_TOO_MANY_VARS = "Too many vars/consts";
+static const char* ERROR_VAR_NAME_TOO_LONG = "Symbol name too long";
 static const char* ERROR_INVALID_CONST_EXPRESSION = "Invalid const expression";
 static const char* ERROR_INVALID_IMPORT = "Invalid or missing import";
 static const char* ERROR_ILLEGAL_IN_THIS_CONTEXT = "Illegal in this context";
@@ -50,8 +51,8 @@ static const char* ERROR_UNEXPECTED_PARAMETERS = "Unexpected parameters";
 static const char* ERROR_UNEXPECTED_EXPORT_TYPE = "Unexpected export type";
 static const char* ERROR_NO_LOADER = "No loader configured";
 
-#define KALOS_VAR_SLOT_COUNT 64
-#define KALOS_VAR_MAX_LENGTH 16
+#define KALOS_VAR_SLOT_COUNT 128
+#define KALOS_VAR_MAX_LENGTH 32
 
 typedef enum var_type {
     VAR_EMPTY = 0,
@@ -460,6 +461,9 @@ static int parse_var_allocate(struct parse_state* parse_state, struct vars_state
         THROW(ERROR_UNEXPECTED_TOKEN);
     }
     TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
+    if (strlen(parse_state->token) >= KALOS_VAR_MAX_LENGTH) {
+        THROW(ERROR_VAR_NAME_TOO_LONG);
+    }
     strcpy(var_state->vars[slot].name, parse_state->token);
     TRY_EXIT;
     return slot;

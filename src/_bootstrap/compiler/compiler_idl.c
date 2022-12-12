@@ -616,6 +616,7 @@ typedef struct lex_object_context {
 kalos_object_ref kalos_compiler_lex_script(kalos_state* state, kalos_string* script) {
     kalos_object_ref lexer = kalos_allocate_object(state, sizeof(lex_object_context));
     lexer->dispatch = &kalos_module_idl_kalos_object_lexer_props;
+    lexer->object_free = &kalos_lexer_free;
     lex_object_context* context = lexer->context;
     context->string = kalos_string_take(state, script);
     kalos_lex_init(kalos_string_c(state, context->string), &context->lex_state);
@@ -627,12 +628,18 @@ typedef struct lex_token_object_context {
     kalos_string string;
 } lex_token_object_context;
 
+void kalos_lexer_free(kalos_state* state, kalos_object_ref* object) {
+    lex_object_context* context = (*object)->context;
+    kalos_string_release(state, context->string);
+}
+
 kalos_object_ref kalos_lexer_peek_token(kalos_state* state, kalos_object_ref* object) {
     lex_object_context* context = (*object)->context;
     *context->token_string = 0;
     kalos_token token = kalos_lex_peek(&context->lex_state, context->token_string);
     kalos_object_ref token_object = kalos_allocate_object(state, sizeof(lex_token_object_context));
     token_object->dispatch = &kalos_module_idl_kalos_object_token_props;
+    token_object->object_free = kalos_lexer_token_read_string_free;
     lex_token_object_context* token_context = token_object->context;
     token_context->token = token;
     token_context->string = kalos_string_allocate(state, context->token_string);
@@ -645,15 +652,21 @@ kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* ob
     kalos_token token = kalos_lex(&context->lex_state, context->token_string);
     kalos_object_ref token_object = kalos_allocate_object(state, sizeof(lex_token_object_context));
     token_object->dispatch = &kalos_module_idl_kalos_object_token_props;
+    token_object->object_free = kalos_lexer_token_read_string_free;
     lex_token_object_context* token_context = token_object->context;
     token_context->token = token;
-    token_context->string = kalos_string_allocate(state, context->token_string);
+    token_context->string = kalos_string_allocate_fmt(state, "%s", context->token_string);
     return token_object;
+}
+
+void kalos_lexer_token_read_string_free(kalos_state* state, kalos_object_ref* object) {
+    lex_token_object_context* context = (*object)->context;
+    kalos_string_release(state, context->string);
 }
 
 kalos_string kalos_lexer_token_read_string(kalos_state* state, kalos_object_ref* object) {
     lex_token_object_context* context = (*object)->context;
-    return context->string;
+    return kalos_string_duplicate(state, context->string);
 }
 
 kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* object) {
@@ -664,4 +677,13 @@ kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* 
         default: break;
     }
     return kalos_string_allocate(state, "");
+}
+
+bool kalos_lexer_token_read_is_word(kalos_state* state, kalos_object_ref* object) {
+    lex_token_object_context* context = (*object)->context;
+    #define KALOS_TOKEN_WORD(x) case KALOS_TOKEN_##x: { return true; }
+    switch (context->token) {
+        #include "../_kalos_constants.inc"
+        default: return false;
+    }
 }

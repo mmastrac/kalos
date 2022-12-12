@@ -22,7 +22,10 @@ kalos_object_ref kalos_get_compiler_module(kalos_state* state);
 void kalos_idl_set_module(kalos_state* state, kalos_object_ref* object);
 
 kalos_object_ref kalos_compiler_lex_script(kalos_state* state, kalos_string* script);
+void kalos_lexer_free(kalos_state* state, kalos_object_ref* object);
 kalos_object_ref kalos_lexer_peek_token(kalos_state* state, kalos_object_ref* object);
 kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* object);
+void kalos_lexer_token_read_string_free(kalos_state* state, kalos_object_ref* object);
 kalos_string kalos_lexer_token_read_string(kalos_state* state, kalos_object_ref* object);
 kalos_string kalos_lexer_token_read_token(kalos_state* state, kalos_object_ref* object);
+bool kalos_lexer_token_read_is_word(kalos_state* state, kalos_object_ref* object);

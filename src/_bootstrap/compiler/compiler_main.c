@@ -9,9 +9,9 @@ static int verbose = 0;
 static FILE* output_file;
 
 static int32_t total_allocated = 0;
-static uint16_t allocation_id;
+static uint32_t allocation_id;
 struct allocation_record {
-    uint16_t id;
+    uint32_t id;
     size_t size;
 };
 
