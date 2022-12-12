@@ -63,6 +63,7 @@ idl {
         object token {
             prop string: string { read = kalos_lexer_token_read_string; }
             prop token: string { read = kalos_lexer_token_read_token; }
+            prop is_word: bool { read = kalos_lexer_token_read_is_word; }
         }
     }
 
