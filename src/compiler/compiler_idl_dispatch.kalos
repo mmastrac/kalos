@@ -58,7 +58,10 @@ fn idl_dispatch_map_arg_types(args): object {
     var arg_types = [];
     var arg;
     for arg in args {
-        append(arg_types, arg.type);
+        var type = arg.type;
+        if !arg.is_vararg {
+            append(arg_types, type);
+        }
     }
     return arg_types;
 }
@@ -188,10 +191,19 @@ fn idl_dispatch_walk_function(idl, context, module, module_context, function) {
     var overload;
     var arg;
     for overload in function.overloads {
-        fprintln("\t// id={overload.binding.invoke_id} name={function.name} arg_count={len(overload.args)} binding={overload.binding.type} {overload.binding.string}");
-        idl_dispatch_write_matcher(overload.binding.invoke_id, function.name, len(overload.args));
+        var arg_count = len(overload.args);
+        var vararg_type = "void";
+        var arg;
+        for arg in overload.args {
+            if arg.is_vararg {
+                vararg_type = arg.type;
+                arg_count -= 1;
+            }
+        }
+        fprintln("\t// id={overload.binding.invoke_id} name={function.name} arg_count={arg_count} binding={overload.binding.type} {overload.binding.string}");
+        idl_dispatch_write_matcher(overload.binding.invoke_id, function.name, arg_count);
         var arg_types = idl_dispatch_map_arg_types(overload.args);
-        idl_dispatch_write_invoke(arg_types, "void", overload.return_type, overload.binding);
+        idl_dispatch_write_invoke(arg_types, vararg_type, overload.return_type, overload.binding);
     }
 }
 

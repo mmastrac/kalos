@@ -240,6 +240,8 @@ fn parse_idl_module(index): object {
             append(module, item);
         } else if token.token == "OBJECT" {
             item = parse_idl_object();
+            # TODO: We shouldn't allocate invoke IDs for object props
+            function_index += len(item[2]);
             append(module, item);
         } else {
             idl_error("Unexpected token in idl module block: {token.token}");
