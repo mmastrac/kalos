@@ -121,7 +121,7 @@ idl {
         object arg_obj {
             prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
             prop type: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
-            prop is_vararg: bool { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop is_vararg: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object property_obj {
