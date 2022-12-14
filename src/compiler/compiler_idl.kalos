@@ -266,8 +266,13 @@ fn parse_idl_block(): object {
             prefix = token.string;
             expect_token("SEMI");
         } else if token.token == "DISPATCH" {
-            token = expect_token("NAME");
-            dispatch = "name";
+            if lexer.peek.token == "NAME" {
+                expect_token("NAME");
+                dispatch = "name";
+            } else {
+                expect_token("INTERNAL");
+                dispatch = "internal";
+            }
             expect_token("SEMI");
         } else if token.token == "MODULE" {
             var module = parse_idl_module(index);
