@@ -41,7 +41,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=2 name=DEBUGGER arg_count=0 binding=c 
+	// id=2 name=DEBUGGER arg_count=0 binding=c ""
 	if (K__match(/*id=*/2, /*args=*/0, /*name=*/DEBUGGER)) {
 		const int arg_count = 0;
 		if (kalos_stack_setup_0(state, arg_count)) {
@@ -51,7 +51,7 @@ static inline bool kalos_run_dispatch_ops(kalos_run_state* state, kalos_op op, k
 		}
 	}
 
-	// id=3 name=DROP arg_count=1 binding=c 
+	// id=3 name=DROP arg_count=1 binding=c ""
 	if (K__match(/*id=*/3, /*args=*/1, /*name=*/DROP)) {
 		const int arg_count = 1;
 		if (kalos_stack_setup_1(state, arg_count, K__t_any)) {

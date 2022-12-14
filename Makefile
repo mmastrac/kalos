@@ -99,7 +99,7 @@ $(SRCDIR)/_kalos_string_format.c: $(SRCDIR)/_kalos_string_format.re
 
 $(SRCDIR)/%.dispatch.inc: $(SRCDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 	$(call color,"GEN","host",$<)
-	@$(BOOTSTRAP_COMPILER) dispatch $< $@
+	@$(BOOTSTRAP_COMPILER) dispatch_new $< $@
 
 $(TESTDIR)/%.dispatch.inc: $(TESTDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 	$(call color,"GEN","host",$<)
@@ -156,13 +156,13 @@ $(BOOTSTRAP_CANDIDATE_DIR)/success: $(SRCDIR)/*.c $(SRCDIR)/compiler/*.c $(SRCDI
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kidl.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kidl.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) compile $(SRCDIR)/compiler/compiler.kidl $(SRCDIR)/compiler/compiler.kalos $(GENDIR)/compiler.kalos.bin
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kalos.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch_new $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
 	@$(CC) -DBINARY_COMPILER $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	$(call color,"STG_2","host",$(BOOTSTRAP_CANDIDATE_COMPILER))
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) idl $(SRCDIR)/compiler/compiler.kidl $(GENDIR)/compiler.kidl.bin
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kidl.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler//compiler.kidl.inc
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) compile $(SRCDIR)/compiler/compiler.kidl $(SRCDIR)/compiler/compiler.kalos $(GENDIR)/compiler.kalos.bin
 	@$(BOOTSTRAP_CANDIDATE_COMPILER) hexify $(GENDIR)/compiler.kalos.bin $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler//compiler.kalos.inc
-	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
+	@$(BOOTSTRAP_CANDIDATE_COMPILER) dispatch_new $(SRCDIR)/compiler/compiler.kidl $(BOOTSTRAP_CANDIDATE_SRCDIR)/compiler/compiler.dispatch.inc
 	@$(CC) -DBINARY_COMPILER $(HOST_CFLAGS) $(BOOTSTRAP_CANDIDATE_SRCDIR)/{,compiler,modules}/*.c -o $(BOOTSTRAP_CANDIDATE_COMPILER)
 	@touch $@

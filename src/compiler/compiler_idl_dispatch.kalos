@@ -75,7 +75,8 @@ fn idl_dispatch_write_binding_call(binding, arg_types, vararg_type) {
             c = replace(c, "@" + index, "(K__arg_{arg}(K__arg(arg_count, {index+1})))");
             index += 1;
         }
-        if (c) {
+        # TODO: Why is empty string coming back as "" rather than a literal empty string?
+        if c != "" && c != "\"\"" {
             fprint("({c})");
         }
     } else {
