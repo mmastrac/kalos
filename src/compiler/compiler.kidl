@@ -86,8 +86,23 @@ idl {
         handler property(context: any, property: object);
         handler object(context: any, property: object);
 
+        # TODO: We should move this out of KIDL
+        object idl_obj {
+            prop class: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+            prop prefix: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+            prop dispatch: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+            prop modules: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+        }
+
         object module_obj {
             prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop items: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+        }
+
+        object const_obj {
+            prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop type: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop value: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object function_obj {
@@ -101,6 +116,12 @@ idl {
             prop arg_count: number { read = kalos_idl_overload_arg_count; }
             prop varargs: string { read = kalos_idl_overload_varargs; }
             prop binding: object { read = kalos_idl_overload_binding; }
+        }
+
+        object arg_obj {
+            prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop type: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
+            prop is_vararg: bool { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object property_obj {
@@ -120,6 +141,7 @@ idl {
 
         object object_obj {
             prop name: string { read = kalos_idl_export_name; }
+            prop items: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
         }
 
         object binding_obj {

@@ -3,6 +3,8 @@ import kalos;
 import sys;
 import .compiler_gen;
 import .compiler_idl;
+import .compiler_idl_object;
+import .compiler_idl_out;
 
 var exe;
 var verbose;
@@ -113,7 +115,8 @@ fn go_idl_new(args) {
         help();
     }
     var idl = file.read(open_read(args[0]));
-    parse_idl(kalos.lex_script(idl));
+    idl = parse_idl(kalos.lex_script(idl));
+    print_idl(idl);
 }
 
 fn go_run(args) {

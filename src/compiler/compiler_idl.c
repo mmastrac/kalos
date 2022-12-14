@@ -54,8 +54,8 @@ bool kalos_list_object_dispatch_value(kalos_run_state* state, kalos_object_ref* 
         kalos_object_retain(kalos_state_from_run_state(state), list);
         kalos_string name = kalos_string_duplicate(kalos_state_from_run_state(state), context->name);
         kalos_value retval = kalos_module_idl_kidl_trigger_resolve_list_object_prop(state, &name, &function, &list);
-        kalos_object_release(kalos_state_from_run_state(state), &list);
-        kalos_string_release(kalos_state_from_run_state(state), name);
+        // kalos_object_release(kalos_state_from_run_state(state), &list);
+        // kalos_string_release(kalos_state_from_run_state(state), name);
         kalos_stack_cleanup(state, 1);
         push_any(stack, retval);
     }

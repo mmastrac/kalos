@@ -1,0 +1,92 @@
+fn map_object_property(props, property, list): any {
+  var prop;
+  var index = 0;
+  for prop in props {
+    if prop == property {
+      return list[index];
+    }
+    index = index + 1;
+  }
+  return "out of index {index} {props} {property}";
+}
+
+fn map_to_objects(list): object {
+  var out = [];
+  var obj;
+  for obj in list {
+    var object = kidl.create_list_object(obj[0], obj);
+    append(out, object);
+  }
+  return out;
+}
+
+fn map_to_objects_type(type, list): object {
+  var out = [];
+  var obj;
+  for obj in list {
+    var object = kidl.create_list_object(type, obj);
+    append(out, object);
+  }
+  return out;
+}
+
+on kidl.resolve_list_object_prop(type, property, list): any {
+  if type == "idl" {
+    if property == @@(.modules) {
+      return map_to_objects(list[3]);
+    }
+    return map_object_property([@@(.class), @@(.prefix), @@(.dispatch)], property, list);
+  }
+  if type == "module" {
+    if property == @@(.items) {
+      return map_to_objects(list[2]);
+    }
+    return map_object_property([@@(.class), @@(.name)], property, list);
+  }
+  if type == "fn" {
+    if property == @@(.overloads) {
+      return map_to_objects_type("overload", list[2]);
+    }
+    return map_object_property([@@(.class), @@(.name)], property, list);
+  }
+  if type == "overload" {
+    if property == @@(.args) {
+      return map_to_objects_type("arg", list[0]);
+    }
+    if property == @@(.binding) {
+      return kidl.create_list_object("binding", list[2]);
+    }
+    return map_object_property([@@(.args), @@(.return_type), @@(.binding)], property, list);
+  }
+  if type == "binding" {
+    return map_object_property([@@(.type), @@(.string)], property, list);
+  }
+  if type == "handler" {
+    if property == @@(.args) {
+      return map_to_objects_type("arg", list[3]);
+    }
+    return map_object_property([@@(.class), @@(.name), @@(.return_type)], property, list);
+  }
+  if type == "arg" {
+    return map_object_property([@@(.name), @@(.type), @@(.is_vararg)], property, list);
+  }
+  if type == "const" {
+    return map_object_property([@@(.class), @@(.name), @@(.type), @@(.value)], property, list);
+  }
+  if type == "object" {
+    if property == @@(.items) {
+      return map_to_objects(list[2]);
+    }
+    return map_object_property([@@(.class), @@(.name)], property, list);
+  }
+  if type == "prop" {
+    if property == @@(.read_binding) {
+      return kidl.create_list_object("binding", list[3]);
+    }
+    if property == @@(.write_binding) {
+      return kidl.create_list_object("binding", list[4]);
+    }
+    return map_object_property([@@(.class), @@(.name), @@(.type), @@(.read_binding), @@(.write_binding)], property, list);
+  }
+  return "unknown ({type})";
+}

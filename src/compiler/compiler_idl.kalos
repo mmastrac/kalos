@@ -1,16 +1,5 @@
 var lexer;
 
-on kidl.resolve_list_object_prop(type, property, list): any {
-    if property == @@(.name) {
-        return type + "=" + list[0];
-    } else if property == @@(.return_type) {
-        return type + "=" + list[1];
-    } else if property == @@(.b) {
-        return type + "=" + list[2];
-    }
-    return "unknown";
-}
-
 fn idl_error(s) {
     print("ERROR: {s}\n");
     sys.exit(1);
@@ -58,7 +47,12 @@ fn parse_idl_args(): object {
         loop {
             var param_name = expect_word();
             var param_type = parse_idl_type();
-            append(args, [param_name, param_type]);
+            if lexer.peek.token == "ELLIPSIS" {
+                expect_token("ELLIPSIS");
+                append(args, [param_name, param_type, true]);
+            } else {
+                append(args, [param_name, param_type, false]);
+            }
             if lexer.peek.token == "PAREN_CLOSE" {
                 break;
             }
@@ -90,8 +84,8 @@ fn parse_idl_prop(): object {
     var type = parse_idl_type();
     expect_token("BRA_OPEN");
     var token = lexer.read;
-    var read = [];
-    var write = [];
+    var read = ["none"];
+    var write = ["none"];
     if token.token == "READ" {
         read = parse_idl_binding();
         token = lexer.read;
@@ -103,7 +97,7 @@ fn parse_idl_prop(): object {
     if token.token != "BRA_CLOSE" {
         idl_error("Expected BRA_CLOSE but got {token.token}");
     }
-    return ["prop", prop_name, read, write];
+    return ["prop", prop_name, type, read, write];
 }
 
 fn parse_idl_fn(): object {
@@ -137,21 +131,30 @@ fn parse_idl_fn(): object {
 
 fn parse_idl_handler(): object {
     var name = expect_word();
-    expect_token("PAREN_OPEN");
-    if lexer.peek.token != "PAREN_CLOSE" {
-        loop {
-            var param_name = expect_word();
-            var param_type = parse_idl_type();
-            if lexer.peek.token == "PAREN_CLOSE" {
-                break;
+    var args = [];
+    if lexer.peek.token == "PAREN_OPEN" {
+        expect_token("PAREN_OPEN");
+        if lexer.peek.token != "PAREN_CLOSE" {
+            loop {
+                var param_name = expect_word();
+                var param_type = parse_idl_type();
+                if lexer.peek.token == "ELLIPSIS" {
+                    expect_token("ELLIPSIS");
+                    append(args, [param_name, param_type, true]);
+                } else {
+                    append(args, [param_name, param_type, false]);
+                }
+                if lexer.peek.token == "PAREN_CLOSE" {
+                    break;
+                }
+                expect_token("COMMA");
             }
-            expect_token("COMMA");
         }
+        expect_token("PAREN_CLOSE");
     }
-    expect_token("PAREN_CLOSE");
     var return_type = parse_idl_type();
     expect_token("SEMI");
-    var handler_list = ["handler", name, return_type];
+    var handler_list = ["handler", name, return_type, args];
     idl_log("handler: {handler_list}");
     return handler_list;
 }
@@ -247,12 +250,14 @@ fn parse_idl_block(): object {
     return ["idl", prefix, dispatch, modules];
 }
 
-export fn parse_idl(lexer_) {
+export fn parse_idl(lexer_): object {
     lexer = lexer_;
     expect_token("IDL");
     expect_token("BRA_OPEN");
     var idl = parse_idl_block();
     print("{idl}");
+    idl = kidl.create_list_object("idl", idl);
     expect_token("BRA_CLOSE");
     lexer = 0;
+    return idl;
 }

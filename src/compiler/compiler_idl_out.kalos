@@ -1,0 +1,119 @@
+var indent;
+
+fn idl_print(s) {
+  var indent_string = "  " * indent;
+  print("{indent_string}{s}\n");
+}
+
+fn stringify_args(args): string {
+  if len(args) == 0 {
+    return "";
+  }
+  var arg_string = "";
+  var arg;
+  for arg in args {
+    if len(arg_string) > 0 {
+      arg_string += ", ";
+    }
+    arg_string += "{arg.name}: {arg.type}";
+    if arg.is_vararg {
+      arg_string += "...";
+    }
+  }
+  return "({arg_string})";
+}
+
+fn stringify_binding(binding): string {
+  # TODO: If we don't assign to a local, we get a use-after-free (bug!)
+  var type = binding.type;
+  if type == "none" {
+    return "";
+  }
+  if type == "c" {
+    var escape = binding.string;
+    escape = replace(escape, "\"", "\\\"");
+    return "= c \"{escape}\"";
+  }
+  if type == "fn" {
+    return "= {binding.string}";
+  }
+  return "<unknown>";
+}
+
+fn stringify_overload(overload): string {
+  # TODO: If this function call is inside of the string interpolation below, we get a double-free (bug!)
+  var binding = stringify_binding(overload.binding);
+  return "{stringify_args(overload.args)}: {overload.return_type} {binding}";
+}
+
+fn print_items(items) {
+  var item;
+  for item in items {
+    if item.class == "const" {
+      idl_print("const {item.name}: {item.type} = {item.value};");
+    } else if item.class == "handler" {
+      idl_print("handler {item.name}{stringify_args(item.args)}: {item.return_type};");
+    } else if item.class == "fn" {
+      var overloads = item.overloads;
+      if len(overloads) == 1 {
+        idl_print("fn {item.name}{stringify_overload(overloads[0])};");
+      } else {
+        idl_print("fn {item.name} {{");
+        var overload;
+        for overload in overloads {
+          indent = indent + 1;
+          idl_print("{stringify_overload(overload)};");
+          indent = indent - 1;
+        }
+        idl_print("}}");
+      }
+    } else if item.class == "prop" {
+      var read_binding = stringify_binding(item.read_binding);
+      var write_binding = stringify_binding(item.write_binding);
+      if read_binding != "" && write_binding != "" {
+        idl_print("prop {item.name}: {item.type} {{");
+        indent = indent + 1;
+        if read_binding != "" {
+          idl_print("read {read_binding};");
+        }
+        if write_binding != "" {
+          idl_print("write {write_binding};");
+        }
+        indent = indent - 1;
+        idl_print("}}");
+      } else if read_binding != "" {
+        idl_print("prop {item.name}: {item.type} {{ read {read_binding}; }}");
+      } else {
+        idl_print("prop {item.name}: {item.type} {{ write {write_binding}; }}");
+      }
+    } else if item.class == "object" {
+      idl_print("object {item.name} {{");
+      indent = indent + 1;
+      print_items(item.items);
+      indent = indent - 1;
+      idl_print("}}");
+    } else {
+      idl_print("# unhandled {item.class}");
+    }
+  }  
+}
+
+export fn print_idl(idl) {
+  indent = 0;
+  idl_print("idl {{");
+  indent = indent + 1;
+  if idl.dispatch != "" {
+    idl_print("dispatch {idl.dispatch};");
+  }
+  idl_print("prefix \"{idl.prefix}\";");
+  var module;
+  for module in idl.modules {
+    idl_print("module \"{module.name}\" {{");
+    indent = indent + 1;
+    print_items(module.items);
+    indent = indent - 1;
+    idl_print("}}");
+  }
+  indent = indent - 1;
+  idl_print("}}");
+}
