@@ -103,7 +103,7 @@ $(SRCDIR)/%.dispatch.inc: $(SRCDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 
 $(TESTDIR)/%.dispatch.inc: $(TESTDIR)/%.kidl $(BOOTSTRAP_COMPILER)
 	$(call color,"GEN","host",$<)
-	@$(BOOTSTRAP_COMPILER) dispatch $< $@
+	@$(BOOTSTRAP_COMPILER) dispatch_new $< $@
 
 $(TEST_OBJDIR)/lib/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(call color,"CC","host",$<)
