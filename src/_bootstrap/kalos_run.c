@@ -3,7 +3,7 @@
 #include "_kalos_string_system.h"
 #include "kalos_run.h"
 
-#define KALOS_VAR_SLOT_SIZE 64
+#define KALOS_VAR_SLOT_SIZE 128
 #define PC_DONE 0xffff
 
 typedef struct kalos_state_internal {
