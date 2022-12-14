@@ -7,18 +7,13 @@
 # to the dispatch interface. Macros de-couple the generated code somewhat from the interface
 # and allow much simpler hand-edits to be made for bootstrapping purposes.
 
-const FORWARD = "forward";  # Forward declaration phase
-const IMPL = "impl";        # Implementation phase
-const HANDLE = "handler";
-const DISPATCH = "dispatch";
-const OBJECT = "object";
-const TYPES = [
-    ["string",  "STRING",   "kalos_string", "*",      "kalos_string_release((kalos_state*)state, x);"],
-    ["number",  "NUMBER",   "kalos_int", "",          ";"],
-    ["bool",    "BOOL",     "kalos_int", "",          ";"],
-    ["object",  "OBJECT",   "kalos_object_ref", "*",  "kalos_object_release((kalos_state*)state, &x);"],
-    ["any",     "ANY",      "kalos_value", "*",       "kalos_clear((kalos_state*)state, &x);"],
-];
+# TODO: var init across modules doesn't work yet
+# TODO: these constants are duplicated down below!
+var FORWARD = "forward";  # Forward declaration phase
+var IMPL = "impl";        # Implementation phase
+var HANDLE = "handler";
+var DISPATCH = "dispatch";
+var OBJECT = "object";
 
 # Output file
 var f;
@@ -126,6 +121,14 @@ fn idl_dispatch_write_invoke(args, varargs, return_type, binding) {
 }
 
 fn idl_dispatch_write_header(idl) {
+    const TYPES = [
+        ["string",  "STRING",   "kalos_string", "*",      "kalos_string_release((kalos_state*)state, x);"],
+        ["number",  "NUMBER",   "kalos_int", "",          ";"],
+        ["bool",    "BOOL",     "kalos_int", "",          ";"],
+        ["object",  "OBJECT",   "kalos_object_ref", "*",  "kalos_object_release((kalos_state*)state, &x);"],
+        ["any",     "ANY",      "kalos_value", "*",       "kalos_clear((kalos_state*)state, &x);"],
+    ];
+
     is_dynamic = idl.dispatch == "name";
     is_internal = idl.dispatch == "internal";
     is_standard = !is_dynamic && !is_internal;
@@ -346,6 +349,13 @@ fn idl_dispatch_walk_modules(idl, context) {
 }
 
 export fn write_dispatch(output, idl): void {
+    # TODO: var init across modules doesn't work yet
+    FORWARD = "forward";  # Forward declaration phase
+    IMPL = "impl";        # Implementation phase
+    HANDLE = "handler";
+    DISPATCH = "dispatch";
+    OBJECT = "object";
+
     f = output;
     idl_dispatch_write_header(idl);
     idl_dispatch_walk_modules(idl, FORWARD);

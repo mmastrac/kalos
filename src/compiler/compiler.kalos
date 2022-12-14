@@ -4,7 +4,6 @@ import sys;
 import module;
 import kidl;
 
-import .compiler_gen;
 import .compiler_idl;
 import .compiler_idl_dispatch;
 import .compiler_idl_object;

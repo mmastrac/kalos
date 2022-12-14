@@ -472,6 +472,7 @@ static int parse_var_allocate(struct parse_state* parse_state, struct vars_state
 static void parse_var_statement(struct parse_state* parse_state, struct vars_state* var_state, bool export) {
     int slot;
     TRY(slot = parse_var_allocate(parse_state, var_state));
+    var_state->vars[slot].export = export;
     kalos_token peek;
     TRY(peek = lex_peek(parse_state));
     if (peek == KALOS_TOKEN_EQ) {
@@ -1087,6 +1088,7 @@ static void parse_function_statement(struct parse_state* parse_state, bool expor
         int slot;
         TRY(slot = parse_var_allocate(parse_state, &parse_state->globals));
         var = &(parse_state->globals.vars[slot]);
+        var->export = export;
     }
     int param_count = 0;
     TRY(peek = lex_peek(parse_state));
@@ -1406,6 +1408,8 @@ void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
                 if (!parse_state->options.loader) {
                     THROW(ERROR_NO_LOADER);
                 }
+                // Capture the old global index
+                int old_global_index = parse_state->globals.var_index;
                 kalos_load_result result;
                 LOG("Loading module %s", parse_state->token);
                 kalos_loaded_script script = parse_state->options.loader(parse_state->state, parse_state->token, &result);
@@ -1420,6 +1424,12 @@ void parse_file(struct parse_state* parse_state, const char kalos_far* s) {
                     parse_state->options.unloader(parse_state->state, script);
                 }
                 parse_state->lex_state = old_lex_state;
+                // Invalidate all the non-exported vars
+                for (int i = old_global_index; i < parse_state->globals.var_index; i++) {
+                    if (!parse_state->globals.vars[i].export) {
+                        parse_state->globals.vars[i].name[0] = 0;
+                    }
+                }
             } else {
                 TRY(parse_assert_token(parse_state, KALOS_TOKEN_WORD));
                 struct name_resolution_result res;
