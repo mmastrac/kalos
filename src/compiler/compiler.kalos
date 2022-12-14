@@ -3,6 +3,7 @@ import kalos;
 import sys;
 import .compiler_gen;
 import .compiler_idl;
+import .compiler_idl_dispatch;
 import .compiler_idl_object;
 import .compiler_idl_out;
 
@@ -74,6 +75,17 @@ fn go_dispatch(args) {
     var out = open_write(args[1]);
 
     gen_dispatch(out, compiled_idl);
+}
+
+fn go_dispatch_new(args) {
+    if len(args) != 2 {
+        help();
+    }
+    var idl = file.read(open_read(args[0]));
+    idl = parse_idl(kalos.lex_script(idl));
+    var out = open_write(args[1]);
+
+    write_dispatch(out, idl);
 }
 
 fn go_dump(args) {
@@ -163,6 +175,8 @@ on sys.main(args) {
         go_compile(tail(args));
     } else if (args[0] == "dispatch") {
         go_dispatch(tail(args));
+    } else if (args[0] == "dispatch_new") {
+        go_dispatch_new(tail(args));
     } else if (args[0] == "dump") {
         go_dump(tail(args));
     } else if (args[0] == "hexify") {

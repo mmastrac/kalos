@@ -97,6 +97,7 @@ idl {
         object module_obj {
             prop name: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
             prop items: string { read = c "kalos_string_allocate(kalos_state_from_run_state(state), \"\")"; }
+            prop invoke_id: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object const_obj {
@@ -137,6 +138,7 @@ idl {
             prop handler_index: number { read = kalos_idl_handler_index; }
             prop args: object { read = kalos_idl_handler_args; }
             prop return_type: string { read = kalos_idl_handler_return_type; }
+            prop invoke_id: string { read = c "IDL_STRING(IDL_OBJECT(kalos_module)->name_index)"; }
         }
 
         object object_obj {

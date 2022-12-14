@@ -1,3 +1,6 @@
+# Output for IDL round-tripping. Prints IDL in a form that should match the input format (or at
+# least parse to the equivalent).
+
 var indent;
 
 fn idl_print(s) {
@@ -108,7 +111,7 @@ export fn print_idl(idl) {
   idl_print("prefix \"{idl.prefix}\";");
   var module;
   for module in idl.modules {
-    idl_print("module \"{module.name}\" {{");
+    idl_print("module {module.name} {{");
     indent = indent + 1;
     print_items(module.items);
     indent = indent - 1;

@@ -1,4 +1,9 @@
+# IDL parser, making use of our lexer service. Constructs a list of list (of lists, etc) that
+# contains the information from the IDL file in structured form. It then maps this to an
+# object with appropriate properties that can be used to walk the structure of the IDL.
+
 var lexer;
+var prop_ids;
 
 fn idl_error(s) {
     print("ERROR: {s}\n");
@@ -6,7 +11,7 @@ fn idl_error(s) {
 }
 
 fn idl_log(s) {
-    print("LOG: {s}\n");
+    # print("LOG: {s}\n");
 }
 
 fn expect_word(): string {
@@ -28,6 +33,20 @@ fn expect_token(token): object {
         idl_error("Expected {token} but got {next.token}");
     }
     return next;
+}
+
+# Allocate the next given property invoke ID
+fn idl_allocate_prop_id(name): number {
+    var prop_index = 0;
+    var prop;
+    for prop in prop_ids {
+        if prop == name {
+            return prop_index + 1;
+        }
+        prop_index += 1;
+    }
+    append(prop_ids, name);
+    return len(prop_ids);
 }
 
 fn parse_idl_type(): object {
@@ -63,35 +82,38 @@ fn parse_idl_args(): object {
     return args;
 }
 
-fn parse_idl_binding(): object {
+fn parse_idl_binding(invoke_id): object {
     expect_token("EQ");
     var retval;
     if lexer.peek.token == "C" {
         expect_token("C");
         var token = expect_token("STRING_LITERAL");
-        retval = ["c", token.string];
+        retval = ["c", token.string, invoke_id];
     } else {
         var word = expect_word();
-        retval = ["fn", word];
+        retval = ["fn", word, invoke_id];
     }
     expect_token("SEMI");
     idl_log("  binding: {retval}");
     return retval;
 }
 
-fn parse_idl_prop(): object {
+fn parse_idl_prop(invoke_id): object {
     var prop_name = expect_word();
+    if invoke_id == -1 {
+        invoke_id = idl_allocate_prop_id(prop_name);
+    }
     var type = parse_idl_type();
     expect_token("BRA_OPEN");
     var token = lexer.read;
     var read = ["none"];
     var write = ["none"];
     if token.token == "READ" {
-        read = parse_idl_binding();
+        read = parse_idl_binding(invoke_id);
         token = lexer.read;
     }
     if token.token == "WRITE" {
-        write = parse_idl_binding();
+        write = parse_idl_binding(invoke_id);
         token = lexer.read;
     }
     if token.token != "BRA_CLOSE" {
@@ -100,7 +122,7 @@ fn parse_idl_prop(): object {
     return ["prop", prop_name, type, read, write];
 }
 
-fn parse_idl_fn(): object {
+fn parse_idl_fn(invoke_id): object {
     var fn_name = expect_word();
     var bindings = [];
     var args;
@@ -114,14 +136,14 @@ fn parse_idl_fn(): object {
             }
             args = parse_idl_args();
             return_type = parse_idl_type();
-            binding = parse_idl_binding();
+            binding = parse_idl_binding(invoke_id);
             append(bindings, [args, return_type, binding]);
         }
         expect_token("BRA_CLOSE");
     } else {
         args = parse_idl_args();
         return_type = parse_idl_type();
-        binding = parse_idl_binding();
+        binding = parse_idl_binding(invoke_id);
         append(bindings, [args, return_type, binding]);
     }
     var fn_list = ["fn", fn_name, bindings];
@@ -129,7 +151,7 @@ fn parse_idl_fn(): object {
     return fn_list;
 }
 
-fn parse_idl_handler(): object {
+fn parse_idl_handler(index): object {
     var name = expect_word();
     var args = [];
     if lexer.peek.token == "PAREN_OPEN" {
@@ -154,7 +176,7 @@ fn parse_idl_handler(): object {
     }
     var return_type = parse_idl_type();
     expect_token("SEMI");
-    var handler_list = ["handler", name, return_type, args];
+    var handler_list = ["handler", index, name, return_type, args];
     idl_log("handler: {handler_list}");
     return handler_list;
 }
@@ -180,7 +202,7 @@ fn parse_idl_object(): object {
         }
         var token = lexer.read;
         if token.token == "PROP" {
-            var prop = parse_idl_prop();
+            var prop = parse_idl_prop(-1);
             append(items, prop);
         } else {
             idl_error("Unexpected token in idl object block: {token.token}");
@@ -190,9 +212,11 @@ fn parse_idl_object(): object {
     return ["object", name, items];
 }
 
-fn parse_idl_module(): object {
+fn parse_idl_module(index): object {
     var name = expect_word();
     var module = [];
+    var handler_index = 1;
+    var function_index = 1;
     expect_token("BRA_OPEN");
     loop {
         var token = lexer.read;
@@ -200,13 +224,16 @@ fn parse_idl_module(): object {
         if token.token == "BRA_CLOSE" {
             break;
         } else if token.token == "FN" {
-            item = parse_idl_fn();
+            item = parse_idl_fn(function_index);
+            function_index += 1;
             append(module, item);
         } else if token.token == "PROP" {
-            item = parse_idl_prop();
+            item = parse_idl_prop(function_index);
+            function_index += 1;
             append(module, item);
         } else if token.token == "HANDLER" {
-            item = parse_idl_handler();
+            item = parse_idl_handler(handler_index);
+            handler_index += 1;
             append(module, item);
         } else if token.token == "CONST" {
             item = parse_idl_const();
@@ -218,13 +245,14 @@ fn parse_idl_module(): object {
             idl_error("Unexpected token in idl module block: {token.token}");
         }
     }
-    return ["module", name, module];
+    return ["module", index, name, module];
 }
 
 fn parse_idl_block(): object {
     var prefix = "";
     var dispatch = "";
     var modules = [];
+    var index = 0;
 
     loop {
         if lexer.peek.token == "BRA_CLOSE" {
@@ -240,7 +268,8 @@ fn parse_idl_block(): object {
             dispatch = "name";
             expect_token("SEMI");
         } else if token.token == "MODULE" {
-            var module = parse_idl_module();
+            var module = parse_idl_module(index);
+            index += 1;
             append(modules, module);
         } else {
             idl_error("Unexpected token in idl block: {token.token}");
@@ -252,10 +281,11 @@ fn parse_idl_block(): object {
 
 export fn parse_idl(lexer_): object {
     lexer = lexer_;
+    prop_ids = [];
     expect_token("IDL");
     expect_token("BRA_OPEN");
     var idl = parse_idl_block();
-    print("{idl}");
+    # print("{idl}");
     idl = kidl.create_list_object("idl", idl);
     expect_token("BRA_CLOSE");
     lexer = 0;
