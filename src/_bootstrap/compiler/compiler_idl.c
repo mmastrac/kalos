@@ -54,8 +54,8 @@ bool kalos_list_object_dispatch_value(kalos_run_state* state, kalos_object_ref* 
         kalos_object_retain(kalos_state_from_run_state(state), list);
         kalos_string name = kalos_string_duplicate(kalos_state_from_run_state(state), context->name);
         kalos_value retval = kalos_module_idl_kidl_trigger_resolve_list_object_prop(state, &name, &function, &list);
-        kalos_object_release(kalos_state_from_run_state(state), &list);
-        kalos_string_release(kalos_state_from_run_state(state), name);
+        // kalos_object_release(kalos_state_from_run_state(state), &list);
+        // kalos_string_release(kalos_state_from_run_state(state), name);
         kalos_stack_cleanup(state, 1);
         push_any(stack, retval);
     }
@@ -655,7 +655,14 @@ kalos_object_ref kalos_lexer_read_token(kalos_state* state, kalos_object_ref* ob
     token_object->object_free = kalos_lexer_token_read_string_free;
     lex_token_object_context* token_context = token_object->context;
     token_context->token = token;
-    token_context->string = kalos_string_allocate_fmt(state, "%s", context->token_string);
+    if (strlen(context->token_string) == 0) {
+        int len = context->lex_state.s - context->lex_state.token_start;
+        kalos_writable_string s = kalos_string_allocate_writable_size(state, len);
+        strncpy(kalos_string_writable_c(state, s), context->lex_state.token_start, len);
+        token_context->string = kalos_string_commit(state, s);
+    } else {
+        token_context->string = kalos_string_allocate_fmt(state, "%s", context->token_string);
+    }
     return token_object;
 }
 
